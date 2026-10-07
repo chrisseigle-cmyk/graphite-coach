@@ -51,6 +51,8 @@ canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:2px}
 .hint{font-size:12.5px;color:var(--muted);margin:0}
 input[type=range]{width:100%;accent-color:var(--blue)}
 .grades{display:flex;flex-wrap:wrap;gap:6px}
+.gridctl{border-top:1px solid var(--rule);padding-top:14px;gap:8px}
+.gridctl .toggle{justify-content:flex-start;font-weight:600}
 .grade{font:500 13px var(--mono);padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--graphite);cursor:pointer}
 .grade[aria-pressed="true"]{background:var(--graphite);color:var(--paper);border-color:var(--graphite)}
 .steplist{display:flex;flex-wrap:wrap;gap:6px}
@@ -125,6 +127,14 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <div class="nav">
         <button class="btn" id="prev">Back</button>
         <button class="btn primary" id="next">Next step</button>
+      </div>
+      <div class="ctrl gridctl">
+        <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
+        <label>Cell shape (width : height)</label>
+        <div class="grades" id="ratios"></div>
+        <label for="gdens">Grid density <output id="gdens-o"></output></label>
+        <input id="gdens" type="range" min="2" max="16" value="4">
+        <p class="hint">Slide right for more, smaller cells. Draw the same grid on your paper so every square matches.</p>
       </div>
     </div>
   </section>
@@ -322,7 +332,7 @@ function loadSource(src){
     if(Y>60&&cr>136&&cr<175&&cb>80&&cb<130){const y=(i/w)|0,wt=Math.pow(1-y/h,4);fx+=(i%w)*wt;fy+=y*wt;fw+=wt;}}
   const focus=fw>w*h*.002?{x:fx/fw,y:fy/fw}:{x:w/2,y:h*.42};focus.r=.2*Math.max(w,h);
   Object.assign(S,{gray:g,w,h,focus,cache:{}});$("dims").textContent=`${w} × ${h} px`;
-  render();renderStep();
+  render();if(S.grid)gridLabel();renderStep();
 }
 
 /* ---------- controls ---------- */
@@ -339,7 +349,7 @@ $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;c
 function grade(i){return GRADES[Math.max(0,Math.min(GRADES.length-1,i))].id;}
 const STEPS=[
  {title:"Set up a light grid",pencil:()=>"2H · very light",
-  body:"Draw a 4 × 4 grid on your paper with the same proportions as the reference. Keep the lines faint enough to erase. The grid lets you place every later shape by its square instead of guessing distances across the whole face.",
+  body:"Draw the same grid shown here on your paper, with the paper cut to the same proportions as the reference. Change the cell shape and density under Grid to suit your paper. Keep the lines faint enough to erase. The grid lets you place every later shape by its square instead of guessing distances across the whole face.",
   checks:["Paper ratio matches the photo","Lines barely visible at arm's length"],layer:"grid"},
  {title:"Block in the big shapes",pencil:()=>"2H",
   body:"Look only at the largest masses: the head as one egg shape, the neck, the shoulder line, the biggest shadow shape. Use straight, angled strokes instead of curves. Squint at the reference to lose the detail.",
@@ -384,14 +394,23 @@ function stepTone(layer){
   if(layer==="mids"){for(let i=0;i<n;i++)out[i]=b[i]>0?sk[i]:Math.min(1,Math.max(sk[i],.9));return out;}
   return sk;
 }
+/* grid overlay: cells of the chosen width:height, "cols" cells across; rows run from the top and the last row may be partial */
+const RATIOS=[[1,1,"1:1 squares"],[3,4,"3:4"],[4,3,"4:3"],[2,3,"2:3"],[3,2,"3:2"]];
+function gridDims(){const [rw,rh]=RATIOS[S.grid.ratio],cw=S.w/S.grid.cols,ch=cw*rh/rw;return{cw,ch,cols:S.grid.cols,rows:Math.ceil(S.h/ch-1e-6)};}
+function drawGrid(ctx,strong){
+  const {cw,ch,cols,rows}=gridDims(),lw=Math.max(1,Math.round(S.w/640));
+  // every step keeps the grid as faint reference blue; step 1 shows it strongly
+  ctx.strokeStyle=strong?"rgba(47,109,181,.85)":"rgba(47,109,181,.32)";ctx.lineWidth=strong?1.5*lw:lw;ctx.beginPath();
+  for(let k=1;k<cols;k++){const x=Math.round(k*cw)+.5;ctx.moveTo(x,0);ctx.lineTo(x,S.h);}
+  for(let k=1;k<rows;k++){const y=Math.round(k*ch)+.5;ctx.moveTo(0,y);ctx.lineTo(S.w,y);}
+  ctx.stroke();ctx.strokeRect(.5,.5,S.w-1,S.h-1);
+}
+function gridLabel(){const {cols,rows}=gridDims();$("gdens-o").textContent=`${cols} × ${rows} cells`;}
 function renderStep(){
   if(!S.gray)return;
   const st=STEPS[S.step],c=$("stepcanvas");
   const ctx=paint(c,stepTone(st.layer),$("ghost").checked);
-  // every step keeps the grid as faint reference blue
-  ctx.strokeStyle=st.layer==="grid"?"rgba(47,109,181,.85)":"rgba(47,109,181,.28)";ctx.lineWidth=st.layer==="grid"?1.5:1;
-  for(let k=1;k<4;k++){const x=Math.round(S.w*k/4)+.5,y=Math.round(S.h*k/4)+.5;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,S.h);ctx.moveTo(0,y);ctx.lineTo(S.w,y);ctx.stroke();}
-  ctx.strokeRect(.5,.5,S.w-1,S.h-1);
+  if(S.grid.on)drawGrid(ctx,st.layer==="grid");
   $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;
   $("s-checks").replaceChildren(...st.checks.map(t=>{const li=document.createElement("li");li.textContent=t;return li;}));
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
@@ -402,6 +421,11 @@ STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot"
 $("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();};
 $("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();};
 $("ghost").onchange=renderStep;
+S.grid={on:true,ratio:0,cols:4};
+RATIOS.forEach((r,i)=>{const b=document.createElement("button");b.className="grade ratio";b.textContent=r[2];b.setAttribute("aria-pressed",i===S.grid.ratio);
+  b.onclick=()=>{S.grid.ratio=i;document.querySelectorAll(".ratio").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));gridLabel();renderStep();};$("ratios").appendChild(b);});
+$("grid-on").onchange=e=>{S.grid.on=e.target.checked;renderStep();};
+$("gdens").addEventListener("input",e=>{S.grid.cols=+e.target.value;gridLabel();renderStep();});
 
 function show(tab){const plan=tab==="plan";$("view-sketch").hidden=plan;$("view-plan").hidden=!plan;$("tab-sketch").setAttribute("aria-selected",!plan);$("tab-plan").setAttribute("aria-selected",plan);if(plan){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}}
 $("tab-sketch").onclick=()=>show("sketch");$("tab-plan").onclick=()=>show("plan");
