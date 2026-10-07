@@ -102,6 +102,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
       <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
       <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
+      <div class="ctrl"><label for="bright">Brightness <output id="bright-o"></output></label><input id="bright" type="range" min="-50" max="50" value="0"></div>
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
       <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
       <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
@@ -236,7 +237,8 @@ function sketchTone(p){
   const srt=Float32Array.from(g).sort(),lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
   let T=new Float32Array(n);const fd=new Float32Array(n);
   for(let i=0;i<n;i++){
-    const v=clamp((g[i]-lo)/(hi-lo)),x=i%w,y=(i/w)|0;
+    // brightness bends the mid-tones lighter or darker; paper white and the darkest dark stay put
+    const v=Math.pow(clamp((g[i]-lo)/(hi-lo)),Math.pow(2,-p.bright*1.3)),x=i%w,y=(i/w)|0;
     let t=1-Math.pow(1-v,1.45);t=t+(1-t)*smooth(.9,.97,t);
     // distance from the face, in face-sizes: detail and darkness ease off further away
     const d=Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)+(st.lo[i]-.5)*1.1;fd[i]=d;
@@ -336,9 +338,9 @@ function loadSource(src){
 }
 
 /* ---------- controls ---------- */
-const sliders=["shade","strokes","soft","press","detail","contrast","grain","fade"];
-function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,grade:S.grade};}
-function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";}
+const sliders=["bright","shade","strokes","soft","press","detail","contrast","grain","fade"];
+function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,bright:$("bright").value/50,grade:S.grade};}
+function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";const b=+$("bright").value;$("bright-o").textContent=(b>0?"+":"")+b;}
 let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;});}
 sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;}));
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
