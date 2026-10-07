@@ -140,7 +140,7 @@ const GRADES = [
 ];
 const S = {grade:3, gray:null, w:0, h:0, step:0, cache:{}};
 const $ = id => document.getElementById(id);
-const MAXW = 640;
+const MAXW = 1000;
 
 /* ---------- image processing ---------- */
 const clamp = v => v<0?0:v>1?1:v;
@@ -150,85 +150,106 @@ function blur(src,w,h,r){r=Math.round(r);if(r<1)return src.slice();const a=new F
 function edges(g,w,h,r1,r2,gain){const b1=blur(g,w,h,r1),b2=blur(g,w,h,r2),o=new Float32Array(w*h);for(let i=0;i<o.length;i++)o[i]=clamp((b2[i]-b1[i])*gain-.02);return o;}
 const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t);};
 function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function lowNoise(w,h,seed,r){const q=rng(seed),n=new Float32Array(w*h);for(let i=0;i<n.length;i++)n[i]=q();
+  const b=blur(n,w,h,r);let mn=1,mx=0;for(const v of b){if(v<mn)mn=v;if(v>mx)mx=v;}for(let i=0;i<b.length;i++)b[i]=(b[i]-mn)/(mx-mn+1e-6);return b;}
 
 /* paper tooth: fine isotropic grain; graphite skips the low spots and leaves white flecks */
 function tooth(w,h){const r=rng(7),n=new Float32Array(w*h);for(let i=0;i<n.length;i++)n[i]=r();
   const b=blur(n,w,h,1);for(let i=0;i<b.length;i++)b[i]=clamp(.5+(b[i]-.5)*5);return b;}
 
-/* direction pencil strokes should run: along the form (across the light-to-dark gradient),
-   falling back to a right-hander's diagonal where the photo has no clear direction */
-function flow(g,w,h){
-  const b=blur(g,w,h,2),n=w*h,xx=new Float32Array(n),xy=new Float32Array(n),yy=new Float32Array(n);
+/* direction strokes should run: along the form (across the light-to-dark gradient), plus how
+   strongly the area has one direction (hair, folds) versus none (smooth skin, flat background) */
+function flow(g,w,h,sc){
+  const b=blur(g,w,h,Math.max(1,Math.round(1.5*sc))),n=w*h,xx=new Float32Array(n),xy=new Float32Array(n),yy=new Float32Array(n);
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;
     const gx=b[y*w+Math.min(w-1,x+1)]-b[y*w+Math.max(0,x-1)],gy=b[Math.min(h-1,y+1)*w+x]-b[Math.max(0,y-1)*w+x];
     xx[i]=gx*gx;xy[i]=gx*gy;yy[i]=gy*gy;}
-  const r=Math.max(4,Math.round(Math.max(w,h)/80)),sxx=blur(xx,w,h,r),sxy=blur(xy,w,h,r),syy=blur(yy,w,h,r);
-  const ang=new Float32Array(n),en=new Float32Array(n),D=-Math.PI/4;
-  for(let i=0;i<n;i++){const a=sxx[i]-syy[i],c=2*sxy[i],m=Math.hypot(a,c),coh=m/(sxx[i]+syy[i]+1e-7);en[i]=sxx[i]+syy[i];
-    const k=smooth(.2,.7,coh)*smooth(0,.0004,m)*.9,iso=.5*Math.atan2(c,a)+Math.PI/2;
+  const r=Math.max(4,Math.round(6*sc)),sxx=blur(xx,w,h,r),sxy=blur(xy,w,h,r),syy=blur(yy,w,h,r);
+  const ang=new Float32Array(n),coh=new Float32Array(n),en=new Float32Array(n),D=-Math.PI/4;
+  for(let i=0;i<n;i++){const a=sxx[i]-syy[i],c=2*sxy[i],m=Math.hypot(a,c),ch=m/(sxx[i]+syy[i]+1e-7);
+    const k=smooth(.15,.6,ch)*smooth(0,.0003,m),iso=.5*Math.atan2(c,a)+Math.PI/2;
     const vx=k*Math.cos(2*iso)+(1-k)*Math.cos(2*D),vy=k*Math.sin(2*iso)+(1-k)*Math.sin(2*D);
-    ang[i]=.5*Math.atan2(vy,vx);}
-  return {ang,en};
+    ang[i]=.5*Math.atan2(vy,vx);coh[i]=k;en[i]=sxx[i]+syy[i];}
+  return {ang,coh,en};
 }
 
-/* hatching layers: each covers tones darker than its threshold, the darker ones crossing at an angle */
-const LAYERS=[{t:.9,off:0,a:.14,d:1.3},{t:.79,off:.08,a:.22,d:1.1},{t:.67,off:.65,a:.36,d:1},{t:.53,off:-.55,a:.44,d:1},{t:.39,off:1.25,a:.6,d:1.1},{t:.26,off:.25,a:.7,d:1.2}];
+/* hatching layers: each covers tones darker than its threshold; only the deepest ones cross */
+const LAYERS=[{t:.88,off:0,a:.16,d:1},{t:.76,off:.06,a:.24,d:1},{t:.63,off:.3,a:.32,d:1},{t:.5,off:-.25,a:.4,d:1},{t:.37,off:.55,a:.5,d:1.1},{t:.25,off:.15,a:.6,d:1.2}];
 function strokes(){
   if(S.cache.strokes)return S.cache.strokes;
-  const {w,h}=S,{ang,en}=flow(S.gray,w,h),sc=Math.max(w,h)/640,r=rng(99),gb=blur(S.gray,w,h,1);
-  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.lineCap="round";
-  const out=LAYERS.map((L,li)=>{
+  const {w,h}=S,sc=Math.max(w,h)/640,{ang,coh,en}=flow(S.gray,w,h,sc),r=rng(99),gb=blur(S.gray,w,h,1);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.fillStyle="#000";
+  const step=2.2*sc;
+  const ink=LAYERS.map((L,li)=>{
     x.clearRect(0,0,w,h);
-    const avg=14*sc,N=Math.round(.55*L.d*w*h/(avg*1.1));
+    const avg=16*sc,N=Math.round(.5*L.d*w*h/(avg*1.1*sc));
     for(let s=0;s<N;s++){
-      let px=r()*w,py=r()*h;const si=(py|0)*w+(px|0),g0=gb[si];
-      // busy areas (eyes, mouth, hair texture) get short strokes; broad planes get long ones
-      const len=(8+r()*14)*sc*(li>3?.8:1)*(1-.55*smooth(.0003,.004,en[si]));
-      // trace a short curved stroke both ways from the seed, following the flow field
+      const px=r()*w,py=r()*h,si=(py|0)*w+(px|0),g0=gb[si];
+      // long, sweeping strokes where the form has a clear direction (hair, folds); short where it doesn't
+      const len=(10+r()*16)*sc*(.5+.9*coh[si])*(li>3?.8:1);
       const pts=[];let budget=len;
       for(const dir of[1,-1]){let qx=px,qy=py,dx=0,dy=0,seg=[],d=0;const lim=dir===1?len/2:budget;
-        for(;d<lim;d+=2.5*sc){const i=(Math.min(h-1,Math.max(0,qy|0)))*w+Math.min(w-1,Math.max(0,qx|0));if(Math.abs(gb[i]-g0)>.2)break; // a stroke stops at an edge instead of crossing it
+        for(;d<lim;d+=step){const i=(Math.min(h-1,Math.max(0,qy|0)))*w+Math.min(w-1,Math.max(0,qx|0));if(Math.abs(gb[i]-g0)>.18&&!(gb[i]>.9&&g0<.6&&d<len*.3))break; // a stroke stops at an edge instead of crossing it, except a short wisp into bare paper
           const a=ang[i]+L.off;let ux=Math.cos(a)*dir,uy=Math.sin(a)*dir;
-          if(dx*ux+dy*uy<0){ux=-ux;uy=-uy;}dx=ux;dy=uy;qx+=ux*2.5*sc;qy+=uy*2.5*sc;seg.push(qx,qy);}
-        budget-=d; // whatever one side could not use, the other side gets, so strokes stay full length beside edges
+          if(dx*ux+dy*uy<0){ux=-ux;uy=-uy;}dx=ux;dy=uy;qx+=ux*step;qy+=uy*step;seg.push(qx,qy);}
+        budget-=d; // what one side could not use, the other side gets
         if(dir===1)for(let k=seg.length-2;k>=0;k-=2)pts.push(seg[k],seg[k+1]);else{pts.push(px,py);for(let k=0;k<seg.length;k+=2)pts.push(seg[k],seg[k+1]);}}
-      x.globalAlpha=L.a*(.6+r()*.6);x.lineWidth=(.5+r()*.6)*Math.max(1,sc*.9);
-      x.beginPath();x.moveTo(pts[0],pts[1]);for(let k=2;k<pts.length;k+=2)x.lineTo(pts[k],pts[k+1]);x.stroke();
+      const m=pts.length/2;if(m<3)continue;
+      // draw the stroke as a ribbon that swells in the middle and tapers to a point at both ends
+      const W=(.45+r()*.5)*Math.max(1,sc*.85),L2=[],R2=[];
+      for(let k=0;k<m;k++){const a=Math.max(0,k-1),b=Math.min(m-1,k+1);let tx=pts[b*2]-pts[a*2],ty=pts[b*2+1]-pts[a*2+1];const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;
+        const hw=W*(.15+.85*Math.sqrt(Math.sin(Math.PI*k/(m-1))));L2.push(pts[k*2]-ty*hw,pts[k*2+1]+tx*hw);R2.push(pts[k*2]+ty*hw,pts[k*2+1]-tx*hw);}
+      x.globalAlpha=L.a*(.6+r()*.6);x.beginPath();x.moveTo(L2[0],L2[1]);
+      for(let k=2;k<L2.length;k+=2)x.lineTo(L2[k],L2[k+1]);for(let k=R2.length-2;k>=0;k-=2)x.lineTo(R2[k],R2[k+1]);x.closePath();x.fill();
     }
-    const d=x.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=d[i*4+3]/255;return ink;
+    const d=x.getImageData(0,0,w,h).data,o=new Float32Array(w*h);for(let i=0;i<o.length;i++)o[i]=d[i*4+3]/255;return o;
   });
-  return S.cache.strokes={ink:out,tooth:tooth(w,h),fade:fadeMask(w,h)};
+  // how "textured" each spot is: hair and fabric get visible hatching, smooth skin gets blended tone
+  const tex=new Float32Array(w*h);for(let i=0;i<tex.length;i++)tex[i]=coh[i]*smooth(.0004,.004,en[i]);
+  return S.cache.strokes={ink,tex:blur(tex,w,h,Math.round(3*sc)),tooth:tooth(w,h),lo:lowNoise(w,h,3,Math.round(Math.max(w,h)/24)),broken:lowNoise(w,h,5,Math.max(2,Math.round(4*sc)))};
 }
-
-/* an unfinished, ragged vignette: real sketches trail off into bare paper near the edges */
-function fadeMask(w,h){const r=rng(3),n=new Float32Array(w*h);for(let i=0;i<n.length;i++)n[i]=r();
-  const lo=blur(n,w,h,Math.round(Math.max(w,h)/22)),o=new Float32Array(w*h);let mn=1,mx=0;for(const v of lo){mn=Math.min(mn,v);mx=Math.max(mx,v);}
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,dx=(x/w-.5)*2,dy=(y/h-.45)*2,d=Math.hypot(dx*.95,dy*.85)+((lo[i]-mn)/(mx-mn+1e-6)-.5)*.35;o[i]=d;}
-  return o;}
 
 function contrasted(c){const g=S.gray,o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
 
 function sketchTone(p){
-  const {w,h}=S, g=contrasted(p.contrast), n=g.length, gr=GRADES[p.grade], st=strokes();
-  // pencil drawings keep far more bare paper than a photo: lift the lights, then let highlights go to white
-  const T=new Float32Array(n);for(let i=0;i<n;i++){const v=Math.pow(clamp(g[i]*1.06),.88);T[i]=v*(1-smooth(.86,.96,v))+smooth(.86,.96,v);}
-  const Tb=blur(T,w,h,p.soft),Th=blur(T,w,h,2.5);
-  const lineR=.6+(1-p.detail)*2;
-  const e=edges(g,w,h,lineR*.5,lineR*2,5+p.press*14);
+  const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,g=contrasted(p.contrast),gr=GRADES[p.grade],st=strokes(),F=S.focus;
+  // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
+  // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+  const srt=Float32Array.from(g).sort(),lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
+  const T=new Float32Array(n),fd=new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const v=clamp((g[i]-lo)/(hi-lo)),x=i%w,y=(i/w)|0;
+    let t=1-Math.pow(1-v,1.45);t=t+(1-t)*smooth(.9,.97,t);
+    // distance from the face, in face-sizes: detail and darkness ease off further away
+    const d=Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)+(st.lo[i]-.5)*1.1;fd[i]=d;
+    t=1-(1-t)*(1-.6*smooth(.9,2.2,d));
+    // unfinished edges: tone drops away so whole layers of strokes stop, rather than a soft mask
+    if(p.fade>0)t=1-(1-t)*(1-smooth(3-2*p.fade,4.2-2*p.fade,d));
+    T[i]=t;
+  }
+  const Tb=blur(T,w,h,p.soft*sc*.6),Th=blur(T,w,h,1.5*sc);
+  // light areas touching paper-white lose their outline ("lost edges")
+  const paper=new Float32Array(n);for(let i=0;i<n;i++)paper[i]=T[i]>.97?1:0;const near=blur(paper,w,h,Math.round(4*sc));
+  const lineR=(.5+(1-p.detail)*1.6)*sc;
+  const e=edges(T,w,h,lineR*.5,lineR*2,4+p.press*10);
   const out=new Float32Array(n);
   for(let i=0;i<n;i++){
-    // blended graphite underlayer (stump work), lighter when strokes carry the tone
-    const base=.6*Tb[i]+.4*T[i];
-    let dark=(1-base)*p.shade*(1-p.strokes*.25);
-    // stacked hatching: each layer appears once the area is darker than its threshold
-    let lit=1;for(let k=0;k<LAYERS.length;k++){const L=LAYERS[k],cov=smooth(L.t+.07,L.t-.07,Th[i]);if(cov>0)lit*=1-st.ink[k][i]*cov*p.strokes*(.55+p.shade*.6);}
+    // the face keeps crisp detail (catchlights, lash line); further out the tone is blended softer
+    const fo=1-smooth(.8,1.8,fd[i]),mx=.45+.4*fo,D=1-((1-mx)*Tb[i]+mx*T[i]);
+    // smooth light skin gets blended tone only; hatching shows in hair, fabric and shadows
+    const hatch=p.strokes*Math.max(st.tex[i],smooth(.4,.75,D))*(1-.5*smooth(1.2,2.6,fd[i]));
+    // blended graphite (stump work) carries the tone where hatching is light
+    let dark=D*(.35+p.shade*1.1)*(1-.5*hatch);
+    let lit=1;for(let k=0;k<LAYERS.length;k++){const L=LAYERS[k],cov=smooth(L.t+.07,L.t-.07,Th[i]);if(cov>0)lit*=1-st.ink[k][i]*cov*hatch*1.3;}
     dark=1-(1-dark)*lit;
-    dark=1-(1-dark)*(1-e[i]*p.press*1.5);
-    // paper tooth: graphite misses the valleys unless pressed hard
-    const valley=1-st.tooth[i];dark*=1-p.grain*gr.grain*.55*valley*(1-dark*.5);
-    // fade the drawing out toward the borders
-    if(p.fade>0){const f=smooth(.55+ (1-p.fade)*.6,.95+(1-p.fade)*.6,st.fade[i]);dark*=1-f;}
-    out[i]=gr.dmin+(1-gr.dmin)*clamp(1-Math.pow(clamp(dark),.85));
+    // contour lines: broken, lighter away from the face, vanishing where light meets white paper
+    // only real edges get a line (no wormy lines from skin texture)
+    let ln=smooth(.06,.3,e[i])*p.press*1.3*(1-.95*near[i])*(.35+.9*st.broken[i])*(1-.6*smooth(1.2,2.6,fd[i]));
+    dark=1-(1-dark)*(1-clamp(ln));
+    // accents: the very darkest spots near the face (pupils, nostrils, mouth) get full pressure
+    dark=1-(1-dark)*(1-.75*smooth(.72,.92,1-T[i])*fo);
+    const valley=1-st.tooth[i];dark*=1-p.grain*gr.grain*.5*valley*(1-dark*.5);
+    out[i]=gr.dmin+(1-gr.dmin)*clamp(1-clamp(dark));
   }
   return out;
 }
@@ -281,8 +302,14 @@ function loadSource(src){
   let w=src.width,h=src.height;const sc=Math.min(1,MAXW/Math.max(w,h));w=Math.round(w*sc);h=Math.round(h*sc);
   const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(src,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);
-  for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=(.299*d[j]+.587*d[j+1]+.114*d[j+2])/255;
-  Object.assign(S,{gray:g,w,h,cache:{}});$("dims").textContent=`${w} × ${h} px`;
+  // weight red like a red filter in black-and-white photography: skin reads lighter, as artists draw it
+  let fx=0,fy=0,fw=0;
+  for(let i=0,j=0;i<g.length;i++,j+=4){const R=d[j],G=d[j+1],B=d[j+2];g[i]=(.5*R+.4*G+.1*B)/255;
+    // rough skin-colour test to find the face, so it gets the most detail and the rest stays looser
+    const Y=.299*R+.587*G+.114*B,cb=128-.1687*R-.3313*G+.5*B,cr=128+.5*R-.4187*G-.0813*B;
+    if(Y>60&&cr>136&&cr<175&&cb>80&&cb<130){const y=(i/w)|0,wt=Math.pow(1-y/h,4);fx+=(i%w)*wt;fy+=y*wt;fw+=wt;}}
+  const focus=fw>w*h*.002?{x:fx/fw,y:fy/fw}:{x:w/2,y:h*.42};focus.r=.2*Math.max(w,h);
+  Object.assign(S,{gray:g,w,h,focus,cache:{}});$("dims").textContent=`${w} × ${h} px`;
   render();renderStep();
 }
 
