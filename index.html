@@ -96,11 +96,13 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <p class="hint">Harder leads cap how dark the drawing can go. Softer leads reach deeper blacks with more grain.</p>
       </div>
       <div class="ctrl"><label for="shade">Shading <output id="shade-o"></output></label><input id="shade" type="range" min="0" max="100" value="55"></div>
+      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
       <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
       <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
       <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
-      <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="35"></div>
+      <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="40"></div>
+      <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="50"></div>
     </div>
   </section>
 
@@ -146,30 +148,87 @@ function boxH(s,d,w,h,r){const n=2*r+1;for(let y=0;y<h;y++){const o=y*w;let acc=
 function boxV(s,d,w,h,r){const n=2*r+1;for(let x=0;x<w;x++){let acc=0;for(let k=-r;k<=r;k++)acc+=s[Math.min(h-1,Math.max(0,k))*w+x];for(let y=0;y<h;y++){d[y*w+x]=acc/n;acc+=s[Math.min(h-1,y+r+1)*w+x]-s[Math.max(0,y-r)*w+x];}}}
 function blur(src,w,h,r){r=Math.round(r);if(r<1)return src.slice();const a=new Float32Array(w*h),b=new Float32Array(w*h);boxH(src,a,w,h,r);boxV(a,b,w,h,r);boxH(b,a,w,h,Math.max(1,r>>1));boxV(a,b,w,h,Math.max(1,r>>1));return b;}
 function edges(g,w,h,r1,r2,gain){const b1=blur(g,w,h,r1),b2=blur(g,w,h,r2),o=new Float32Array(w*h);for(let i=0;i<o.length;i++)o[i]=clamp((b2[i]-b1[i])*gain-.02);return o;}
-let NOISE=null;
-function noise(w,h){if(NOISE&&NOISE.length===w*h)return NOISE;const n=new Float32Array(w*h);let s=12345;for(let i=0;i<n.length;i++){s=(s*1103515245+12345)&0x7fffffff;n[i]=s/0x7fffffff;}
-  // streak the noise diagonally so it reads as pencil tooth, not static
-  const o=new Float32Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let a=0,c=0;for(let k=-3;k<=3;k++){const xx=x+k,yy=y-k;if(xx>=0&&xx<w&&yy>=0&&yy<h){a+=n[yy*w+xx];c++;}}o[y*w+x]=a/c;}
-  return NOISE=o;}
+const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t);};
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+
+/* paper tooth: fine isotropic grain; graphite skips the low spots and leaves white flecks */
+function tooth(w,h){const r=rng(7),n=new Float32Array(w*h);for(let i=0;i<n.length;i++)n[i]=r();
+  const b=blur(n,w,h,1);for(let i=0;i<b.length;i++)b[i]=clamp(.5+(b[i]-.5)*5);return b;}
+
+/* direction pencil strokes should run: along the form (across the light-to-dark gradient),
+   falling back to a right-hander's diagonal where the photo has no clear direction */
+function flow(g,w,h){
+  const b=blur(g,w,h,2),n=w*h,xx=new Float32Array(n),xy=new Float32Array(n),yy=new Float32Array(n);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;
+    const gx=b[y*w+Math.min(w-1,x+1)]-b[y*w+Math.max(0,x-1)],gy=b[Math.min(h-1,y+1)*w+x]-b[Math.max(0,y-1)*w+x];
+    xx[i]=gx*gx;xy[i]=gx*gy;yy[i]=gy*gy;}
+  const r=Math.max(4,Math.round(Math.max(w,h)/80)),sxx=blur(xx,w,h,r),sxy=blur(xy,w,h,r),syy=blur(yy,w,h,r);
+  const ang=new Float32Array(n),en=new Float32Array(n),D=-Math.PI/4;
+  for(let i=0;i<n;i++){const a=sxx[i]-syy[i],c=2*sxy[i],m=Math.hypot(a,c),coh=m/(sxx[i]+syy[i]+1e-7);en[i]=sxx[i]+syy[i];
+    const k=smooth(.2,.7,coh)*smooth(0,.0004,m)*.9,iso=.5*Math.atan2(c,a)+Math.PI/2;
+    const vx=k*Math.cos(2*iso)+(1-k)*Math.cos(2*D),vy=k*Math.sin(2*iso)+(1-k)*Math.sin(2*D);
+    ang[i]=.5*Math.atan2(vy,vx);}
+  return {ang,en};
+}
+
+/* hatching layers: each covers tones darker than its threshold, the darker ones crossing at an angle */
+const LAYERS=[{t:.9,off:0,a:.14,d:1.3},{t:.79,off:.08,a:.22,d:1.1},{t:.67,off:.65,a:.36,d:1},{t:.53,off:-.55,a:.44,d:1},{t:.39,off:1.25,a:.6,d:1.1},{t:.26,off:.25,a:.7,d:1.2}];
+function strokes(){
+  if(S.cache.strokes)return S.cache.strokes;
+  const {w,h}=S,{ang,en}=flow(S.gray,w,h),sc=Math.max(w,h)/640,r=rng(99),gb=blur(S.gray,w,h,1);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.lineCap="round";
+  const out=LAYERS.map((L,li)=>{
+    x.clearRect(0,0,w,h);
+    const avg=14*sc,N=Math.round(.55*L.d*w*h/(avg*1.1));
+    for(let s=0;s<N;s++){
+      let px=r()*w,py=r()*h;const si=(py|0)*w+(px|0),g0=gb[si];
+      // busy areas (eyes, mouth, hair texture) get short strokes; broad planes get long ones
+      const len=(8+r()*14)*sc*(li>3?.8:1)*(1-.55*smooth(.0003,.004,en[si]));
+      // trace a short curved stroke both ways from the seed, following the flow field
+      const pts=[];let budget=len;
+      for(const dir of[1,-1]){let qx=px,qy=py,dx=0,dy=0,seg=[],d=0;const lim=dir===1?len/2:budget;
+        for(;d<lim;d+=2.5*sc){const i=(Math.min(h-1,Math.max(0,qy|0)))*w+Math.min(w-1,Math.max(0,qx|0));if(Math.abs(gb[i]-g0)>.2)break; // a stroke stops at an edge instead of crossing it
+          const a=ang[i]+L.off;let ux=Math.cos(a)*dir,uy=Math.sin(a)*dir;
+          if(dx*ux+dy*uy<0){ux=-ux;uy=-uy;}dx=ux;dy=uy;qx+=ux*2.5*sc;qy+=uy*2.5*sc;seg.push(qx,qy);}
+        budget-=d; // whatever one side could not use, the other side gets, so strokes stay full length beside edges
+        if(dir===1)for(let k=seg.length-2;k>=0;k-=2)pts.push(seg[k],seg[k+1]);else{pts.push(px,py);for(let k=0;k<seg.length;k+=2)pts.push(seg[k],seg[k+1]);}}
+      x.globalAlpha=L.a*(.6+r()*.6);x.lineWidth=(.5+r()*.6)*Math.max(1,sc*.9);
+      x.beginPath();x.moveTo(pts[0],pts[1]);for(let k=2;k<pts.length;k+=2)x.lineTo(pts[k],pts[k+1]);x.stroke();
+    }
+    const d=x.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=d[i*4+3]/255;return ink;
+  });
+  return S.cache.strokes={ink:out,tooth:tooth(w,h),fade:fadeMask(w,h)};
+}
+
+/* an unfinished, ragged vignette: real sketches trail off into bare paper near the edges */
+function fadeMask(w,h){const r=rng(3),n=new Float32Array(w*h);for(let i=0;i<n.length;i++)n[i]=r();
+  const lo=blur(n,w,h,Math.round(Math.max(w,h)/22)),o=new Float32Array(w*h);let mn=1,mx=0;for(const v of lo){mn=Math.min(mn,v);mx=Math.max(mx,v);}
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,dx=(x/w-.5)*2,dy=(y/h-.45)*2,d=Math.hypot(dx*.95,dy*.85)+((lo[i]-mn)/(mx-mn+1e-6)-.5)*.35;o[i]=d;}
+  return o;}
 
 function contrasted(c){const g=S.gray,o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
 
 function sketchTone(p){
-  const {w,h}=S, g=contrasted(p.contrast), n=g.length;
-  const inv=new Float32Array(n);for(let i=0;i<n;i++)inv[i]=1-g[i];
-  const bi=blur(inv,w,h,p.soft);
-  const lineR=1+ (1-p.detail)*2.5;
-  const e=edges(g,w,h,lineR*.5,lineR*2.2,6+p.press*18);
-  const nz=noise(w,h), gr=GRADES[p.grade];
+  const {w,h}=S, g=contrasted(p.contrast), n=g.length, gr=GRADES[p.grade], st=strokes();
+  // pencil drawings keep far more bare paper than a photo: lift the lights, then let highlights go to white
+  const T=new Float32Array(n);for(let i=0;i<n;i++){const v=Math.pow(clamp(g[i]*1.06),.88);T[i]=v*(1-smooth(.86,.96,v))+smooth(.86,.96,v);}
+  const Tb=blur(T,w,h,p.soft),Th=blur(T,w,h,2.5);
+  const lineR=.6+(1-p.detail)*2;
+  const e=edges(g,w,h,lineR*.5,lineR*2,5+p.press*14);
   const out=new Float32Array(n);
   for(let i=0;i<n;i++){
-    let dodge=Math.min(1,g[i]/(1-bi[i]+.02));
-    const tone=Math.pow(g[i],1.2);
-    let t=dodge*(1-p.shade+p.shade*tone);
-    t*=1-e[i]*p.press*1.4;
-    t=clamp(t);
-    t+= (nz[i]-.5)*p.grain*.5*gr.grain*(1-t)*1.6;
-    out[i]=gr.dmin+(1-gr.dmin)*clamp(t);
+    // blended graphite underlayer (stump work), lighter when strokes carry the tone
+    const base=.6*Tb[i]+.4*T[i];
+    let dark=(1-base)*p.shade*(1-p.strokes*.25);
+    // stacked hatching: each layer appears once the area is darker than its threshold
+    let lit=1;for(let k=0;k<LAYERS.length;k++){const L=LAYERS[k],cov=smooth(L.t+.07,L.t-.07,Th[i]);if(cov>0)lit*=1-st.ink[k][i]*cov*p.strokes*(.55+p.shade*.6);}
+    dark=1-(1-dark)*lit;
+    dark=1-(1-dark)*(1-e[i]*p.press*1.5);
+    // paper tooth: graphite misses the valleys unless pressed hard
+    const valley=1-st.tooth[i];dark*=1-p.grain*gr.grain*.55*valley*(1-dark*.5);
+    // fade the drawing out toward the borders
+    if(p.fade>0){const f=smooth(.55+ (1-p.fade)*.6,.95+(1-p.fade)*.6,st.fade[i]);dark*=1-f;}
+    out[i]=gr.dmin+(1-gr.dmin)*clamp(1-Math.pow(clamp(dark),.85));
   }
   return out;
 }
@@ -177,11 +236,11 @@ function sketchTone(p){
 function paint(canvas,tone,ghost){
   const {w,h}=S;canvas.width=w;canvas.height=h;
   const ctx=canvas.getContext("2d"),img=ctx.createImageData(w,h),d=img.data;
-  // paper (248,249,249) to graphite (35,39,46) with a faint cool sheen in the darks
+  // warm paper (250,249,245) to graphite (38,41,47) with a faint cool sheen in the darks
   for(let i=0,j=0;i<tone.length;i++,j+=4){
     let t=tone[i];
     if(ghost){t=Math.min(t,.72+S.gray[i]*.28);}
-    d[j]=35+(248-35)*t; d[j+1]=39+(249-39)*t; d[j+2]=46+(249-46)*t; d[j+3]=255;
+    d[j]=38+(250-38)*t; d[j+1]=41+(249-41)*t; d[j+2]=47+(245-47)*t; d[j+3]=255;
   }
   ctx.putImageData(img,0,0);
   return ctx;
@@ -223,14 +282,14 @@ function loadSource(src){
   const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(src,0,0,w,h);
   const d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);
   for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=(.299*d[j]+.587*d[j+1]+.114*d[j+2])/255;
-  Object.assign(S,{gray:g,w,h,cache:{}});NOISE=null;$("dims").textContent=`${w} × ${h} px`;
+  Object.assign(S,{gray:g,w,h,cache:{}});$("dims").textContent=`${w} × ${h} px`;
   render();renderStep();
 }
 
 /* ---------- controls ---------- */
-const sliders=["shade","soft","press","detail","contrast","grain"];
-function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,grade:S.grade};}
-function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";}
+const sliders=["shade","strokes","soft","press","detail","contrast","grain","fade"];
+function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,grade:S.grade};}
+function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";}
 let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;});}
 sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;}));
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
