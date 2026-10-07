@@ -221,6 +221,8 @@ function sketchTone(p){
   const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,g=contrasted(p.contrast),gr=GRADES[p.grade],st=strokes(),F=S.focus;
   // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
   // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+  // the Fade edges slider also sets how much the drawing lightens away from the face (50% = default)
+  const fk=Math.min(1.4,p.fade*2);
   const srt=Float32Array.from(g).sort(),lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
   let T=new Float32Array(n);const fd=new Float32Array(n);
   for(let i=0;i<n;i++){
@@ -228,7 +230,7 @@ function sketchTone(p){
     let t=1-Math.pow(1-v,1.45);t=t+(1-t)*smooth(.9,.97,t);
     // distance from the face, in face-sizes: detail and darkness ease off further away
     const d=Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)+(st.lo[i]-.5)*1.1;fd[i]=d;
-    t=1-(1-t)*(1-.6*smooth(.9,2.2,d));
+    t=1-(1-t)*(1-.6*fk*smooth(.9,2.2,d));
     // unfinished edges: tone drops away so whole layers of strokes stop, rather than a soft mask
     if(p.fade>0)t=1-(1-t)*(1-smooth(3-2*p.fade,4.2-2*p.fade,d));
     T[i]=t;
@@ -244,14 +246,14 @@ function sketchTone(p){
     // the face keeps crisp detail (catchlights, lash line); further out the tone is blended softer
     const fo=1-smooth(.8,1.8,fd[i]),mx=.45+.4*fo,D=1-((1-mx)*Tb[i]+mx*T[i]);
     // smooth light skin gets blended tone only; hatching shows in hair, fabric and shadows
-    const hatch=p.strokes*Math.max(st.tex[i],smooth(.4,.75,D))*(1-.5*smooth(1.2,2.6,fd[i]));
+    const hatch=p.strokes*Math.max(st.tex[i],smooth(.4,.75,D))*(1-.5*fk*smooth(1.2,2.6,fd[i]));
     // blended graphite (stump work) carries the tone where hatching is light
     let dark=D*(.35+p.shade*1.1)*(1-.5*hatch);
     let lit=1;for(let k=0;k<LAYERS.length;k++){const L=LAYERS[k],cov=smooth(L.t+.07,L.t-.07,Th[i]);if(cov>0)lit*=1-st.ink[k][i]*cov*Math.max(hatch*1.3,k<3?.35*p.strokes:0);} // a faint directional grain even on smooth skin
     dark=1-(1-dark)*lit;
     // contour lines: broken, lighter away from the face, vanishing where light meets white paper
     // only real edges get a line (no wormy lines from skin texture)
-    let ln=smooth(.06,.3,e[i])*p.press*1.3*(1-.95*near[i])*(.35+.9*st.broken[i])*(1-.85*smooth(1,2.2,fd[i]))*(1-.8*st.tex[i]); // hair and fabric are drawn by their strokes, not traced
+    let ln=smooth(.06,.3,e[i])*p.press*1.3*(1-.95*near[i])*(.35+.9*st.broken[i])*Math.max(0,1-.85*fk*smooth(1,2.2,fd[i]))*(1-.8*st.tex[i]); // hair and fabric are drawn by their strokes, not traced
     dark=1-(1-dark)*(1-clamp(ln));
     // accents: the very darkest spots near the face (pupils, nostrils, mouth) get full pressure
     // accents: spots much darker than their surroundings near the face (pupils, nostrils, lip line) get full pressure
