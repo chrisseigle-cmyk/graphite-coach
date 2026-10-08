@@ -89,7 +89,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <section id="view-sketch" class="grid">
     <div class="stage">
       <canvas id="out"></canvas>
-      <div class="cap"><span id="srcname">Sample: plaster head study (upload your own photo)</span><span id="dims"></span></div>
+      <div class="cap"><span id="srcname">Sample: plaster head study (upload your own photo)</span><span><span id="aistat"></span> · <span id="dims"></span></span></div>
     </div>
     <div class="panel">
       <div class="ctrl">
@@ -140,9 +140,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     </div>
   </section>
 
-  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 2.</p>
+  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 2. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), running on your device.</p>
 </div>
 
+<script src="vendor/ort.wasm.min.js"></script>
 <script>
 (() => {
 const GRADES = [
@@ -252,7 +253,9 @@ function sketchTone(p){
   // light areas touching paper-white lose their outline ("lost edges")
   const paper=new Float32Array(n);for(let i=0;i<n;i++)paper[i]=T[i]>.97?1:0;const nb=blur(paper,w,h,Math.round(5*sc)),near=nb.map(v=>smooth(.01,.12,v));
   const lineR=(.5+(1-p.detail)*1.6)*sc;
-  const e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10);
+  const e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10),AI=S.cache.ailines;
+  // the line drawing model's ink, softened a little so the shading can darken into each line
+  const aiSoft=AI?blur(AI,w,h,Math.max(1,Math.round(1.5*sc))):null;
   const out=new Float32Array(n);
   for(let i=0;i<n;i++){
     // the face keeps crisp detail (catchlights, lash line); further out the tone is blended softer
@@ -265,7 +268,11 @@ function sketchTone(p){
     dark=1-(1-dark)*lit;
     // contour lines: broken, lighter away from the face, vanishing where light meets white paper
     // only real edges get a line (no wormy lines from skin texture)
-    let ln=smooth(.06,.3,e[i])*p.press*1.3*(1-.95*near[i])*(.35+.9*st.broken[i])*Math.max(0,1-.85*fk*smooth(1,2.2,fd[i]))*(1-.8*st.tex[i]); // hair and fabric are drawn by their strokes, not traced
+    let ln=AI
+      // lines from the drawing model: an artist's contours, dropped where a light edge meets bare paper
+      ? AI[i]*p.press*1.7*(1-.75*near[i]*(1-.6*st.broken[i]))*Math.max(0,1-.85*fk*smooth(1,2.2,fd[i]))
+      : smooth(.06,.3,e[i])*p.press*1.3*(1-.95*near[i])*(.35+.9*st.broken[i])*Math.max(0,1-.85*fk*smooth(1,2.2,fd[i]))*(1-.8*st.tex[i]); // hair and fabric are drawn by their strokes, not traced
+    if(AI)dark=1-(1-dark)*(1-.3*aiSoft[i]*p.press*2*(1-near[i]));
     dark=1-(1-dark)*(1-clamp(ln));
     // accents: the very darkest spots near the face (pupils, nostrils, mouth) get full pressure
     // accents: spots much darker than their surroundings near the face (pupils, nostrils, lip line) get full pressure
@@ -333,8 +340,41 @@ function loadSource(src){
     const Y=.299*R+.587*G+.114*B,cb=128-.1687*R-.3313*G+.5*B,cr=128+.5*R-.4187*G-.0813*B;
     if(Y>60&&cr>136&&cr<175&&cb>80&&cb<130){const y=(i/w)|0,wt=Math.pow(1-y/h,4);fx+=(i%w)*wt;fy+=y*wt;fw+=wt;}}
   const focus=fw>w*h*.002?{x:fx/fw,y:fy/fw}:{x:w/2,y:h*.42};focus.r=.2*Math.max(w,h);
-  Object.assign(S,{gray:g,w,h,focus,cache:{}});$("dims").textContent=`${w} × ${h} px`;
+  Object.assign(S,{gray:g,w,h,focus,src:c,cache:{}});$("dims").textContent=`${w} × ${h} px`;
   render();if(S.grid)gridLabel();renderStep();
+  aiLines(c);
+}
+
+/* ---------- AI line drawing (runs on this device; the photo is never uploaded) ----------
+   Model: "Informative Drawings" (Chan, Durand & Isola, CVPR 2022), trained on artists' line drawings. MIT licence.
+   It reads a 512 x 512 image and returns a line drawing; we pad the photo to a square, run it, and crop back. */
+let AISESSION=null,AIJOB=0;
+function aiStatus(t){$("aistat").textContent=t;}
+async function aiLines(c){
+  const job=++AIJOB,{w,h}=S;
+  if(!window.ort){aiStatus("Basic lines (AI drawing unavailable)");return;}
+  try{
+    aiStatus("Drawing lines with AI…");
+    if(!AISESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true; // run in a background worker so the page stays responsive
+      ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
+      AISESSION=ort.InferenceSession.create("models/lines.onnx",{executionProviders:["wasm"]});}
+    const sess=await AISESSION;
+    const N=512,side=Math.max(w,h),ox=(side-w)/2,oy=(side-h)/2,k=N/side;
+    const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
+    qx.fillStyle="#fff";qx.fillRect(0,0,N,N);qx.drawImage(c,ox*k,oy*k,w*k,h*k);
+    const px=qx.getImageData(0,0,N,N).data,inp=new Float32Array(3*N*N);
+    for(let i=0;i<N*N;i++){inp[i]=px[i*4]/255;inp[N*N+i]=px[i*4+1]/255;inp[2*N*N+i]=px[i*4+2]/255;}
+    await new Promise(r=>setTimeout(r,30)); // let the status text paint before the model runs
+    const res=await sess.run({[sess.inputNames[0]]:new ort.Tensor("float32",inp,[1,3,N,N])}),y=res[sess.outputNames[0]].data;
+    if(job!==AIJOB)return; // a newer photo was loaded meanwhile
+    const img=qx.createImageData(N,N);for(let i=0;i<N*N;i++){const v=Math.max(0,Math.min(255,y[i]*255));img.data[i*4]=img.data[i*4+1]=img.data[i*4+2]=v;img.data[i*4+3]=255;}
+    qx.putImageData(img,0,0);
+    const o=document.createElement("canvas");o.width=w;o.height=h;const ox2=o.getContext("2d",{willReadFrequently:true});
+    ox2.imageSmoothingQuality="high";ox2.drawImage(q,ox*k,oy*k,w*k,h*k,0,0,w,h);
+    const d=ox2.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=1-d[i*4]/255;
+    S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
+    render();renderStep();
+  }catch(err){console.warn(err);if(job===AIJOB)aiStatus("Basic lines (AI drawing unavailable)");}
 }
 
 /* ---------- controls ---------- */
@@ -387,7 +427,7 @@ function stepTone(layer){
   if(layer==="full")return sk;
   const big=edges(blur(S.gray,w,h,4),w,h,2,9,14);
   if(layer==="big"){for(let i=0;i<n;i++)out[i]=1-big[i]*.75;return out;}
-  const con=edges(contrasted(params().contrast),w,h,1,3.5,12);
+  const con=S.cache.ailines||edges(contrasted(params().contrast),w,h,1,3.5,12);
   const lines=i=>1-Math.max(big[i]*.4,con[i]*.7);
   if(layer==="contour"){for(let i=0;i<n;i++)out[i]=lines(i);return out;}
   const b=bands();
