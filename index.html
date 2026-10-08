@@ -194,7 +194,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <p class="peekhint" id="peekhint">Hover over the picture (or touch and hold it) to see what this step adds.</p>
       <div class="cap">
         <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
-        <label class="toggle"><input id="newmarks" type="checkbox"> Show this step's new marks in blue</label></span>
+</span>
         <span id="stepcount"></span>
       </div>
     </div>
@@ -524,7 +524,7 @@ const STEPS=[
   look:"Smooth, gradual shading on the skin; the hair still shows its strokes. The bright areas may have picked up a light grey film, which the next step fixes.",
   checks:["Round forms turn gradually, with no hard bands","Hair and clothing still show pencil strokes"]},
  {title:"Lift highlights and finish",pencil:()=>"Kneaded eraser · "+grade(S.grade),
-  body:"Press a kneaded eraser into the brightest spots to lift them clean: the catchlights in the eyes, the bridge of the nose, the lower lip. Erase the grid. Then step back two metres and compare the drawing with the reference at the same size.",
+  body:"Press a kneaded eraser into the small bright spots to lift them back to clean paper: the catchlights in the eyes, the bridge and tip of the nose, the lower lip, any shine along the cheek. Hover over the picture (or touch and hold it) to see where they are in your photo. Then erase the grid, step back two metres and compare the drawing with the reference at the same size.",
   look:"The finished drawing: clean highlights, no grid, values running from paper white to your darkest pencil.",
   checks:["Catchlights in both eyes","No grid lines left","Value range runs from paper white to your darkest pencil"]}
 ];
@@ -609,6 +609,12 @@ function planLayers(){
     L.tone2[i]=m2*clamp(.15+.85*hd)*grain(i);
   }
   L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
+  // the highlights step 10 lifts: the brightest spots inside the face, surrounded by shading
+  // (catchlights, the bridge of the nose, the lower lip), not the bare paper around the figure
+  // found as spots in the photo that are clearly brighter than what is around them
+  L.hi=new Float32Array(n);const pg=blur(S.gray,w,h,Math.max(1,Math.round(.8*sc))),around=blur(S.gray,w,h,Math.round(5*sc));
+  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.9,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
+    L.hi[i]=smooth(.05,.12,pg[i]-around[i])*smooth(.45,.65,pg[i])*face;}
   L.sc=sc;
   return S.cache.plan=L;
 }
@@ -629,7 +635,7 @@ function stepTone(k){
     // the darkest accents are taken straight from the finished drawing
     if(k>=7)lit=Math.min(lit,1-(1-sk[i])*smooth(.5,.28,sk[i]));
     // blending turns the hatched values into the finished smooth shading, with a grey film over the lights
-    if(k>=8)lit=k>=9?sk[i]:Math.min(sk[i],1-.07*L.film[i]);
+    if(k>=8)lit=k>=9?sk[i]:sk[i]-.16*L.hi[i];
     out[i]=lit;
   }
   return L.tones[k]=out;
@@ -673,13 +679,6 @@ function renderStep(){
   if(!S.gray)return;
   const st=STEPS[S.step],k=S.step,c=$("stepcanvas"),tone=stepTone(k);
   const ctx=paint(c,tone,$("ghost").checked);
-  if($("newmarks").checked&&k>0){
-    // tint what this step added in blue so it stands apart from the marks already on the paper
-    const prev=stepTone(k-1),img=ctx.getImageData(0,0,S.w,S.h),d=img.data;
-    for(let i=0,j=0;i<tone.length;i++,j+=4){const m=smooth(.015,.08,prev[i]-tone[i]);if(m<=0)continue;const t=tone[i];
-      d[j]+=(25+(250-25)*t-d[j])*m;d[j+1]+=(85+(249-85)*t-d[j+1])*m;d[j+2]+=(185+(245-185)*t-d[j+2])*m;}
-    ctx.putImageData(img,0,0);
-  }
   if(S.grid.on&&k<STEPS.length-1)drawGrid(ctx,k===0); // the grid is erased in the last step
   renderGlow(k);
   $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;$("s-look").textContent=st.look;
@@ -698,7 +697,7 @@ $("ghost").onchange=renderStep;
 // phones have no hover: touching and holding the picture shows the glow until the finger lifts
 {const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
   w.addEventListener("pointerdown",on);["pointerup","pointercancel","pointerleave"].forEach(t=>w.addEventListener(t,off));
-  w.addEventListener("contextmenu",e=>e.preventDefault());}$("newmarks").onchange=renderStep;
+  w.addEventListener("contextmenu",e=>e.preventDefault());}
 S.grid={on:true,ratio:0,cols:4,color:0,op:.35,thick:1,type:0};
 function pickers(id,items,key,cls,make){items.forEach((it,i)=>{const b=document.createElement("button");b.className=cls;make(b,it);b.setAttribute("aria-pressed",i===S.grid[key]);
   b.onclick=()=>{S.grid[key]=i;document.querySelectorAll("#"+id+" button").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));renderStep();};$(id).appendChild(b);});}
