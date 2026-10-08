@@ -7,7 +7,7 @@
 <meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.">
 <meta name="theme-color" content="#f2eee5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M60 7 106 33.5v53L60 113 14 86.5v-53z' fill='%23f6f1e6' stroke='%2326282c' stroke-width='10' stroke-linejoin='round'/%3E%3Cpath d='M68 22C59 25 55 33 55 42.5c0 2.5-1 4-2 5.5-2.5 4-7 9-9.5 12.5-1 1.5 1 4 5 4-1.5 2-3.5 4-2.5 6 .8 1.7 3.5 2.1 3 4-1 2-2.5 4.5-1.5 7 1 2.5 3 3.5 5.5 4 3 .5 4.5 2 5 4.5.5 4 .5 8 0 12' fill='none' stroke='%2326282c' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M68 22c15-3 25 9 24.5 25-.5 11-5.5 18-11 24-2 3-2 12-1.5 21' fill='none' stroke='%2326282c' stroke-width='7' stroke-linecap='round' opacity='.6'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect x='2' y='2' width='116' height='116' rx='22' fill='%23f6f1e5'/%3E%3Cg fill='none' stroke='%232b2d31' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23b4533a' stroke-width='4.94'%3E%3Cpath d='M60 4V111M14 55H106'/%3E%3C/g%3E%3Cpath stroke-width='8.74' d='M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z'/%3E%3Ccircle cx='47' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Ccircle cx='73' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Cpath stroke-width='5.7' d='M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75'/%3E%3Cpath stroke-width='6.08' d='M51.5 86C56 88.4 64 88.4 68.5 86'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -18,7 +18,7 @@
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
   --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
-  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#b4533a;
   --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
   --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
   --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
@@ -30,7 +30,7 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#e3907a;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -38,7 +38,7 @@
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#e3907a;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -55,11 +55,17 @@ img{max-width:100%}
 
 /* ---------- brand header ---------- */
 header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+header{align-items:flex-end}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
-.brand .mark{width:56px;height:56px;flex:none;color:var(--graphite)}
-h1{font-family:var(--display);font-weight:400;font-size:clamp(25px,4.2vw,32px);margin:0;line-height:1.05;letter-spacing:-.005em;text-wrap:balance}
-.sub{color:var(--muted);margin:3px 0 0;max-width:none;text-wrap:pretty;font-size:14.5px;line-height:1.45}
-@media (max-width:520px){.brand{gap:11px;align-items:flex-start}.brand .mark{width:42px;height:42px;margin-top:2px}.sub{font-size:13.5px}}
+.brand .mark{width:60px;height:60px;flex:none;color:var(--graphite)}
+h1{font-family:var(--display);font-weight:400;margin:0;line-height:1.05}
+.lockup{display:inline-flex;flex-direction:column;gap:5px}
+.lockup .w1{font-size:clamp(28px,4.2vw,34px);line-height:1;letter-spacing:-.005em}
+.lockup .w2{display:flex;align-items:center;gap:10px;font:500 11.5px var(--mono);letter-spacing:.42em;text-transform:uppercase;color:var(--ink-2)}
+.lockup .w2::after{content:"";flex:1;min-width:20px;height:1.5px;background:var(--chalk)}
+.sub{color:var(--muted);margin:0;max-width:40ch;text-align:right;text-wrap:pretty;font-size:14px;line-height:1.45}
+@media (max-width:640px){.sub{text-align:left;max-width:none;font-size:13.5px}}
+@media (max-width:520px){.brand{gap:12px}.brand .mark{width:50px;height:50px}}
 
 .upload{display:inline-flex;align-items:center;gap:8px;background:var(--graphite);color:var(--paper);padding:10px 16px;border-radius:999px;font-weight:600;cursor:pointer}
 .upload:focus-within{outline:3px solid var(--blue);outline-offset:2px}
@@ -258,25 +264,28 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
   *{transition-duration:.01ms!important}
 }
 
-/* ---------- launch splash: the logo sketched in pencil on a sheet of paper ----------
-   Layers: .sp-sheet (the paper) / .sp-stage (mark + wordmark, graphite multiplied into the paper) / .sp-pen (the pencil).
-   At the end the paper fades and the mark flies into the header logo's place. */
-.splash{--sp-paper:#f7f2e7;--sp-vig:rgba(120,92,48,.16);--sp-ink:#3a3b3f;
+/* ---------- launch splash: an invisible pencil lays in circles and triangles, they settle into the face,
+   red-chalk proportion guides go in, the name is written, and the mark settles into the header.
+   Layers: .sp-sheet (paper) / .sp-stage (drawing, multiplied into the paper) / .sp-dust + .sp-fly (graphite specks). */
+.splash{--sp-paper:#f6f1e5;--sp-vig:rgba(120,92,48,.16);--sp-ink:#35363a;--sp-chalk:#b4533a;
   position:fixed;inset:0;z-index:100;overflow:hidden;cursor:pointer;
   animation:splashAuto .5s ease 3.6s forwards}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}}
 :root[data-theme="dark"] .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}
+/* the paper's tooth is meant to be seen: a fine grain plus a softer, larger mottle */
 .sp-sheet{position:absolute;inset:0;
   background:
     radial-gradient(ellipse 95% 85% at 50% 46%,transparent 45%,var(--sp-vig) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .25 0 0 0 0 .17 .75 0 0 0 -.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .28 0 0 0 0 .23 0 0 0 0 .16 1.25 0 0 0 -.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .33 0 0 0 0 .22 .22 0 0 0 -.07'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E"),
     var(--sp-paper)}
-.sp-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-bottom:4vh;color:var(--sp-ink)}
-.sp-mark{width:min(210px,48vw);height:auto;overflow:visible;mix-blend-mode:multiply;transform-origin:50% 50%;color:var(--sp-ink)}
-.sp-word{width:min(430px,86vw);height:auto;overflow:visible;mix-blend-mode:multiply}
-.sp-word text{font-family:var(--display);font-size:39px;letter-spacing:.005em}
+.sp-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding-bottom:3vh}
+.sp-mark{width:min(230px,54vw);height:auto;overflow:visible;mix-blend-mode:multiply;transform-origin:50% 50%;color:var(--sp-ink)}
+.sp-word{width:min(330px,74vw);height:auto;overflow:visible;mix-blend-mode:multiply;color:var(--sp-ink)}
+.sp-word .w1{font-family:var(--display);font-size:50px}
+.sp-word .w2{font:500 14px var(--mono);letter-spacing:.42em}
 .splash.quick .sp-word{display:none}
-.sp-pen{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.sp-dust,.sp-fly{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply}
 .splash .skip{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sp-ink);opacity:0;transition:opacity .6s}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash .skip{color:#d9d2c3}}
 :root[data-theme="dark"] .splash .skip{color:#d9d2c3}
@@ -285,11 +294,11 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 .splash.run{animation:none}
 .splash.static{pointer-events:none}
 .splash.static.out{opacity:0;transition:opacity .4s ease}
-/* landing: wordmark goes first, then the paper, while the mark flies to the header */
+/* landing: name, dust and paper fade while the mark flies to the header */
 .splash.landing{pointer-events:none}
-.splash.landing .skip,.splash.landing .sp-pen{opacity:0;transition:opacity .15s}
+.splash.landing .skip,.splash.landing .sp-fly{opacity:0;transition:opacity .15s}
 .splash.landing .sp-word{opacity:0;transition:opacity .2s ease}
-.splash.landing .sp-sheet{opacity:0;transition:opacity .42s ease .08s}
+.splash.landing .sp-sheet,.splash.landing .sp-dust{opacity:0;transition:opacity .42s ease .08s}
 .splash.landing .sp-mark{mix-blend-mode:normal;color:var(--graphite);transition:transform var(--fly,.5s) cubic-bezier(.55,0,.2,1),color var(--fly,.5s),opacity .18s ease}
 html.splashing .brand .mark{opacity:0}
 .brand .mark{transition:opacity .18s ease}
@@ -313,53 +322,45 @@ html.revealing .wrap>header{animation:none!important}
       <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -.05" result="speck"/>
       <feComposite in="rough" in2="speck" operator="in"/>
     </filter>
-    <clipPath id="sp-hair"><path d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70L60 72V21Z"/></clipPath>
   </defs>
+  <!-- the finished mark; the script swaps these for construction shapes and morphs them back -->
   <g filter="url(#sp-graphite)">
-    <!-- drawn strictly in this order; data-d: ms, data-e: easing, data-w: width, data-o: darkness, data-q: also drawn on quick launches -->
-    <path class="sk" data-q="1" data-d="400" data-e="io" data-w="3" data-o=".9" d="M60 9 104.3 34.7 104.1 85.4 60.1 111 15.9 85.6 15.8 34.6 61.6 8.2"/>
-    <path class="sk" data-d="230" data-e="io" data-w="1.3" data-o=".6" d="M60 16.2 98 38.1 97.9 81.9 60 103.8 22 81.9 22.1 38.2Z"/>
-    <path class="sk" data-q="1" data-d="480" data-e="out" data-w="2.8" data-o=".92" d="M66 21C58 24 54 33 54 42.5 54 45 53 46.5 52 48 49.5 52 45 57 42.5 60.5 41.5 62 43.5 64.5 47.5 64.5 46 66.5 44 68.5 45 70.5 45.8 72.2 48.5 72.6 48 74.5 47 76.5 45.5 79 46.5 81.5 47.5 84 49.5 85 52 85.5 55 86 56.5 87.5 57 90 57.5 94 57.5 98 57 102.3"/>
-    <path class="sk" data-d="230" data-e="out" data-w="2" data-o=".78" d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70 79.5 73 79.5 82 80 92.5"/>
-    <path class="sk" data-d="110" data-e="out" data-w="1.6" data-o=".72" d="M73.5 51C78 49.5 81 53 80 58 79.3 61.5 76.5 63 74.5 64.5"/>
-    <g clip-path="url(#sp-hair)">
-      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".62" d="M81 45.5 90.5 36"/>
-      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".6" d="M81.8 52.5 92 42.5"/>
-      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".56" d="M82.2 59.5 92 50"/>
-      <path class="sk hatch" data-d="50" data-e="lin" data-w="1.2" data-o=".48" d="M81 66.5 89.5 58"/>
+    <g id="sp-guides" style="stroke:var(--sp-chalk)">
+      <path data-g="230" data-w="1.25" data-o=".85" d="M60 4V111"/>
+      <path data-g="230" data-w="1.25" data-o=".85" d="M14 55H106"/>
+      <path data-g="100" data-w="1.1" data-o=".7" d="M44 76H76"/>
+      <path data-g="90" data-w="1.1" data-o=".7" d="M47 86H73"/>
+      <path data-g="140" data-w="1.1" data-o=".75" d="M101 33V77"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 33H104"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 55H104"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 77H104"/>
+    </g>
+    <g id="sp-face">
+      <path id="sp-head" stroke-width="3" opacity=".92" d="M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z"/>
+      <path id="sp-eyes" stroke-width="2" opacity=".85" d="M38.5 55C42 50.5 52 50.5 55.5 55C52 58.5 42 58.5 38.5 55ZM64.5 55C68 50.5 78 50.5 81.5 55C78 58.5 68 58.5 64.5 55Z"/>
+      <path id="sp-nose" stroke-width="2.2" opacity=".88" d="M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75"/>
+      <path id="sp-mouth" stroke-width="2.3" opacity=".88" d="M51.5 86C56 88.4 64 88.4 68.5 86"/>
+      <g id="sp-pupils" fill="currentColor" stroke="none"><circle cx="47" cy="55" r="2.5"/><circle cx="73" cy="55" r="2.5"/></g>
     </g>
   </g>
 </svg>
-<svg class="sp-word" viewBox="0 0 300 70" fill="none" stroke="currentColor" stroke-linecap="round">
-  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="70"/></clipPath></defs>
-  <g filter="url(#sp-graphite)">
-    <text id="sp-wtext" x="150" y="44" text-anchor="middle" fill="currentColor" fill-opacity=".86" stroke="none" clip-path="url(#sp-wclip)">Graphite Coach</text>
+<svg class="sp-word" viewBox="0 0 300 92">
+  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="92"/></clipPath></defs>
+  <g filter="url(#sp-graphite)" clip-path="url(#sp-wclip)">
+    <text class="w1" id="sp-wtext" x="150" y="50" text-anchor="middle" fill="currentColor" fill-opacity=".88">Graphite</text>
+    <text class="w2" x="153" y="80" text-anchor="middle" fill="currentColor" fill-opacity=".85">COACH</text>
+    <path d="M58 75.5H108M196 75.5H246" style="stroke:var(--sp-chalk)" stroke-width="1.5" opacity=".9"/>
   </g>
 </svg>
 </div>
-<svg class="sp-pen" aria-hidden="true">
-  <defs>
-    <linearGradient id="sp-cedar" x1="0" x2="1"><stop offset="0" stop-color="#a97b4f"/><stop offset=".42" stop-color="#e2c195"/><stop offset=".7" stop-color="#c99a6a"/><stop offset="1" stop-color="#99693f"/></linearGradient>
-    <linearGradient id="sp-lacquer" x1="0" x2="1"><stop offset="0" stop-color="#17181a"/><stop offset=".33" stop-color="#1f2023"/><stop offset=".34" stop-color="#3a3c41"/><stop offset=".5" stop-color="#4d5056"/><stop offset=".66" stop-color="#34363a"/><stop offset=".67" stop-color="#0f1012"/><stop offset="1" stop-color="#18191b"/></linearGradient>
-    <linearGradient id="sp-lead" x1="0" x2="1"><stop offset="0" stop-color="#2b2c30"/><stop offset=".5" stop-color="#6b6d73"/><stop offset="1" stop-color="#26272a"/></linearGradient>
-    <filter id="sp-blur" x="-50%" y="-20%" width="200%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>
-  </defs>
-  <g id="sp-shadow" opacity="0"><ellipse cx="0" cy="-60" rx="5" ry="60" fill="#2a1e10" filter="url(#sp-blur)"/></g>
-  <g id="sp-pencil" opacity="0">
-    <path d="M0 0-1.7-5.6H1.7Z" fill="url(#sp-lead)"/>
-    <path d="M-1.7-5.6-5.4-20H5.4L1.7-5.6Z" fill="url(#sp-cedar)"/>
-    <path d="M-3.2-12.5-2.4-18M.6-9-.1-18.5M3-13 2.6-18.6" stroke="#9c6d42" stroke-width=".35" opacity=".5"/>
-    <path d="M-5.4-20Q-3.6-22.8-1.8-20.3-0-23 1.8-20.3 3.6-22.8 5.4-20V-113H-5.4Z" fill="url(#sp-lacquer)"/>
-    <rect x="-.45" y="-98" width=".9" height="24" fill="#b89a5a" opacity=".75"/>
-    <path d="M-5.4-113H5.4V-114.6H-5.4Z" fill="#77797e"/>
-  </g>
-</svg>
+<canvas class="sp-dust"></canvas><canvas class="sp-fly"></canvas>
 <div class="skip">Tap to skip</div>
 </div>
 <script>
-/* Launch splash: the logo drawn by one pencil, stroke after stroke, then the mark settles into the header.
-   Independent of the app script below, which never waits on it. A timer always clears it, and the CSS
-   fades it out by itself if this script never runs. First launch: full drawing; later launches: a short one. */
+/* Launch splash, drawn by an invisible pencil: circles and triangles first, which then morph into the face;
+   red-chalk proportion guides; the name. Graphite specks flick off the moving stroke end and a few settle as dust.
+   Independent of the app script below (it never waits on this). A timer always clears it, and the CSS fades it
+   out on its own if this script never runs. First launch: the full drawing; later launches: a short morph. */
 (function(){
   var sp=document.getElementById("splash");if(!sp)return;
   var root=document.documentElement,done=false,raf=0,quick=false,reduce=false;
@@ -370,88 +371,112 @@ html.revealing .wrap>header{animation:none!important}
   if(reduce){sp.classList.add("run","static","quick");remember();
     setTimeout(function(){sp.classList.add("out");setTimeout(gone,450);},700);return;}
   root.classList.add("splashing");sp.classList.add("run");if(quick)sp.classList.add("quick");
-  var safety=setTimeout(function(){finish(true);},quick?3200:8000);
+  var safety=setTimeout(function(){land(true);},quick?3000:8000);
 
-  var mark=sp.querySelector(".sp-mark"),word=sp.querySelector(".sp-word"),wtext=document.getElementById("sp-wtext"),wrect=document.getElementById("sp-wrect");
-  var pen=document.getElementById("sp-pencil"),shadow=document.getElementById("sp-shadow");
-  var clamp=function(v){return v<0?0:v>1?1:v;};
-  var EASE={lin:function(p){return .8*p+.2*p*p*(3-2*p);},io:function(p){return p*p*(3-2*p);},
-    out:function(p){return 1-Math.pow(1-p,2.4);}}; // confident lines: a fast attack and a slow finish
+  var NS="http://www.w3.org/2000/svg",mark=sp.querySelector(".sp-mark"),wtext=document.getElementById("sp-wtext"),wrect=document.getElementById("sp-wrect");
+  var clamp=function(v){return v<0?0:v>1?1:v;},lerp=function(a,b,t){return a+(b-a)*t;};
+  var EASE={lin:function(p){return .8*p+.2*p*p*(3-2*p);},io:function(p){return p*p*(3-2*p);},out:function(p){return 1-Math.pow(1-p,2.4);}};
 
-  /* each centre line becomes a few offset sub-strokes of different weight and length, so the line
-     swells in the middle and tapers at both ends, the way pressure on a pencil does */
-  function prep(el){
-    var L=el.getTotalLength(),w=+el.getAttribute("data-w"),o=+el.getAttribute("data-o"),hatch=el.classList.contains("hatch");
-    var specs=hatch?[[.55,1,.08,.92,0,0],[1,.55,.25,.75,.15,-.15]]
-      :[[.5,1,0,1,0,0],[1,.6,.06,.92,.25,-.2],[.75,.4,.14,.98,-.22,.24]];
-    var cl=specs.map(function(s){var c=el.cloneNode(false);c.removeAttribute("class");
-      c.setAttribute("stroke-width",w*s[0]);c.setAttribute("transform","translate("+s[4]+" "+s[5]+")");
-      c.style.opacity=o*s[1];c.style.visibility="hidden";el.parentNode.insertBefore(c,el);return{c:c,a:s[2],b:s[3],o:o*s[1]};});
-    el.style.visibility="hidden";
-    return{el:el,L:L,cl:cl,d:+el.getAttribute("data-d"),e:EASE[el.getAttribute("data-e")]||EASE.io,hatch:hatch,q:el.hasAttribute("data-q"),inWord:!!el.closest(".sp-word")};
-  }
-  function setP(s,p){for(var i=0;i<s.cl.length;i++){var k=s.cl[i],seg=Math.min(k.b,p)-k.a;
+  /* ---- geometry: every shape is a start point plus cubic segments, so a construction shape and the
+     feature it becomes have the same structure and can be interpolated point by point ---- */
+  function circ(cx,cy,r,a0){var k=.5523*r,s=[],R=Math.PI/180;
+    for(var i=0;i<4;i++){var a=(a0+90*i)*R,b=(a0+90*(i+1))*R;
+      s.push([cx+r*Math.cos(a)-k*Math.sin(a),cy+r*Math.sin(a)+k*Math.cos(a),cx+r*Math.cos(b)+k*Math.sin(b),cy+r*Math.sin(b)-k*Math.cos(b),cx+r*Math.cos(b),cy+r*Math.sin(b)]);}
+    return{m:[cx+r*Math.cos(a0*R),cy+r*Math.sin(a0*R)],s:s,z:1};}
+  function poly(pts,z){var s=[];for(var i=1;i<pts.length;i++){var a=pts[i-1],b=pts[i];s.push([a[0]+(b[0]-a[0])/3,a[1]+(b[1]-a[1])/3,a[0]+2*(b[0]-a[0])/3,a[1]+2*(b[1]-a[1])/3,b[0],b[1]]);}return{m:pts[0],s:s,z:z};}
+  function shift(g,dx){return{m:[g.m[0]+dx,g.m[1]],s:g.s.map(function(c){return[c[0]+dx,c[1],c[2]+dx,c[3],c[4]+dx,c[5]];}),z:g.z};}
+  function D(g){var d="M"+g.m[0].toFixed(2)+" "+g.m[1].toFixed(2);g.s.forEach(function(c){d+="C"+c.map(function(v){return v.toFixed(2);}).join(" ");});return d+(g.z?"Z":"");}
+  function mix(a,b,t){return{m:[lerp(a.m[0],b.m[0],t),lerp(a.m[1],b.m[1],t)],s:a.s.map(function(c,i){return c.map(function(v,j){return lerp(v,b.s[i][j],t);});}),z:a.z};}
+  var EGG={m:[60,14],s:[[80,14,92,31,92,52],[92,77,77,101,60,101],[43,101,28,77,28,52],[28,31,40,14,60,14]],z:1};
+  var ALM={m:[38.5,55],s:[[39.8,53.2,43.5,51.4,47,51.4],[50.5,51.4,54.2,53.2,55.5,55],[54.2,56.8,50.5,58.6,47,58.6],[43.5,58.6,39.8,56.8,38.5,55]],z:1};
+  var NOSE={m:[60.5,61],s:[[59.5,66,57.5,71,57,74],[57,76,60,76.6,63.5,75],[63.5,75,63.5,75,63.5,75]],z:0};
+  var MOUTH={m:[51.5,86],s:[[56,88.4,64,88.4,68.5,86],[68.5,86,68.5,86,68.5,86],[68.5,86,68.5,86,68.5,86]],z:0};
+  // construction shapes -> the features they turn into, with stroke weight/darkness before and after
+  var SHAPES=[
+    {a:circ(60,47,31,-90),b:EGG,w:[1.7,3],o:[.68,.92],d:320},                                   // cranium circle -> head
+    {a:poly([[60,60],[87,60],[60,103],[33,60],[60,60]],1),b:EGG,w:[1.5,3],o:[.6,0],d:260},     // jaw wedge -> merges into the head
+    {a:circ(47,55,6.5,180),b:ALM,w:[1.4,2],o:[.65,.85],d:120},                                   // eye circles -> almond eyes
+    {a:circ(73,55,6.5,180),b:shift(ALM,26),w:[1.4,2],o:[.65,.85],d:120},
+    {a:poly([[60,60],[54.5,75],[65.5,75],[60,60]],0),b:NOSE,w:[1.4,2.2],o:[.65,.88],d:140},      // nose triangle -> nose
+    {a:poly([[51.5,85],[68.5,85],[60,91],[51.5,85]],0),b:MOUTH,w:[1.4,2.3],o:[.65,.88],d:120}    // mouth triangle -> lips
+  ];
+
+  /* ---- graphite line: a few offset sub-strokes of different weight and length, so it swells and tapers ---- */
+  var face=document.getElementById("sp-face"),guides=document.getElementById("sp-guides"),pupils=document.getElementById("sp-pupils");
+  ["sp-head","sp-eyes","sp-nose","sp-mouth"].forEach(function(id){document.getElementById(id).style.display="none";});
+  var SPEC=[[.5,1,0,1,0,0],[1,.6,.06,.92,.25,-.2],[.75,.4,.14,.98,-.22,.24]];
+  function stroke(parent,d,w,o,color){
+    var base=document.createElementNS(NS,"path");base.setAttribute("d",d);base.style.visibility="hidden";parent.appendChild(base);
+    var cl=SPEC.map(function(s){var c=document.createElementNS(NS,"path");c.setAttribute("d",d);if(color)c.setAttribute("stroke",color);
+      c.setAttribute("transform","translate("+s[4]+" "+s[5]+")");c.style.visibility="hidden";parent.insertBefore(c,base);return{c:c,s:s};});
+    var S={base:base,cl:cl,L:base.getTotalLength(),p:0,w:w,o:o};style(S);return S;}
+  function style(S){S.cl.forEach(function(k){k.c.setAttribute("stroke-width",(S.w*k.s[0]).toFixed(2));k.c.style.opacity=(S.o*k.s[1]).toFixed(3);});}
+  function setD(S,d){S.base.setAttribute("d",d);S.cl.forEach(function(k){k.c.setAttribute("d",d);});S.L=S.base.getTotalLength();setP(S,S.p);}
+  function setP(S,p){S.p=p;for(var i=0;i<S.cl.length;i++){var k=S.cl[i],a=k.s[2],seg=Math.min(k.s[3],p)-a;
     if(seg<=.004){k.c.style.visibility="hidden";continue;}
-    k.c.style.visibility="visible";k.c.style.strokeDasharray=(seg*s.L)+" "+(s.L*3);k.c.style.strokeDashoffset=-k.a*s.L;}}
-  function scr(el,x,y){var m=el.getScreenCTM(),p=el.ownerSVGElement?el.ownerSVGElement.createSVGPoint():el.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(m);}
-  function at(s,f){var q=s.el.getPointAtLength(clamp(f)*s.L);return scr(s.el,q.x,q.y);}
+    k.c.style.visibility="visible";k.c.style.strokeDasharray=(seg*S.L)+" "+(S.L*3);k.c.style.strokeDashoffset=-a*S.L;}}
+  function tipOf(S,p){var q=S.base.getPointAtLength(clamp(p)*S.L),m=S.base.getScreenCTM(),P=mark.createSVGPoint();P.x=q.x;P.y=q.y;return P.matrixTransform(m);}
 
-  var all=[].slice.call(sp.querySelectorAll(".sk")).map(prep);
-  var markS=all.filter(function(s){return !s.inWord;}),under=all.filter(function(s){return s.inWord;})[0];
-  var drawn=quick?markS.filter(function(s){return s.q;}):all; // quick launch: the pencil draws the hexagon and the profile only
-  var rest=quick?markS.filter(function(s){return !s.q;}):[];
-  var mainMark=drawn.filter(function(s){return !s.inWord;});
+  var shapeS=SHAPES.map(function(o){var S=stroke(face,D(o.a),o.w[0],o.o[0]);S.def=o;return S;});
+  var guideS=[].slice.call(guides.querySelectorAll("path")).map(function(el){el.style.display="none";
+    var S=stroke(guides,el.getAttribute("d"),+el.getAttribute("data-w"),+el.getAttribute("data-o"));S.d=+el.getAttribute("data-g");S.chalk=true;return S;});
+  pupils.style.opacity=0;
 
-  /* the timeline: travel (lifted arc) -> settle -> draw, for each stroke in turn */
-  var T=[],t=0,k=quick?.6:1;
-  function travel(to,d){T.push({k:"travel",to:to,t0:t,d:d});t+=d;}
-  function settle(d){T.push({k:"settle",t0:t,d:d});t+=d;}
-  function draw(s){s.t0=t;s.dd=Math.round(s.d*k);T.push({k:"draw",s:s,t0:t,d:s.dd});t+=s.dd;}
-  travel({start:mainMark[0]},quick?180:220);settle(50);
-  mainMark.forEach(function(s,i){if(i){travel({start:s},s.hatch?90:120);settle(s.hatch?30:45);}draw(s);});
-  var W0=0,WD=0;
-  if(!quick){travel({word:0},150);settle(40);W0=t;WD=480;T.push({k:"word",t0:t,d:WD});t+=WD;
-    if(under){travel({start:under},130);settle(45);draw(under);}}
-  var LIFT0=t;T.push({k:"away",t0:t,d:300});
-  var REST0=t;var HOLD=quick?140:350,END=t+HOLD;
-  if(!quick)wrect.setAttribute("width",0); // the wordmark stays hidden until the pencil writes it
+  /* ---- the timeline ---- */
+  var T=[],t=150;
+  function draw(S,d,e,gap){S.t0=t;S.dd=d;S.e=e;T.push(S);t+=d+gap;}
+  if(!quick){
+    shapeS.forEach(function(S,i){draw(S,S.def.d,i<2?EASE.io:EASE.out,i<2?80:60);});
+  }else{shapeS.forEach(function(S){S.t0=0;S.dd=180;S.e=EASE.lin;S.fadeIn=true;});t=200;}
+  var M0=t+(quick?20:100),MD=quick?430:620;              // the morph: head first, the features just after
+  shapeS.forEach(function(S,i){S.m0=M0+(i<2?0:quick?40:90+40*(i-2));S.md=i<2?MD:MD-(quick?60:140);});
+  var morphEnd=M0+MD,G0=morphEnd+(quick?-120:70);
+  if(!quick){t=G0;guideS.forEach(function(S,i){draw(S,S.d,EASE.lin,i>=5?25:45);});}
+  else guideS.forEach(function(S){S.t0=G0;S.dd=200;S.e=EASE.lin;S.fadeIn=true;});
+  var W0=quick?0:t+20,WD=440,END=(quick?G0+200:W0+WD)+(quick?120:330);
+  if(!quick)wrect.setAttribute("width",0);
 
-  var pos={x:innerWidth*.82,y:innerHeight*.12},rot=30,last={x:0,y:0},from=null;
-  function wordBox(){var b=wtext.getBBox();return b;}
-  function wordPt(p){var b=wordBox();return scr(wtext,b.x+b.width*p,b.y+b.height*.58);}
-  function target(to){return to.start?at(to.start,0):wordPt(0);}
+  /* ---- graphite specks: flick off the moving stroke end, drift and fall a little; some settle as dust ---- */
+  var dust=sp.querySelector(".sp-dust"),fly=sp.querySelector(".sp-fly"),dx=dust.getContext("2d"),fx=fly.getContext("2d"),dpr=Math.min(2,window.devicePixelRatio||1),parts=[];
+  function size(){[dust,fly].forEach(function(c){c.width=innerWidth*dpr;c.height=innerHeight*dpr;});dx.setTransform(dpr,0,0,dpr,0,0);fx.setTransform(dpr,0,0,dpr,0,0);}
+  size();
+  function emit(p,speed,chalk){var n=Math.min(5,.7+speed*.14);n=Math.floor(n)+(Math.random()<n%1?1:0);
+    for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,v=18+Math.random()*70;
+      parts.push({x:p.x+(Math.random()-.5)*2,y:p.y+(Math.random()-.5)*2,vx:Math.cos(a)*v,vy:Math.sin(a)*v-12,life:200+Math.random()*400,age:0,
+        r:.55+Math.random()*1.0,a:.5+Math.random()*.4,chalk:chalk,settle:Math.random()<(chalk?.08:.22)});}}
+  function specks(dt){fx.clearRect(0,0,fly.width,fly.height);
+    for(var i=parts.length-1;i>=0;i--){var q=parts[i];q.age+=dt;var s=dt/1000;q.vy+=150*s;q.vx*=.96;q.x+=q.vx*s;q.y+=q.vy*s;
+      var k=q.age/q.life,col=q.chalk?"150,72,52":"46,47,52";
+      if(k>=1){if(q.settle){dx.fillStyle="rgba("+col+","+(q.a*.42).toFixed(3)+")";dx.beginPath();dx.arc(q.x,q.y,q.r*.85,0,7);dx.fill();}parts.splice(i,1);continue;}
+      fx.fillStyle="rgba("+col+","+(q.a*(1-k*k)).toFixed(3)+")";fx.beginPath();fx.arc(q.x,q.y,q.r,0,7);fx.fill();}}
+
+  var last=null,prevNow=0;
   function frame(now){
-    if(done)return;if(!frame.t0)frame.t0=now;var tt=now-frame.t0;
-    for(var i=0;i<drawn.length;i++){var s=drawn[i];setP(s,s.e(clamp((tt-s.t0)/s.dd)));}
-    if(rest.length){var r=clamp((tt-REST0+120)/180);rest.forEach(function(s){setP(s,1);s.cl.forEach(function(c){c.c.style.opacity=c.o*r;});});}
-    if(!quick){var wp=clamp((tt-W0)/WD);wp=EASE.lin(wp);var b=wordBox();wrect.setAttribute("x",b.x-4);wrect.setAttribute("width",Math.max(0,b.width*wp+4));}
-    // where is the pencil, and how high above the paper
-    var seg=null;for(var j=T.length-1;j>=0;j--){if(tt>=T[j].t0){seg=T[j];break;}}
-    var lift=0,dir=null,alpha=1;
-    if(seg){var u=clamp((tt-seg.t0)/seg.d);
-      if(seg.k==="draw"){var s2=seg.s,f=s2.e(u);pos=at(s2,f);var p2=at(s2,Math.min(1,f+.02)),p1=at(s2,Math.max(0,f-.02));dir={x:p2.x-p1.x,y:p2.y-p1.y};}
-      else if(seg.k==="word"){pos=wordPt(EASE.lin(u));dir={x:1,y:0};}
-      else if(seg.k==="travel"){if(seg.from==null)seg.from={x:pos.x,y:pos.y};var tg=target(seg.to),e=u*u*(3-2*u);
-        pos={x:seg.from.x+(tg.x-seg.from.x)*e,y:seg.from.y+(tg.y-seg.from.y)*e};lift=Math.sin(Math.PI*u)*(seg.t0===0?18:8)+(seg.t0===0?(1-u)*14:0);
-        dir={x:tg.x-seg.from.x,y:tg.y-seg.from.y};if(seg.t0===0)alpha=clamp(u*2.5);}
-      else if(seg.k==="settle"){lift=0;}
-      else if(seg.k==="away"){if(!seg.from)seg.from={x:pos.x,y:pos.y};var e2=u*u;pos={x:seg.from.x+e2*60,y:seg.from.y-e2*40};lift=4+u*26;alpha=1-clamp((u-.35)/.65);}
-    }else{alpha=0;}
-    if(dir&&(dir.x||dir.y)){var n=Math.hypot(dir.x,dir.y)||1,trg=30+3*(dir.x/n)-1.5*(dir.y/n);rot+=(trg-rot)*.18;} // the hand turns a little with the stroke
-    var sc=mark.getBoundingClientRect().width/120;
-    pen.setAttribute("opacity",alpha.toFixed(3));
-    pen.setAttribute("transform","translate("+pos.x.toFixed(1)+" "+(pos.y-lift).toFixed(1)+") rotate("+rot.toFixed(2)+") scale("+sc.toFixed(3)+")");
-    // the shadow: tight and dark while the tip touches the paper, softer and further off when lifted
-    shadow.setAttribute("opacity",(alpha*(.2-.009*Math.min(lift,14))).toFixed(3));
-    shadow.setAttribute("transform","translate("+(pos.x+2+lift*1.5).toFixed(1)+" "+(pos.y+2.5+lift*.9).toFixed(1)+") rotate("+(rot+3).toFixed(2)+") scale("+sc.toFixed(3)+")");
+    if(done)return;if(!frame.t0)frame.t0=prevNow=now;var tt=now-frame.t0,dt=Math.min(50,now-prevNow);prevNow=now;
+    var tip=null;
+    // drawing: construction shapes, then the red-chalk guides
+    T.forEach(function(S){var u=clamp((tt-S.t0)/S.dd),p=S.e(u);setP(S,p);
+      if(tt>=S.t0&&tt<S.t0+S.dd)tip={pt:tipOf(S,p),chalk:!!S.chalk};});
+    if(quick){shapeS.concat(guideS).forEach(function(S){var u=clamp((tt-S.t0)/S.dd);setP(S,1);
+      S.cl.forEach(function(k){k.c.style.opacity=(S.o*k.s[1]*u).toFixed(3);});});}
+    // the morph: each shape eases into its feature; the line firms up from construction weight to the final line
+    shapeS.forEach(function(S){var u=clamp((tt-S.m0)/S.md);if(u<=0&&!S.morphed)return;var e=EASE.io(u),o=S.def;
+      setD(S,D(mix(o.a,o.b,e)));S.w=lerp(o.w[0],o.w[1],e);S.o=lerp(o.o[0],o.o[1],e);if(!quick||u>0)style(S);S.morphed=u<1;});
+    pupils.style.opacity=clamp((tt-(morphEnd-120))/220).toFixed(3);
+    // the name, written left to right; the specks come off the writing edge
+    if(!quick){var wp=EASE.lin(clamp((tt-W0)/WD)),b=wtext.getBBox();wrect.setAttribute("x",-10);wrect.setAttribute("width",Math.max(0,(b.x+10)+b.width*1.12*wp));
+      if(tt>=W0&&tt<W0+WD){var m=wtext.getScreenCTM(),P=wtext.ownerSVGElement.createSVGPoint();P.x=b.x+b.width*1.12*wp-4;P.y=b.y+b.height*(.3+.55*Math.random());tip={pt:P.matrixTransform(m),chalk:false};}}
+    if(tip){var sp2=last?Math.hypot(tip.pt.x-last.x,tip.pt.y-last.y):0;emit(tip.pt,sp2,tip.chalk);last=tip.pt;}else last=null;
+    specks(dt);
     if(tt>=END){land(false);return;}
     raf=requestAnimationFrame(frame);
   }
   /* the finished mark flies into the header logo while the paper fades away */
   function land(fast){
     if(done)return;done=true;clearTimeout(safety);cancelAnimationFrame(raf);remember();
-    all.forEach(function(s){setP(s,1);s.cl.forEach(function(c){c.c.style.opacity=c.o;});});
-    if(wrect)wrect.setAttribute("width",9999),wrect.setAttribute("x",-100);
+    try{shapeS.forEach(function(S){var o=S.def;setD(S,D(o.b));S.w=o.w[1];S.o=o.o[1];style(S);setP(S,1);});
+      guideS.forEach(function(S){style(S);setP(S,1);});pupils.style.opacity=1;}catch(e){}
+    if(wrect){wrect.setAttribute("x",-100);wrect.setAttribute("width",9999);}
     var dur=fast?320:500,hm=document.querySelector(".brand .mark");
     sp.style.setProperty("--fly",dur+"ms");sp.classList.add("landing");root.classList.add("revealing");
     try{var a=mark.getBoundingClientRect(),b=hm.getBoundingClientRect();
@@ -461,33 +486,29 @@ html.revealing .wrap>header{animation:none!important}
     setTimeout(gone,dur+220);
     setTimeout(function(){root.classList.remove("revealing");},dur+1300);
   }
-  function finish(fast){land(fast);}
   raf=requestAnimationFrame(frame);
-  sp.addEventListener("pointerdown",function(){finish(true);});
-  window.addEventListener("keydown",function k(){window.removeEventListener("keydown",k);finish(true);});
+  sp.addEventListener("pointerdown",function(){land(true);});
+  window.addEventListener("keydown",function k(){window.removeEventListener("keydown",k);land(true);});
 })();
 </script>
-<!-- the logo mark (header, empty sketchbook). A pencil seen end-on: the lacquered hexagon, the wood inside it, and a portrait drawn in it -->
+<!-- the logo mark (header, empty sketchbook): a face laid out with red-chalk proportion guides -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="gc-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-    <clipPath id="gc-hair"><path d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70L60 72V21Z"/></clipPath>
-    <path stroke-width="5.5" d="M60 9 104.2 34.5V85.5L60 111 15.8 85.5V34.5Z"/>
-    <path stroke-width="2" opacity=".55" d="M60 16.5 97.8 38.3V81.7L60 103.5 22.2 81.7V38.3Z"/>
-    <path stroke-width="4.6" d="M66 21C58 24 54 33 54 42.5 54 45 53 46.5 52 48 49.5 52 45 57 42.5 60.5 41.5 62 43.5 64.5 47.5 64.5 46 66.5 44 68.5 45 70.5 45.8 72.2 48.5 72.6 48 74.5 47 76.5 45.5 79 46.5 81.5 47.5 84 49.5 85 52 85.5 55 86 56.5 87.5 57 90 57.5 94 57.5 98 57 102.3"/>
-    <path stroke-width="3.2" opacity=".8" d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70 79.5 73 79.5 82 80 92.5"/>
-    <path stroke-width="2.8" opacity=".8" d="M73.5 51C78 49.5 81 53 80 58 79.3 61.5 76.5 63 74.5 64.5"/>
-    <g clip-path="url(#gc-hair)" stroke-width="2.6" opacity=".7"><path d="M81 45.5 90.5 36M81.8 52.5 92 42.5M82.2 59.5 92 50M81 66.5 89.5 58"/></g>
+    <g style="stroke:var(--chalk,#b4533a)" stroke-width="2.2"><path d="M60 4V111M14 55H106"/><path d="M44 76H76M47 86H73" opacity=".7"/><path d="M101 33V77M98 33H104M98 55H104M98 77H104" opacity=".8"/></g>
+    <path stroke-width="5.4" d="M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z"/>
+    <path stroke-width="3.4" d="M38.5 55C42 50.5 52 50.5 55.5 55C52 58.5 42 58.5 38.5 55ZM64.5 55C68 50.5 78 50.5 81.5 55C78 58.5 68 58.5 64.5 55Z"/>
+    <g fill="currentColor" stroke="none"><circle cx="47" cy="55" r="3"/><circle cx="73" cy="55" r="3"/></g>
+    <path stroke-width="3.8" d="M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75"/>
+    <path stroke-width="4" d="M51.5 86C56 88.4 64 88.4 68.5 86"/>
   </symbol>
 </svg>
 <div class="wrap">
   <header>
     <div class="brand">
       <svg class="mark" aria-hidden="true"><use href="#gc-mark"/></svg>
-      <div>
-        <h1>Graphite Coach</h1>
-        <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
-      </div>
+      <h1 class="lockup"><span class="w1">Graphite</span> <span class="w2">Coach</span></h1>
     </div>
+    <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
   </header>
 
   <div class="tabs" role="tablist">
