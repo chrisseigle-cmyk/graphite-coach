@@ -109,6 +109,15 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 .dot.done{border-color:var(--blue);color:var(--blue);font-weight:700}
 .dot.done[aria-current="step"]{color:#fff}
 #savestat{font-size:12.5px;color:var(--muted)}
+.tab:disabled{opacity:.4;cursor:default}
+@media (max-width:520px){.tabs{gap:0;overflow-x:auto}.tab{white-space:nowrap;padding:8px 9px;font-size:14px}.tab .wide{display:none}}
+.tab .narrow{display:none}@media (max-width:520px){.tab .narrow{display:inline}}
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:320px;border:2px dashed var(--rule);border-radius:6px;cursor:pointer;text-align:center;padding:24px}
+.dropzone b{background:var(--graphite);color:var(--paper);padding:10px 18px;border-radius:999px;font-weight:600}
+.dropzone span{color:var(--muted);font-size:13px}
+.dropzone:focus-within{outline:3px solid var(--blue);outline-offset:2px}
+.dropzone input{position:absolute;opacity:0;width:1px;height:1px}
+.dropzone.over{border-color:var(--blue);background:var(--blue-soft)}
 .note{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;margin:0;max-width:72ch}
 </style>
 </head>
@@ -119,31 +128,33 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <h1>Graphite Coach</h1>
       <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.</p>
     </div>
-    <label class="upload">Upload photo<input id="file" type="file" accept="image/*"></label>
   </header>
 
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-book" aria-selected="false">Sketchbook</button>
-    <button class="tab" role="tab" id="tab-photo" aria-selected="false">Photo</button>
-    <button class="tab" role="tab" id="tab-sketch" aria-selected="true">Sketch</button>
-    <button class="tab" role="tab" id="tab-plan" aria-selected="false">Drawing plan</button>
+    <button class="tab" role="tab" id="tab-book" aria-selected="true">Sketchbook</button>
+    <button class="tab" role="tab" id="tab-photo" aria-selected="false" disabled>1 · Photo</button>
+    <button class="tab" role="tab" id="tab-sketch" aria-selected="false" disabled>2 · Sketch</button>
+    <button class="tab" role="tab" id="tab-plan" aria-selected="false" disabled>3 · <span class="wide">Drawing p</span><span class="narrow">P</span>lan</button>
   </div>
 
 
-  <section id="view-book" class="panel" hidden>
-    <p class="empty" id="bookempty" hidden>Your sketchbook is empty. Upload a photo, tidy it up on the Photo tab, then press Start sketching: the drawing plan is saved here so you can stop and pick it up later.</p>
+  <section id="view-book" class="panel">
+    <div class="rowbtns"><button class="btn primary" id="newsketch">Start new sketch</button><button class="btn" id="trysample">Try it with a sample photo</button></div>
+    <p class="empty" id="bookempty" hidden>Your sketchbook is empty. Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing. Every sketch is saved here so you can stop and pick it up later.</p>
     <div class="books" id="books"></div>
   </section>
 
   <section id="view-photo" class="grid" hidden>
     <div class="stage">
-      <div class="cropwrap" id="cropwrap">
+      <label class="dropzone" id="dropzone"><input id="file" type="file" accept="image/*"><b>Choose a photo</b><span>A clear, well-lit portrait works best.</span></label>
+      <div class="cropwrap" id="cropwrap" hidden>
         <canvas id="photocanvas"></canvas>
         <div class="croprect" id="croprect"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
       </div>
       <div class="cap"><span id="photoname">Sample: plaster head study</span><span id="photostat"></span></div>
     </div>
     <div class="panel">
+      <label class="upload" id="changephoto" hidden>Choose a different photo<input id="file2" type="file" accept="image/*"></label>
       <div class="ctrl">
         <label>Rotate</label>
         <div class="rowbtns"><button class="btn" id="rot-l">Left 90°</button><button class="btn" id="rot-r">Right 90°</button></div>
@@ -160,12 +171,12 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       </div>
       <div class="nav">
         <button class="btn" id="resetphoto">Undo my changes</button>
-        <button class="btn primary" id="startsketch">Start sketching</button>
+        <button class="btn primary" id="gensketch" disabled>Generate sketch</button>
       </div>
     </div>
   </section>
 
-  <section id="view-sketch" class="grid">
+  <section id="view-sketch" class="grid" hidden>
     <div class="stage">
       <canvas id="out"></canvas>
       <div class="cap"><span id="srcname">Sample: plaster head study (upload your own photo)</span><span><span id="aistat"></span> · <span id="dims"></span></span></div>
@@ -185,6 +196,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
       <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
       <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
+      <div class="nav">
+        <button class="btn" id="backphoto">Back to photo</button>
+        <button class="btn primary" id="planbtn">Plan my drawing</button>
+      </div>
     </div>
   </section>
 
@@ -475,12 +490,14 @@ let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimat
 sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;saveSoon();}));
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
-$("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const im=new Image();
-  im.onload=()=>{Object.assign(P,{img:im,name:f.name.replace(/\.[^.]+$/,""),quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null,pending:true});
-    $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";
-    $("photoname").textContent=f.name;$("srcname").textContent=f.name;setAspect(0);drawPhoto();show("photo");};
-  im.onerror=()=>{$("photoname").textContent="That file could not be read as an image. Try a JPEG or PNG.";show("photo");};
-  im.src=URL.createObjectURL(f);});
+function usePhoto(f){if(!f)return;const im=new Image();
+  im.onload=()=>{setPhoto(im,f.name.replace(/\.[^.]+$/,""));URL.revokeObjectURL(im.src);};
+  im.onerror=()=>{$("photostat").textContent="That file could not be read as an image. Try a JPEG or PNG.";};
+  im.src=URL.createObjectURL(f);}
+["file","file2"].forEach(id=>$(id).addEventListener("change",e=>{usePhoto(e.target.files[0]);e.target.value="";}));
+{const z=$("dropzone");z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});
+  z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("over");usePhoto(e.dataTransfer.files[0]);});}
 
 /* ---------- drawing plan: fixed step library ----------
    Each step's picture is the whole drawing as it should look once that step is done:
@@ -713,10 +730,12 @@ $("grid-on").onchange=e=>{S.grid.on=e.target.checked;renderStep();};
 $("gdens").addEventListener("input",e=>{S.grid.cols=+e.target.value;gridLabel();renderStep();});
 
 const TABS=["book","photo","sketch","plan"];
+// how far the current sketch has got: 0 nothing open, 1 choosing the photo, 2 sketch generated, 3 drawing planned
+S.stage=0;
+function setStage(n){S.stage=n;$("tab-photo").disabled=n<1;$("tab-sketch").disabled=n<2;$("tab-plan").disabled=n<3;}
 function show(tab){
-  // a photo that has been edited but not started yet gets turned into a drawing first
-  if(P.pending&&(tab==="sketch"||tab==="plan")){P.pending=false;startSketch();return;}
   TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);});
+  window.scrollTo({top:0});
   if(tab==="book")drawBook();
   if(tab==="photo")drawPhoto();
   if(tab==="plan"){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}
@@ -875,7 +894,7 @@ const allProjects=()=>store("readonly",s=>s.getAll());
 const putProject=p=>store("readwrite",s=>s.put(p));
 const delProject=id=>store("readwrite",s=>s.delete(id));
 
-function snapshot(){return{params:params(),grade:S.grade,grid:{...S.grid},step:S.step,done:[...S.done]};}
+function snapshot(){return{params:params(),grade:S.grade,grid:{...S.grid},step:S.step,done:[...S.done],planned:S.stage>=3};}
 function applySnapshot(p){
   if(p.grade!=null)S.grade=p.grade;
   if(p.grid)S.grid={...S.grid,...p.grid};
@@ -904,24 +923,49 @@ function thumbOf(c){const t=document.createElement("canvas"),s=Math.min(1,240/Ma
   t.getContext("2d").drawImage(c,0,0,t.width,t.height);return t.toDataURL("image/jpeg",.78);}
 const blobOf=c=>new Promise(r=>c.toBlob(r,"image/jpeg",.92));
 
-async function startSketch(){
-  P.pending=false; // the photo has been turned into a drawing, so switching tabs must not redo it
+function newId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now());}
+function setPhoto(im,name){
+  Object.assign(P,{img:im,name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
+  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";
+  $("photoname").textContent=name;$("srcname").textContent=name;
+  $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
+  setAspect(0);drawPhoto();
+}
+/* Start new sketch: an empty photo screen; nothing is saved until the sketch is generated */
+function startNew(){
+  S.project=null;P.img=null;P.mask=null;P.rot=null;
+  $("dropzone").hidden=false;$("cropwrap").hidden=true;$("changephoto").hidden=true;$("gensketch").disabled=true;
+  $("photoname").textContent="";$("photostat").textContent="";
+  setStage(1);show("photo");
+}
+/* Generate sketch: the edited photo becomes the pencil sketch, and the sketch is saved to the sketchbook */
+async function generateSketch(){
   const c=buildPhoto();
   loadSource(c);
-  S.step=0;S.done=[];
+  S.step=0;S.done=[];setStage(2);show("sketch");
   try{
-    const p={id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:P.name||"Untitled sketch",
-      created:Date.now(),updated:Date.now(),photo:await blobOf(c),thumb:thumbOf(c),...snapshot()};
-    S.project=p;await putProject(p);$("savestat").textContent="Saved to your sketchbook";
-  }catch(e){S.project=null;$("savestat").textContent="This browser would not save the sketch, but you can still draw it now.";}
-  show("plan");renderStep();
+    const now=Date.now(),photo=await blobOf(c),thumb=thumbOf(c);
+    // going back to the photo and generating again updates the same sketch rather than adding another
+    S.project=S.project?{...S.project,photo,thumb,updated:now,planned:false,...snapshot()}
+      :{id:newId(),name:P.name||"Untitled sketch",created:now,updated:now,photo,thumb,planned:false,...snapshot()};
+    await putProject(S.project);
+  }catch(e){console.warn(e);}
+}
+/* Plan my drawing: the ten steps, built from the sketch as it is now */
+function planDrawing(){
+  if(S.project&&!S.project.planned){S.project.planned=true;S.step=0;S.done=[];}
+  setStage(3);show("plan");saveSoon();
 }
 function openProject(p){
   const im=new Image();
-  im.onload=()=>{P.img=im;P.name=p.name;P.quarter=0;P.tilt=0;P.crop=FULLCROP();P.bg=false;P.mask=null;P.rot=null;
+  im.onload=()=>{
+    // the saved photo is already cropped and cleaned up, so it comes back with no edits on top
+    Object.assign(P,{img:im,name:p.name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
+    $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
+    $("photoname").textContent=p.name;$("srcname").textContent=p.name;setAspect(0);
     S.project=p;applySnapshot(p);loadSource(im);
-    $("photoname").textContent=p.name;$("srcname").textContent=p.name;
-    show("plan");renderStep();$("savestat").textContent="Opened from your sketchbook";
+    if(p.planned){setStage(3);show("plan");}else{setStage(2);show("sketch");}
+    $("savestat").textContent="Opened from your sketchbook";
     URL.revokeObjectURL(im.src);};
   im.src=URL.createObjectURL(p.photo);
 }
@@ -934,7 +978,7 @@ async function drawBook(){
     const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";
     const img=document.createElement("img");img.src=p.thumb;img.alt="";
     const b=document.createElement("b");b.textContent=p.name;
-    const st=document.createElement("span");st.textContent=`Step ${(p.step|0)+1} of ${STEPS.length} · ${done} done`;
+    const st=document.createElement("span");st.textContent=p.planned?`Step ${(p.step|0)+1} of ${STEPS.length} · ${done} done`:"Sketch ready, drawing not planned yet";
     const bar=document.createElement("div");bar.className="bar";const fill=document.createElement("i");
     fill.style.width=Math.round(100*done/STEPS.length)+"%";bar.appendChild(fill);
     const row=document.createElement("div");row.className="rowbtns";
@@ -945,12 +989,15 @@ async function drawBook(){
     row.append(open,del);el.append(img,b,st,bar,row);return el;
   }));
 }
-$("startsketch").onclick=startSketch;
+$("newsketch").onclick=startNew;
+$("trysample").onclick=()=>{startNew();setPhoto(sample(),"Sample: plaster head study");};
+$("gensketch").onclick=generateSketch;
+$("planbtn").onclick=planDrawing;
+$("backphoto").onclick=()=>show("photo");
 $("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();};
 
-// first run: the built-in sample stands in for a photo until one is uploaded
-P.img=sample();P.name="Sample: plaster head study";P.crop=FULLCROP();
-loadSource(P.img);
+// the app opens on the sketchbook
+setStage(0);show("book");
 })();
 </script>
 </body>
