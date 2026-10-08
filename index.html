@@ -1060,18 +1060,15 @@ function stepTone(k){
   }
   return L.tones[k]=out;
 }
-/* glowing outline around everything step k changed: the changed marks are grouped into soft
-   regions, and the glow sits on each region's edge, so a small addition gets a small ring */
+/* glow on the marks step k actually adds: every pixel the step darkens (or, in the last step, lifts)
+   lights up in place, with a thin halo, so new hair strokes or hatching glow as the strokes themselves */
 function stepGlow(k){
   const L=planLayers();if(!L.glows)L.glows=[];if(L.glows[k])return L.glows[k];
   const {w,h}=S,n=w*h,sc=L.sc,cur=stepTone(k),prev=stepTone(k-1),m=new Float32Array(n);
-  // the last step's change is small (highlights lifted back to clean paper), so it needs a lower threshold
-  const t0=k===STEPS.length-1?.008:.02,t1=k===STEPS.length-1?.03:.08;
-  for(let i=0;i<n;i++)m[i]=smooth(t0,t1,Math.abs(prev[i]-cur[i]));
-  const reg=blur(m,w,h,Math.round(5*sc)),ring=new Float32Array(n);
-  for(let i=0;i<n;i++){const r=smooth(.04,.14,reg[i]);ring[i]=4*r*(1-r);}
-  const g=blur(ring,w,h,Math.max(1,Math.round(1.2*sc))),img=new ImageData(w,h),d=img.data;
-  for(let i=0,j=0;i<n;i++,j+=4){const a=clamp(g[i]*1.6+.1*smooth(.04,.14,reg[i]));d[j]=70;d[j+1]=150;d[j+2]=255;d[j+3]=a*255;}
+  const last=k===STEPS.length-1,t0=last?.01:.025,t1=last?.05:.09;
+  for(let i=0;i<n;i++){const dv=last?Math.abs(prev[i]-cur[i]):prev[i]-cur[i];m[i]=smooth(t0,t1,dv);}
+  const halo=blur(m,w,h,Math.max(1,Math.round(1.5*sc))),img=new ImageData(w,h),d=img.data;
+  for(let i=0,j=0;i<n;i++,j+=4){const a=clamp(Math.max(m[i]*.9,halo[i]*1.4));d[j]=40;d[j+1]=130;d[j+2]=255;d[j+3]=a*255;}
   return L.glows[k]=img;
 }
 function renderGlow(k){
