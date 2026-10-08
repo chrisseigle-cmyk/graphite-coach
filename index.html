@@ -174,9 +174,9 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .canvaswrap{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-y;border-radius:4px}
 .stepfade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
 #glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 2px rgba(70,150,255,.3))}
-@media (hover:hover){.canvaswrap:hover #glowcanvas{opacity:.5;animation:glow 1.6s ease-in-out infinite}}
-.canvaswrap.peek #glowcanvas{opacity:.5;animation:glow 1.6s ease-in-out infinite}
-@keyframes glow{50%{opacity:.28}}
+@media (hover:hover){.canvaswrap:hover #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}}
+.canvaswrap.peek #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{opacity:.65}}
 @media (prefers-reduced-motion:reduce){#glowcanvas{animation:none!important}}
 .peekhint{font-size:12.5px;color:var(--muted);margin:0;display:flex;align-items:center;gap:7px;padding-inline:2px}
 .peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(70,150,255);box-shadow:0 0 0 3px rgba(70,150,255,.18),0 0 8px rgba(70,150,255,.7)}
@@ -1014,14 +1014,14 @@ function planLayers(){
   const shadow=pencilLines(shadowLines,{seed:23,passes:1,jit:.6*sc,over:0,lw:.9*sc,alpha:.55});
   // contour lines: the AI line drawing, kept thin (only the core of each line)
   const con=AI||edges(contrasted(params().contrast),w,h,1,3.5,12);
-  const L={block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),sk,ai:AI};
+  const L={block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),m1:new Float32Array(n),m2:new Float32Array(n),sk,ai:AI};
   for(let i=0;i<n;i++){
     const ln=smooth(.2,.75,con[i])*grain(i),x=i%w,y=(i/w)|0;
     const near=1-smooth(.45,.75,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)); // the face only, not the hair
     L.feat[i]=.42*ln*near;L.line[i]=.5*ln;
     L.block[i]*=grain(i);L.shadow[i]*=grain(i);
     // one light, even hatched layer over everything darker than the lights...
-    const m1=smooth(t2+.015,t2-.015,g3[i]),m2=smooth(t1+.015,t1-.015,g3[i]);
+    const m1=smooth(t2+.015,t2-.015,g3[i]),m2=smooth(t1+.015,t1-.015,g3[i]);L.m1[i]=m1;L.m2[i]=m2;
     const hl=1-(1-st.ink[0][i])*(1-st.ink[1][i])*(1-st.ink[2][i]);
     L.tone1[i]=m1*clamp(.12+.75*hl)*grain(i);
     // ...then a second, crossing layer inside the shadow shapes
@@ -1060,15 +1060,49 @@ function stepTone(k){
   }
   return L.tones[k]=out;
 }
-/* glow on the marks step k actually adds: every pixel the step darkens (or, in the last step, lifts)
-   lights up in place, with a thin halo, so new hair strokes or hatching glow as the strokes themselves */
+/* the glow shows what step k adds, built from that step's own layer:
+   line steps light the new pencil strokes themselves (with a thin halo);
+   shading steps outline the area being shaded and lightly mark the hatch strokes inside it, instead of flooding it;
+   blending outlines where the texture gets smoothed; the last step rings each highlight that is lifted */
 function stepGlow(k){
   const L=planLayers();if(!L.glows)L.glows=[];if(L.glows[k])return L.glows[k];
-  const {w,h}=S,n=w*h,sc=L.sc,cur=stepTone(k),prev=stepTone(k-1),m=new Float32Array(n);
-  const last=k===STEPS.length-1,t0=last?.01:.025,t1=last?.05:.09;
-  for(let i=0;i<n;i++){const dv=last?Math.abs(prev[i]-cur[i]):prev[i]-cur[i];m[i]=smooth(t0,t1,dv);}
-  const halo=blur(m,w,h,Math.max(1,Math.round(1.5*sc))),img=new ImageData(w,h),d=img.data;
-  for(let i=0,j=0;i<n;i++,j+=4){const a=clamp(Math.max(m[i]*.9,halo[i]*1.4));d[j]=40;d[j+1]=130;d[j+2]=255;d[j+3]=a*255;}
+  const {w,h}=S,n=w*h,sc=L.sc,F=S.focus,a=new Float32Array(n);
+  const edgeOf=m=>{const b=blur(m,w,h,Math.max(1,Math.round(1.5*sc))),e=new Float32Array(n);
+    for(let i=0;i<n;i++)e[i]=smooth(.05,.25,Math.abs(m[i]-b[i]));return blur(e,w,h,1);};
+  // the hair: large, dense dark masses (small dark marks like pupils don't count), grown by r
+  const hairNear=r=>{const d=new Float32Array(n);for(let i=0;i<n;i++)d[i]=L.sk[i]<.35?1:0;
+    const dense=blur(d,w,h,Math.round(8*sc));for(let i=0;i<n;i++)d[i]=smooth(.55,.7,dense[i]);return blur(d,w,h,Math.round(r*sc));};
+  const faceOnly=i=>{const x=i%w,y=(i/w)|0;return 1-smooth(.5,.85,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));};
+  if(k>=1&&k<=4){
+    const lay=[null,L.block,L.feat,L.line,L.shadow][k],core=new Float32Array(n);
+    for(let i=0;i<n;i++)core[i]=smooth(.03,.12,lay[i])*(k===3?1-smooth(.05,.2,L.feat[i]):1);
+    const halo=blur(core,w,h,Math.max(1,Math.round(1.5*sc)));
+    for(let i=0;i<n;i++)a[i]=Math.max(core[i]*.5,halo[i]*.55);
+  }else if(k===5||k===6||k===7){
+    // the area this step shades: the light layer (6), the shadow shapes (7), the darkest accents (8)
+    let reg,tone;
+    if(k===7){const cur=stepTone(k),prev=stepTone(k-1);reg=new Float32Array(n);
+      for(let i=0;i<n;i++)reg[i]=prev[i]-cur[i]>.15?1:0;
+      reg=blur(reg,w,h,Math.max(1,Math.round(2*sc)));for(let i=0;i<n;i++)reg[i]=reg[i]>.02?1:0;} // grown a little so the outline sits on lighter paper
+    else{reg=k===5?L.m1:L.m2;tone=k===5?L.tone1:L.tone2;}
+    const e=edgeOf(reg);
+    for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.85,tone?smooth(.3,.6,tone[i])*.3:0);
+  }else if(k===8){
+    // blending: the shaded skin of the face is smoothed with the stump; the hair keeps its strokes
+    const hair=hairNear(3),reg=new Float32Array(n);
+    for(let i=0;i<n;i++)reg[i]=faceOnly(i)*L.m1[i]*(1-smooth(.15,.4,hair[i]));
+    const r2=blur(reg,w,h,Math.round(4*sc));for(let i=0;i<n;i++)r2[i]=smooth(.45,.6,r2[i]);
+    const e=edgeOf(r2);for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.8,r2[i]*.1);
+  }else if(k===9){
+    // lifted highlights: only spots with shading all round them (not the pale edge of the figure), each ringed
+    const sh=new Float32Array(n);for(let i=0;i<n;i++)sh[i]=L.sk[i]<.9?1:0;
+    const inside=blur(sh,w,h,Math.round(12*sc)),hn=hairNear(6),spot=new Float32Array(n);
+    for(let i=0;i<n;i++)spot[i]=(L.hi[i]*smooth(.92,.99,inside[i])*(1-smooth(.02,.08,hn[i])))>.15?1:0;
+    const grow=blur(spot,w,h,Math.round(8*sc));for(let i=0;i<n;i++)grow[i]=smooth(.002,.006,grow[i]);
+    const e=edgeOf(grow);for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.95,spot[i]*.5);
+  }
+  const img=new ImageData(w,h),d=img.data;
+  for(let i=0,j=0;i<n;i++,j+=4){d[j]=40;d[j+1]=130;d[j+2]=255;d[j+3]=clamp(a[i])*255;}
   return L.glows[k]=img;
 }
 function renderGlow(k){
