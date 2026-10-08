@@ -504,7 +504,7 @@ html.revealing .wrap>header{animation:none!important}
 </svg>
 <div class="wrap">
   <header>
-    <div class="brand">
+    <div class="brand" id="brand" title="Replay the intro">
       <svg class="mark" aria-hidden="true"><use href="#gc-mark"/></svg>
       <h1 class="lockup"><span class="w1">Graphite</span> <span class="w2">Coach</span></h1>
     </div>
@@ -1453,6 +1453,9 @@ $("planbtn").onclick=planDrawing;
 $("backphoto").onclick=()=>show("photo");
 $("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();};
 
+// clicking the logo replays the full intro (it normally plays in full only on the first visit)
+$("brand").style.cursor="pointer";
+$("brand").onclick=()=>{try{localStorage.removeItem("gc-splash-seen");}catch(e){}location.reload();};
 // the app opens on the sketchbook
 setStage(0);show("book");
 })();
