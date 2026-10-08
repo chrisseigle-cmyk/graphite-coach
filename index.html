@@ -5,152 +5,524 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Graphite Coach</title>
 <meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.">
+<meta name="theme-color" content="#f2eee5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M60 7 106 33.5v53L60 113 14 86.5v-53z' fill='%23f6f1e6' stroke='%2326282c' stroke-width='10' stroke-linejoin='round'/%3E%3Cpath d='M68 22C59 25 55 33 55 42.5c0 2.5-1 4-2 5.5-2.5 4-7 9-9.5 12.5-1 1.5 1 4 5 4-1.5 2-3.5 4-2.5 6 .8 1.7 3.5 2.1 3 4-1 2-2.5 4.5-1.5 7 1 2.5 3 3.5 5.5 4 3 .5 4.5 2 5 4.5.5 4 .5 8 0 12' fill='none' stroke='%2326282c' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M68 22c15-3 25 9 24.5 25-.5 11-5.5 18-11 24-2 3-2 12-1.5 21' fill='none' stroke='%2326282c' stroke-width='7' stroke-linecap='round' opacity='.6'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: working canvas left, controls right (stacks on phone); tabs switch Sketch / Plan */
+/* Graphite Coach: warm sketch-paper surfaces, graphite ink, one blue-pencil accent.
+   Layout: working canvas left, controls right (stacks on phone); tabs step through Photo / Sketch / Plan */
 :root{
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
-  --paper:#eceeef; --sheet:#f8f9f9; --graphite:#23272b; --muted:#5d656c;
-  --rule:#d3d8dc; --blue:#2f6db5; --blue-soft:#dbe7f5;
+  --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c;
+  --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
+  --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
+  --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .27 0 0 0 0 .2 .6 0 0 0 -.24'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --display:"Young Serif",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.75,.25,1);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#16191c; --sheet:#1f2327; --graphite:#e6e9ec; --muted:#9aa3ab;
-  --rule:#343a40; --blue:#7fb0eb; --blue-soft:#22344a; color-scheme:dark}}
+  --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548;
+  --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
+  --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
+  --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .92 0 0 0 0 .85 .28 0 0 0 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#16191c; --sheet:#1f2327; --graphite:#e6e9ec; --muted:#9aa3ab;
-  --rule:#343a40; --blue:#7fb0eb; --blue-soft:#22344a; color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;padding:0;background:var(--paper);color:var(--graphite);font-family:var(--body);font-size:15px;line-height:1.5}
+  --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548;
+  --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
+  --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
+  --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .92 0 0 0 0 .85 .28 0 0 0 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(#out,#stepcanvas,.stepfade){filter:brightness(.88) saturate(.55)}}
+:root[data-theme="dark"] :is(#out,#stepcanvas,.stepfade){filter:brightness(.88) saturate(.55)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--paper)}
+body{margin:0;padding:0;background:var(--grain),var(--paper);color:var(--graphite);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
 img{max-width:100%}
 [hidden]:not([hidden=until-found i]){display:none!important}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
-h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,5vw,36px);margin:0;line-height:1.1;text-wrap:balance}
-.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;display:flex;flex-direction:column;gap:22px}
+@media (min-width:761px){.wrap{padding-inline:28px;padding-top:30px}}
+
+/* ---------- brand header ---------- */
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand .mark{width:56px;height:56px;flex:none;color:var(--graphite)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(25px,4.2vw,32px);margin:0;line-height:1.05;letter-spacing:-.005em;text-wrap:balance}
+.sub{color:var(--muted);margin:3px 0 0;max-width:none;text-wrap:pretty;font-size:14.5px;line-height:1.45}
+@media (max-width:520px){.brand{gap:11px;align-items:flex-start}.brand .mark{width:42px;height:42px;margin-top:2px}.sub{font-size:13.5px}}
+
 .upload{display:inline-flex;align-items:center;gap:8px;background:var(--graphite);color:var(--paper);padding:10px 16px;border-radius:999px;font-weight:600;cursor:pointer}
 .upload:focus-within{outline:3px solid var(--blue);outline-offset:2px}
 .upload input{position:absolute;opacity:0;width:1px;height:1px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
-.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 15px var(--body);padding:8px 14px;cursor:pointer}
-.tab[aria-selected="true"]{color:var(--graphite);border-color:var(--blue)}
-.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
-@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
-.stage{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
-canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:2px}
-.cap{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.panel{display:flex;flex-direction:column;gap:16px;min-width:0}
-.ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{display:flex;justify-content:space-between;font-weight:500}
-.ctrl output{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.hint{font-size:12.5px;color:var(--muted);margin:0}
-input[type=range]{width:100%;accent-color:var(--blue)}
+#changephoto{align-self:flex-start;background:transparent;color:var(--graphite);border:1px solid var(--rule-2);font-size:14px;padding:8px 15px;transition:background .2s,border-color .2s}
+#changephoto:hover{border-color:var(--graphite);background:var(--sheet-2)}
+
+/* ---------- stepper tabs: a segmented track; steps unlock in order ---------- */
+.tabs{display:flex;gap:2px;padding:4px;align-self:flex-start;max-width:100%;box-sizing:border-box;
+  background:var(--track);border-radius:999px;box-shadow:inset 0 1px 2px rgba(var(--shadow),.08)}
+.tab{position:relative;display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-radius:999px;color:var(--ink-2);
+  font:600 14.5px var(--body);padding:8px 16px 8px 10px;cursor:pointer;white-space:nowrap;transition:color .2s,background .25s var(--ease),box-shadow .25s var(--ease)}
+.tab .num,.tab .ti{display:inline-grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;font:600 12px var(--mono);
+  border:1.5px solid currentColor;box-sizing:border-box;transition:background .25s,color .25s,border-color .25s}
+.tab .ti{border:0;width:20px;height:20px}
+.tab:hover:not(:disabled):not([aria-selected="true"]){background:color-mix(in srgb,var(--sheet) 55%,transparent)}
+.tab[aria-selected="true"]{color:var(--graphite);background:var(--tab-on);box-shadow:0 1px 2px rgba(var(--shadow),.12),0 4px 12px -4px rgba(var(--shadow),.2)}
+.tab[aria-selected="true"] .num{background:var(--graphite);border-color:var(--graphite);color:var(--tab-on)}
+.tab:disabled{color:var(--muted);opacity:.55;cursor:default}
+.tab:disabled .num{border-style:dashed}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tab .narrow{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (max-width:560px){
+  .tabs{align-self:stretch;gap:0;padding:5px}
+  .tab{flex:1 1 auto;justify-content:center;gap:6px;padding:8px 8px;font-size:13.5px}
+  .tab .wide{display:none}.tab .narrow{display:inline}
+  #tab-book{flex:0 0 auto;padding-inline:11px}
+  #tab-book .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
+
+/* ---------- sheets of paper ---------- */
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr);gap:16px}}
+.stage{background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--lift);position:relative}
+.grid>.panel{background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:14px;padding:22px;box-shadow:var(--lift)}
+@media (max-width:520px){.stage{padding:10px;border-radius:12px}.grid>.panel{padding:18px 16px;border-radius:12px}}
+canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:4px}
+.stage>canvas,.canvaswrap,.cropwrap{box-shadow:0 0 0 1px rgba(var(--shadow),.06)}
+.cap{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-inline:2px}
+.panel{display:flex;flex-direction:column;gap:18px;min-width:0}
+.ctrl{display:flex;flex-direction:column;gap:6px}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-weight:500;font-size:14.5px}
+.ctrl output{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;background:var(--sheet-2);border:1px solid var(--rule);border-radius:6px;padding:0 6px;line-height:20px}
+.group{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--rule);padding-top:14px}
+.group h3{margin:0 0 -4px;font:600 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5}
 .grades{display:flex;flex-wrap:wrap;gap:6px}
-.gridctl{border-top:1px solid var(--rule);padding-top:14px;gap:8px}
+.gridctl{border-top:1px solid var(--rule);padding-top:16px;gap:10px}
 .gridctl .toggle{justify-content:flex-start;font-weight:600}
 .gridopts{display:flex;flex-direction:column;gap:8px}
-.gridopts summary{cursor:pointer;font-weight:600;color:var(--muted);list-style-position:inside}
-.gridopts[open] summary{margin-bottom:4px;color:var(--graphite)}
+.gridopts summary{cursor:pointer;font-weight:600;color:var(--muted);list-style:none;display:flex;align-items:center;gap:8px;border-radius:6px}
+.gridopts summary::-webkit-details-marker{display:none}
+.gridopts summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .25s var(--ease);margin-left:2px}
+.gridopts[open] summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+.gridopts[open] summary{margin-bottom:6px;color:var(--graphite)}
 .gridopts .ctrl{gap:6px}
-.swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--sheet);box-shadow:0 0 0 1px var(--rule);cursor:pointer;padding:0}
+.gridopts[open]>.ctrl{animation:viewIn .3s var(--ease) both}
+
+/* sliders: thin graphite track, filled up to the thumb (--p set from JS; falls back to unfilled) */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:0;background:transparent;cursor:pointer;--p:0%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(var(--graphite),var(--graphite)) 0/var(--p) 100% no-repeat,var(--rule-2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--sheet);border:2px solid var(--graphite);box-shadow:0 1px 3px rgba(var(--shadow),.25);transition:transform .15s var(--ease)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:var(--rule-2)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--graphite)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--sheet);border:2px solid var(--graphite);box-shadow:0 1px 3px rgba(var(--shadow),.25)}
+input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:0}
+
+.swatch{width:30px;height:30px;border-radius:50%;border:3px solid var(--sheet);box-shadow:0 0 0 1px var(--rule-2);cursor:pointer;padding:0;transition:box-shadow .2s,transform .2s var(--ease)}
+.swatch:hover{transform:scale(1.08)}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--graphite)}
-.grade{font:500 13px var(--mono);padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--graphite);cursor:pointer}
-.grade[aria-pressed="true"]{background:var(--graphite);color:var(--paper);border-color:var(--graphite)}
-.steplist{display:flex;flex-wrap:wrap;gap:6px}
-.dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--graphite);font:500 13px var(--mono);cursor:pointer}
-.dot[aria-current="step"]{background:var(--blue);color:#fff;border-color:var(--blue)}
-.stepcard{display:flex;flex-direction:column;gap:10px}
-.stepcard h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
-.pencil{align-self:start;font:500 12.5px var(--mono);background:var(--blue-soft);color:var(--blue);padding:3px 8px;border-radius:3px;letter-spacing:.03em}
-.stepcard p{margin:0;max-width:60ch}
-.checks{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
-.nav{display:flex;gap:8px}
-.btn{font:600 14px var(--body);padding:9px 16px;border-radius:999px;border:1px solid var(--graphite);background:transparent;color:var(--graphite);cursor:pointer}
-.btn.primary{background:var(--graphite);color:var(--paper)}
-.btn:disabled{opacity:.35;cursor:default}
-.toggle{display:flex;align-items:center;gap:8px;font-size:14px}
+.grade{font:500 13px var(--mono);padding:6px 12px;border:1px solid var(--rule-2);border-radius:999px;background:var(--sheet);color:var(--graphite);cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .15s}
+.grade:hover{border-color:var(--graphite)}
+.grade:active{transform:scale(.96)}
+.grade[aria-pressed="true"]{background:var(--graphite);color:var(--sheet);border-color:var(--graphite)}
+
+/* ---------- drawing plan ---------- */
+.steplist{display:grid;grid-template-columns:repeat(10,minmax(0,36px));gap:6px}
+.dot{width:100%;height:auto;aspect-ratio:1;border-radius:50%;border:1px solid var(--rule-2);background:var(--sheet);color:var(--ink-2);font:500 13px var(--mono);cursor:pointer;padding:0;
+  transition:background .25s,color .25s,border-color .25s,transform .25s var(--ease),box-shadow .25s}
+.dot:hover{border-color:var(--graphite);transform:translateY(-1px)}
+.dot[aria-current="step"]{background:var(--blue);color:var(--on-blue);border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);transform:scale(1.06)}
+@media (max-width:420px){.steplist{gap:4px}.dot{font-size:12px}}
+.stepcard{display:flex;flex-direction:column;gap:12px}
+.stepcard h2{font-family:var(--display);font-weight:400;font-size:clamp(23px,3vw,27px);line-height:1.15;margin:0;text-wrap:balance}
+.pencil{align-self:start;display:inline-flex;align-items:center;gap:7px;font:500 12.5px var(--mono);background:var(--blue-soft);color:var(--blue);padding:4px 11px;border-radius:999px;letter-spacing:.03em}
+.stepcard p{margin:0;max-width:62ch}
+.checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.checks li{position:relative;padding-left:22px;font-size:14.5px}
+.checks li::before{content:"";position:absolute;left:3px;top:8px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted);box-sizing:border-box}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:600 14px var(--body);padding:10px 18px;border-radius:999px;border:1px solid var(--rule-2);background:var(--sheet);color:var(--graphite);cursor:pointer;
+  transition:background .2s,border-color .2s,box-shadow .2s,transform .15s var(--ease)}
+.btn:hover:not(:disabled){border-color:var(--graphite);box-shadow:0 2px 8px -3px rgba(var(--shadow),.25)}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.98)}
+.btn.primary{background:var(--graphite);border-color:var(--graphite);color:var(--paper);box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 4px 12px -4px rgba(var(--shadow),.45)}
+.btn.primary:hover:not(:disabled){background:var(--ink-2);box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 8px 18px -6px rgba(var(--shadow),.5);transform:translateY(-1px)}
+.btn:disabled{opacity:.38;cursor:default;box-shadow:none}
+.stepnav #donebtn{margin-left:auto}
+@media (max-width:520px){.stepnav #donebtn{margin-left:0;flex:1 1 100%}}
+#donebtn[aria-pressed="true"]{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+.toggle{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
 .toggles{display:flex;flex-direction:column;gap:4px}
 /* hover (or touch and hold) the step picture: a soft glowing outline around what this step adds */
-.canvaswrap{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-y}
-#glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 3px rgba(70,150,255,.95)) drop-shadow(0 0 8px rgba(70,150,255,.6))}
+.canvaswrap{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-y;border-radius:4px}
+.stepfade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
+#glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 2px rgba(70,150,255,.6))}
 @media (hover:hover){.canvaswrap:hover #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}}
 .canvaswrap.peek #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}
 @keyframes glow{50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){#glowcanvas{animation:none!important}}
-.peekhint{font-size:12.5px;color:var(--muted);margin:0}
-.stepcard .look{border-left:3px solid var(--blue);padding:2px 0 2px 10px;font-size:14px}
+.peekhint{font-size:12.5px;color:var(--muted);margin:0;display:flex;align-items:center;gap:7px;padding-inline:2px}
+.peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(70,150,255);box-shadow:0 0 0 3px rgba(70,150,255,.18),0 0 8px rgba(70,150,255,.7)}
+.stepcard .look{background:var(--sheet-2);border:1px solid var(--rule);border-left:3px solid var(--blue);border-radius:4px 10px 10px 4px;padding:10px 12px;font-size:14px}
+#stepcount{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
 /* photo editing: the picture with a drag-to-crop box over it */
-.cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:4px;overflow:hidden}
 .croprect{position:absolute;box-shadow:0 0 0 9999px rgba(20,22,25,.5);outline:1px solid rgba(255,255,255,.9);cursor:move}
-.croprect i{position:absolute;width:22px;height:22px;background:#fff;border:1px solid var(--graphite);border-radius:3px}
-.croprect i[data-h="nw"]{left:-11px;top:-11px;cursor:nwse-resize}
-.croprect i[data-h="ne"]{right:-11px;top:-11px;cursor:nesw-resize}
-.croprect i[data-h="sw"]{left:-11px;bottom:-11px;cursor:nesw-resize}
-.croprect i[data-h="se"]{right:-11px;bottom:-11px;cursor:nwse-resize}
-.rowbtns{display:flex;flex-wrap:wrap;gap:6px}
+/* corner brackets sit just inside the box, so they stay visible (and grabbable) when the crop is the whole photo */
+.croprect i{position:absolute;width:24px;height:24px;border:0 solid #fff;filter:drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.croprect i[data-h="nw"]{left:-1px;top:-1px;border-width:4px 0 0 4px;cursor:nwse-resize}
+.croprect i[data-h="ne"]{right:-1px;top:-1px;border-width:4px 4px 0 0;cursor:nesw-resize}
+.croprect i[data-h="sw"]{left:-1px;bottom:-1px;border-width:0 0 4px 4px;cursor:nesw-resize}
+.croprect i[data-h="se"]{right:-1px;bottom:-1px;border-width:0 4px 4px 0;cursor:nwse-resize}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px}
 .ctrl label.toggle{justify-content:flex-start}
 #savestat{margin:0}
-/* sketchbook */
-.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
-.book{display:flex;flex-direction:column;gap:6px;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:8px;text-align:left}
-.book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:3px;background:var(--paper)}
+
+/* ---------- sketchbook ---------- */
+.bookhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 20px}
+.bookhead h2{font-family:var(--display);font-weight:400;font-size:clamp(22px,3vw,26px);margin:0;line-height:1.15}
+.bookhead p{margin:4px 0 0;color:var(--muted);font-size:14px}
+@media (max-width:520px){.bookhead>.rowbtns{width:100%}.bookhead>.rowbtns .btn{flex:1 1 100%}}
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+@media (max-width:520px){.books{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.book{display:flex;flex-direction:column;gap:6px;background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:12px;padding:10px 10px 12px;text-align:left;box-shadow:var(--lift);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);animation:cardIn .45s var(--ease) both;animation-delay:calc(var(--i,0)*45ms)}
+.book:hover{transform:translateY(-3px) rotate(-.25deg);box-shadow:var(--lift-hi)}
+.book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;background:var(--paper);box-shadow:0 0 0 1px rgba(var(--shadow),.07);margin-bottom:4px}
 .book b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
-.book span{font-size:12.5px;color:var(--muted)}
-.namefield{font:inherit;color:var(--ink,inherit);background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;width:100%;box-sizing:border-box}
-.book .namefield{font-weight:600;font-size:14px;padding:3px 5px;margin:0 -6px;width:calc(100% + 12px);border-color:transparent;background:transparent}
-.book .namefield:hover{border-color:var(--rule)}
+.book span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.namefield{font:inherit;color:var(--graphite);background:var(--sheet);border:1px solid var(--rule-2);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.namefield:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);outline:none}
+.book .namefield{font-weight:600;font-size:14.5px;padding:3px 5px;margin:0 -6px;width:calc(100% + 12px);border-color:transparent;background:transparent;border-radius:6px}
+.book .namefield:hover{border-color:var(--rule-2)}
 .book .namefield:focus{border-color:var(--blue);background:var(--paper)}
-.book .rowbtns{margin-top:2px}
-.book .btn{padding:5px 12px;font-size:13px}
-.bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--blue)}
-.empty{color:var(--muted);max-width:60ch}
-.dot.done{border-color:var(--blue);color:var(--blue);font-weight:700}
-.dot.done[aria-current="step"]{color:#fff}
+.book .rowbtns{margin-top:6px;gap:4px;align-items:center}
+.book .rowbtns .primary{flex:1 0 100%;margin-bottom:2px}
+.book .rowbtns .btn:not(.primary){flex:1 1 0}
+.book .btn{padding:6px 13px;font-size:13px}
+.book .btn:not(.primary){border-color:transparent;background:transparent;color:var(--muted);padding-inline:9px}
+.book .btn:not(.primary):hover{color:var(--graphite);background:var(--sheet-2);box-shadow:none}
+.bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:2px}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;color:var(--muted);padding:36px 22px 40px;border:1.5px dashed var(--rule-2);border-radius:16px;background:color-mix(in srgb,var(--sheet) 55%,transparent)}
+.empty svg{width:150px;height:auto;color:var(--graphite);margin-bottom:4px}
+.empty h3{font-family:var(--display);font-weight:400;font-size:21px;color:var(--graphite);margin:0}
+.empty p{margin:0;max-width:52ch;font-size:14.5px}
+.dot.past{background:var(--sheet-2);border-color:var(--rule-2);color:var(--graphite)}
+.dot.past::after{content:"";display:block;width:4px;height:4px;margin:-1px auto 0;border-radius:50%;background:var(--muted);opacity:.6}
+.dot.done{border-color:var(--blue);color:var(--blue);font-weight:700;background:var(--blue-soft)}
+.dot.done[aria-current="step"]{color:var(--on-blue);background:var(--blue)}
 #savestat{font-size:12.5px;color:var(--muted)}
-.tab:disabled{opacity:.4;cursor:default}
-@media (max-width:520px){.tabs{gap:0;overflow-x:auto}.tab{white-space:nowrap;padding:8px 9px;font-size:14px}.tab .wide{display:none}}
-.tab .narrow{display:none}@media (max-width:520px){.tab .narrow{display:inline}}
-.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:320px;border:2px dashed var(--rule);border-radius:6px;cursor:pointer;text-align:center;padding:24px}
-.dropzone b{background:var(--graphite);color:var(--paper);padding:10px 18px;border-radius:999px;font-weight:600}
+.dropzone{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;border:1.5px dashed var(--rule-2);border-radius:10px;cursor:pointer;text-align:center;padding:24px;
+  background:radial-gradient(ellipse at 50% 40%,var(--sheet) 0,var(--sheet-2) 100%);transition:border-color .25s,background .25s}
+.dropzone:hover{border-color:var(--graphite)}
+.dropzone svg{width:64px;height:64px;color:var(--muted);transition:transform .35s var(--ease)}
+.dropzone:hover svg{transform:translateY(-3px) rotate(-3deg)}
+.dropzone b{background:var(--graphite);color:var(--paper);padding:10px 20px;border-radius:999px;font-weight:600;box-shadow:0 4px 12px -4px rgba(var(--shadow),.45)}
 .dropzone span{color:var(--muted);font-size:13px}
 .dropzone:focus-within{outline:3px solid var(--blue);outline-offset:2px}
 .dropzone input{position:absolute;opacity:0;width:1px;height:1px}
 .dropzone.over{border-color:var(--blue);background:var(--blue-soft)}
-.note{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;margin:0;max-width:72ch}
+.about{border-top:1px solid var(--rule);padding-top:14px;margin-top:10px;font-size:13px;color:var(--muted)}
+.about summary{cursor:pointer;font-weight:600;color:var(--ink-2);list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;border-radius:6px}
+.about summary::-webkit-details-marker{display:none}
+.about summary::before{content:"";align-self:center;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .25s var(--ease)}
+.about[open] summary::before{transform:rotate(45deg)}
+.about summary span{font-weight:400;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);margin:10px 0 0;max-width:78ch;line-height:1.6}
+
+/* ---------- motion: screens rise in, cards settle, steps slide ---------- */
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.985)}}
+/* a screen replays its entrance each time it is unhidden (display:none restarts CSS animations) */
+#view-book{animation:viewIn .38s var(--ease) both}
+section.grid>*{animation:viewIn .42s var(--ease) both}
+section.grid>*+*{animation-delay:70ms}
+html.revealing .wrap>*{animation:viewIn .6s var(--ease) both}
+html.revealing .wrap>:nth-child(2){animation-delay:80ms}
+html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
+@media (prefers-reduced-motion:reduce){
+  #view-book,section.grid>*,.book,html.revealing .wrap>*,.gridopts[open]>.ctrl{animation:none!important}
+  .book:hover{transform:none}
+  *{transition-duration:.01ms!important}
+}
+
+/* ---------- launch splash: the logo sketched in pencil on a sheet of paper ----------
+   Layers: .sp-sheet (the paper) / .sp-stage (mark + wordmark, graphite multiplied into the paper) / .sp-pen (the pencil).
+   At the end the paper fades and the mark flies into the header logo's place. */
+.splash{--sp-paper:#f7f2e7;--sp-vig:rgba(120,92,48,.16);--sp-ink:#3a3b3f;
+  position:fixed;inset:0;z-index:100;overflow:hidden;cursor:pointer;
+  animation:splashAuto .5s ease 3.6s forwards}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}}
+:root[data-theme="dark"] .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}
+.sp-sheet{position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 95% 85% at 50% 46%,transparent 45%,var(--sp-vig) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .25 0 0 0 0 .17 .75 0 0 0 -.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    var(--sp-paper)}
+.sp-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-bottom:4vh;color:var(--sp-ink)}
+.sp-mark{width:min(210px,48vw);height:auto;overflow:visible;mix-blend-mode:multiply;transform-origin:50% 50%;color:var(--sp-ink)}
+.sp-word{width:min(430px,86vw);height:auto;overflow:visible;mix-blend-mode:multiply}
+.sp-word text{font-family:var(--display);font-size:39px;letter-spacing:.005em}
+.splash.quick .sp-word{display:none}
+.sp-pen{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.splash .skip{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sp-ink);opacity:0;transition:opacity .6s}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash .skip{color:#d9d2c3}}
+:root[data-theme="dark"] .splash .skip{color:#d9d2c3}
+.splash.run .skip{opacity:.4;transition-delay:.8s}
+.splash.static .skip,.splash.quick .skip{display:none}
+.splash.run{animation:none}
+.splash.static{pointer-events:none}
+.splash.static.out{opacity:0;transition:opacity .4s ease}
+/* landing: wordmark goes first, then the paper, while the mark flies to the header */
+.splash.landing{pointer-events:none}
+.splash.landing .skip,.splash.landing .sp-pen{opacity:0;transition:opacity .15s}
+.splash.landing .sp-word{opacity:0;transition:opacity .2s ease}
+.splash.landing .sp-sheet{opacity:0;transition:opacity .42s ease .08s}
+.splash.landing .sp-mark{mix-blend-mode:normal;color:var(--graphite);transition:transform var(--fly,.5s) cubic-bezier(.55,0,.2,1),color var(--fly,.5s),opacity .18s ease}
+html.splashing .brand .mark{opacity:0}
+.brand .mark{transition:opacity .18s ease}
+html.revealing .wrap>header{animation:none!important}
+@keyframes splashAuto{to{opacity:0;visibility:hidden;pointer-events:none}}
+@media (prefers-reduced-motion:reduce){.splash{animation-delay:.9s}}
 </style>
 </head>
 <body>
+<!-- launch splash. Without JS the finished logo shows and the CSS fades it out by itself. -->
+<div class="splash" id="splash" aria-hidden="true">
+<div class="sp-sheet"></div>
+<div class="sp-stage">
+<svg class="sp-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <!-- graphite: a slightly wobbly edge, and the paper's tooth breaking the line up a little -->
+    <filter id="sp-graphite" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="wob"/>
+      <feDisplacementMap in="SourceGraphic" in2="wob" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="11" result="tooth"/>
+      <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -.05" result="speck"/>
+      <feComposite in="rough" in2="speck" operator="in"/>
+    </filter>
+    <clipPath id="sp-hair"><path d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70L60 72V21Z"/></clipPath>
+  </defs>
+  <g filter="url(#sp-graphite)">
+    <!-- drawn strictly in this order; data-d: ms, data-e: easing, data-w: width, data-o: darkness, data-q: also drawn on quick launches -->
+    <path class="sk" data-q="1" data-d="400" data-e="io" data-w="3" data-o=".9" d="M60 9 104.3 34.7 104.1 85.4 60.1 111 15.9 85.6 15.8 34.6 61.6 8.2"/>
+    <path class="sk" data-d="230" data-e="io" data-w="1.3" data-o=".6" d="M60 16.2 98 38.1 97.9 81.9 60 103.8 22 81.9 22.1 38.2Z"/>
+    <path class="sk" data-q="1" data-d="480" data-e="out" data-w="2.8" data-o=".92" d="M66 21C58 24 54 33 54 42.5 54 45 53 46.5 52 48 49.5 52 45 57 42.5 60.5 41.5 62 43.5 64.5 47.5 64.5 46 66.5 44 68.5 45 70.5 45.8 72.2 48.5 72.6 48 74.5 47 76.5 45.5 79 46.5 81.5 47.5 84 49.5 85 52 85.5 55 86 56.5 87.5 57 90 57.5 94 57.5 98 57 102.3"/>
+    <path class="sk" data-d="230" data-e="out" data-w="2" data-o=".78" d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70 79.5 73 79.5 82 80 92.5"/>
+    <path class="sk" data-d="110" data-e="out" data-w="1.6" data-o=".72" d="M73.5 51C78 49.5 81 53 80 58 79.3 61.5 76.5 63 74.5 64.5"/>
+    <g clip-path="url(#sp-hair)">
+      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".62" d="M81 45.5 90.5 36"/>
+      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".6" d="M81.8 52.5 92 42.5"/>
+      <path class="sk hatch" data-d="55" data-e="lin" data-w="1.3" data-o=".56" d="M82.2 59.5 92 50"/>
+      <path class="sk hatch" data-d="50" data-e="lin" data-w="1.2" data-o=".48" d="M81 66.5 89.5 58"/>
+    </g>
+  </g>
+</svg>
+<svg class="sp-word" viewBox="0 0 300 70" fill="none" stroke="currentColor" stroke-linecap="round">
+  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="70"/></clipPath></defs>
+  <g filter="url(#sp-graphite)">
+    <text id="sp-wtext" x="150" y="44" text-anchor="middle" fill="currentColor" fill-opacity=".86" stroke="none" clip-path="url(#sp-wclip)">Graphite Coach</text>
+  </g>
+</svg>
+</div>
+<svg class="sp-pen" aria-hidden="true">
+  <defs>
+    <linearGradient id="sp-cedar" x1="0" x2="1"><stop offset="0" stop-color="#a97b4f"/><stop offset=".42" stop-color="#e2c195"/><stop offset=".7" stop-color="#c99a6a"/><stop offset="1" stop-color="#99693f"/></linearGradient>
+    <linearGradient id="sp-lacquer" x1="0" x2="1"><stop offset="0" stop-color="#17181a"/><stop offset=".33" stop-color="#1f2023"/><stop offset=".34" stop-color="#3a3c41"/><stop offset=".5" stop-color="#4d5056"/><stop offset=".66" stop-color="#34363a"/><stop offset=".67" stop-color="#0f1012"/><stop offset="1" stop-color="#18191b"/></linearGradient>
+    <linearGradient id="sp-lead" x1="0" x2="1"><stop offset="0" stop-color="#2b2c30"/><stop offset=".5" stop-color="#6b6d73"/><stop offset="1" stop-color="#26272a"/></linearGradient>
+    <filter id="sp-blur" x="-50%" y="-20%" width="200%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>
+  </defs>
+  <g id="sp-shadow" opacity="0"><ellipse cx="0" cy="-60" rx="5" ry="60" fill="#2a1e10" filter="url(#sp-blur)"/></g>
+  <g id="sp-pencil" opacity="0">
+    <path d="M0 0-1.7-5.6H1.7Z" fill="url(#sp-lead)"/>
+    <path d="M-1.7-5.6-5.4-20H5.4L1.7-5.6Z" fill="url(#sp-cedar)"/>
+    <path d="M-3.2-12.5-2.4-18M.6-9-.1-18.5M3-13 2.6-18.6" stroke="#9c6d42" stroke-width=".35" opacity=".5"/>
+    <path d="M-5.4-20Q-3.6-22.8-1.8-20.3-0-23 1.8-20.3 3.6-22.8 5.4-20V-113H-5.4Z" fill="url(#sp-lacquer)"/>
+    <rect x="-.45" y="-98" width=".9" height="24" fill="#b89a5a" opacity=".75"/>
+    <path d="M-5.4-113H5.4V-114.6H-5.4Z" fill="#77797e"/>
+  </g>
+</svg>
+<div class="skip">Tap to skip</div>
+</div>
+<script>
+/* Launch splash: the logo drawn by one pencil, stroke after stroke, then the mark settles into the header.
+   Independent of the app script below, which never waits on it. A timer always clears it, and the CSS
+   fades it out by itself if this script never runs. First launch: full drawing; later launches: a short one. */
+(function(){
+  var sp=document.getElementById("splash");if(!sp)return;
+  var root=document.documentElement,done=false,raf=0,quick=false,reduce=false;
+  try{quick=localStorage.getItem("gc-splash-seen")==="1";}catch(e){}
+  try{reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  function remember(){try{localStorage.setItem("gc-splash-seen","1");}catch(e){}}
+  function gone(){if(sp.parentNode)sp.parentNode.removeChild(sp);root.classList.remove("splashing");}
+  if(reduce){sp.classList.add("run","static","quick");remember();
+    setTimeout(function(){sp.classList.add("out");setTimeout(gone,450);},700);return;}
+  root.classList.add("splashing");sp.classList.add("run");if(quick)sp.classList.add("quick");
+  var safety=setTimeout(function(){finish(true);},quick?3200:8000);
+
+  var mark=sp.querySelector(".sp-mark"),word=sp.querySelector(".sp-word"),wtext=document.getElementById("sp-wtext"),wrect=document.getElementById("sp-wrect");
+  var pen=document.getElementById("sp-pencil"),shadow=document.getElementById("sp-shadow");
+  var clamp=function(v){return v<0?0:v>1?1:v;};
+  var EASE={lin:function(p){return .8*p+.2*p*p*(3-2*p);},io:function(p){return p*p*(3-2*p);},
+    out:function(p){return 1-Math.pow(1-p,2.4);}}; // confident lines: a fast attack and a slow finish
+
+  /* each centre line becomes a few offset sub-strokes of different weight and length, so the line
+     swells in the middle and tapers at both ends, the way pressure on a pencil does */
+  function prep(el){
+    var L=el.getTotalLength(),w=+el.getAttribute("data-w"),o=+el.getAttribute("data-o"),hatch=el.classList.contains("hatch");
+    var specs=hatch?[[.55,1,.08,.92,0,0],[1,.55,.25,.75,.15,-.15]]
+      :[[.5,1,0,1,0,0],[1,.6,.06,.92,.25,-.2],[.75,.4,.14,.98,-.22,.24]];
+    var cl=specs.map(function(s){var c=el.cloneNode(false);c.removeAttribute("class");
+      c.setAttribute("stroke-width",w*s[0]);c.setAttribute("transform","translate("+s[4]+" "+s[5]+")");
+      c.style.opacity=o*s[1];c.style.visibility="hidden";el.parentNode.insertBefore(c,el);return{c:c,a:s[2],b:s[3],o:o*s[1]};});
+    el.style.visibility="hidden";
+    return{el:el,L:L,cl:cl,d:+el.getAttribute("data-d"),e:EASE[el.getAttribute("data-e")]||EASE.io,hatch:hatch,q:el.hasAttribute("data-q"),inWord:!!el.closest(".sp-word")};
+  }
+  function setP(s,p){for(var i=0;i<s.cl.length;i++){var k=s.cl[i],seg=Math.min(k.b,p)-k.a;
+    if(seg<=.004){k.c.style.visibility="hidden";continue;}
+    k.c.style.visibility="visible";k.c.style.strokeDasharray=(seg*s.L)+" "+(s.L*3);k.c.style.strokeDashoffset=-k.a*s.L;}}
+  function scr(el,x,y){var m=el.getScreenCTM(),p=el.ownerSVGElement?el.ownerSVGElement.createSVGPoint():el.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(m);}
+  function at(s,f){var q=s.el.getPointAtLength(clamp(f)*s.L);return scr(s.el,q.x,q.y);}
+
+  var all=[].slice.call(sp.querySelectorAll(".sk")).map(prep);
+  var markS=all.filter(function(s){return !s.inWord;}),under=all.filter(function(s){return s.inWord;})[0];
+  var drawn=quick?markS.filter(function(s){return s.q;}):all; // quick launch: the pencil draws the hexagon and the profile only
+  var rest=quick?markS.filter(function(s){return !s.q;}):[];
+  var mainMark=drawn.filter(function(s){return !s.inWord;});
+
+  /* the timeline: travel (lifted arc) -> settle -> draw, for each stroke in turn */
+  var T=[],t=0,k=quick?.6:1;
+  function travel(to,d){T.push({k:"travel",to:to,t0:t,d:d});t+=d;}
+  function settle(d){T.push({k:"settle",t0:t,d:d});t+=d;}
+  function draw(s){s.t0=t;s.dd=Math.round(s.d*k);T.push({k:"draw",s:s,t0:t,d:s.dd});t+=s.dd;}
+  travel({start:mainMark[0]},quick?180:220);settle(50);
+  mainMark.forEach(function(s,i){if(i){travel({start:s},s.hatch?90:120);settle(s.hatch?30:45);}draw(s);});
+  var W0=0,WD=0;
+  if(!quick){travel({word:0},150);settle(40);W0=t;WD=480;T.push({k:"word",t0:t,d:WD});t+=WD;
+    if(under){travel({start:under},130);settle(45);draw(under);}}
+  var LIFT0=t;T.push({k:"away",t0:t,d:300});
+  var REST0=t;var HOLD=quick?140:350,END=t+HOLD;
+  if(!quick)wrect.setAttribute("width",0); // the wordmark stays hidden until the pencil writes it
+
+  var pos={x:innerWidth*.82,y:innerHeight*.12},rot=30,last={x:0,y:0},from=null;
+  function wordBox(){var b=wtext.getBBox();return b;}
+  function wordPt(p){var b=wordBox();return scr(wtext,b.x+b.width*p,b.y+b.height*.58);}
+  function target(to){return to.start?at(to.start,0):wordPt(0);}
+  function frame(now){
+    if(done)return;if(!frame.t0)frame.t0=now;var tt=now-frame.t0;
+    for(var i=0;i<drawn.length;i++){var s=drawn[i];setP(s,s.e(clamp((tt-s.t0)/s.dd)));}
+    if(rest.length){var r=clamp((tt-REST0+120)/180);rest.forEach(function(s){setP(s,1);s.cl.forEach(function(c){c.c.style.opacity=c.o*r;});});}
+    if(!quick){var wp=clamp((tt-W0)/WD);wp=EASE.lin(wp);var b=wordBox();wrect.setAttribute("x",b.x-4);wrect.setAttribute("width",Math.max(0,b.width*wp+4));}
+    // where is the pencil, and how high above the paper
+    var seg=null;for(var j=T.length-1;j>=0;j--){if(tt>=T[j].t0){seg=T[j];break;}}
+    var lift=0,dir=null,alpha=1;
+    if(seg){var u=clamp((tt-seg.t0)/seg.d);
+      if(seg.k==="draw"){var s2=seg.s,f=s2.e(u);pos=at(s2,f);var p2=at(s2,Math.min(1,f+.02)),p1=at(s2,Math.max(0,f-.02));dir={x:p2.x-p1.x,y:p2.y-p1.y};}
+      else if(seg.k==="word"){pos=wordPt(EASE.lin(u));dir={x:1,y:0};}
+      else if(seg.k==="travel"){if(seg.from==null)seg.from={x:pos.x,y:pos.y};var tg=target(seg.to),e=u*u*(3-2*u);
+        pos={x:seg.from.x+(tg.x-seg.from.x)*e,y:seg.from.y+(tg.y-seg.from.y)*e};lift=Math.sin(Math.PI*u)*(seg.t0===0?18:8)+(seg.t0===0?(1-u)*14:0);
+        dir={x:tg.x-seg.from.x,y:tg.y-seg.from.y};if(seg.t0===0)alpha=clamp(u*2.5);}
+      else if(seg.k==="settle"){lift=0;}
+      else if(seg.k==="away"){if(!seg.from)seg.from={x:pos.x,y:pos.y};var e2=u*u;pos={x:seg.from.x+e2*60,y:seg.from.y-e2*40};lift=4+u*26;alpha=1-clamp((u-.35)/.65);}
+    }else{alpha=0;}
+    if(dir&&(dir.x||dir.y)){var n=Math.hypot(dir.x,dir.y)||1,trg=30+3*(dir.x/n)-1.5*(dir.y/n);rot+=(trg-rot)*.18;} // the hand turns a little with the stroke
+    var sc=mark.getBoundingClientRect().width/120;
+    pen.setAttribute("opacity",alpha.toFixed(3));
+    pen.setAttribute("transform","translate("+pos.x.toFixed(1)+" "+(pos.y-lift).toFixed(1)+") rotate("+rot.toFixed(2)+") scale("+sc.toFixed(3)+")");
+    // the shadow: tight and dark while the tip touches the paper, softer and further off when lifted
+    shadow.setAttribute("opacity",(alpha*(.2-.009*Math.min(lift,14))).toFixed(3));
+    shadow.setAttribute("transform","translate("+(pos.x+2+lift*1.5).toFixed(1)+" "+(pos.y+2.5+lift*.9).toFixed(1)+") rotate("+(rot+3).toFixed(2)+") scale("+sc.toFixed(3)+")");
+    if(tt>=END){land(false);return;}
+    raf=requestAnimationFrame(frame);
+  }
+  /* the finished mark flies into the header logo while the paper fades away */
+  function land(fast){
+    if(done)return;done=true;clearTimeout(safety);cancelAnimationFrame(raf);remember();
+    all.forEach(function(s){setP(s,1);s.cl.forEach(function(c){c.c.style.opacity=c.o;});});
+    if(wrect)wrect.setAttribute("width",9999),wrect.setAttribute("x",-100);
+    var dur=fast?320:500,hm=document.querySelector(".brand .mark");
+    sp.style.setProperty("--fly",dur+"ms");sp.classList.add("landing");root.classList.add("revealing");
+    try{var a=mark.getBoundingClientRect(),b=hm.getBoundingClientRect();
+      if(b.width>0){mark.style.transform="translate("+((b.left+b.width/2)-(a.left+a.width/2))+"px,"+((b.top+b.height/2)-(a.top+a.height/2))+"px) scale("+(b.width/a.width)+")";}
+      else mark.style.opacity=0;}catch(e){mark.style.opacity=0;}
+    setTimeout(function(){root.classList.remove("splashing");mark.style.opacity=0;},dur);
+    setTimeout(gone,dur+220);
+    setTimeout(function(){root.classList.remove("revealing");},dur+1300);
+  }
+  function finish(fast){land(fast);}
+  raf=requestAnimationFrame(frame);
+  sp.addEventListener("pointerdown",function(){finish(true);});
+  window.addEventListener("keydown",function k(){window.removeEventListener("keydown",k);finish(true);});
+})();
+</script>
+<!-- the logo mark (header, empty sketchbook). A pencil seen end-on: the lacquered hexagon, the wood inside it, and a portrait drawn in it -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="gc-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <clipPath id="gc-hair"><path d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70L60 72V21Z"/></clipPath>
+    <path stroke-width="5.5" d="M60 9 104.2 34.5V85.5L60 111 15.8 85.5V34.5Z"/>
+    <path stroke-width="2" opacity=".55" d="M60 16.5 97.8 38.3V81.7L60 103.5 22.2 81.7V38.3Z"/>
+    <path stroke-width="4.6" d="M66 21C58 24 54 33 54 42.5 54 45 53 46.5 52 48 49.5 52 45 57 42.5 60.5 41.5 62 43.5 64.5 47.5 64.5 46 66.5 44 68.5 45 70.5 45.8 72.2 48.5 72.6 48 74.5 47 76.5 45.5 79 46.5 81.5 47.5 84 49.5 85 52 85.5 55 86 56.5 87.5 57 90 57.5 94 57.5 98 57 102.3"/>
+    <path stroke-width="3.2" opacity=".8" d="M66 21C82 17 93 29 92.5 46 92 57 87 64 81.5 70 79.5 73 79.5 82 80 92.5"/>
+    <path stroke-width="2.8" opacity=".8" d="M73.5 51C78 49.5 81 53 80 58 79.3 61.5 76.5 63 74.5 64.5"/>
+    <g clip-path="url(#gc-hair)" stroke-width="2.6" opacity=".7"><path d="M81 45.5 90.5 36M81.8 52.5 92 42.5M82.2 59.5 92 50M81 66.5 89.5 58"/></g>
+  </symbol>
+</svg>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Graphite Coach</h1>
-      <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.</p>
+    <div class="brand">
+      <svg class="mark" aria-hidden="true"><use href="#gc-mark"/></svg>
+      <div>
+        <h1>Graphite Coach</h1>
+        <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
+      </div>
     </div>
   </header>
 
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-book" aria-selected="true">Sketchbook</button>
-    <button class="tab" role="tab" id="tab-photo" aria-selected="false" disabled>1 · Photo</button>
-    <button class="tab" role="tab" id="tab-sketch" aria-selected="false" disabled>2 · Sketch</button>
-    <button class="tab" role="tab" id="tab-plan" aria-selected="false" disabled>3 · <span class="wide">Drawing p</span><span class="narrow">P</span>lan</button>
+    <button class="tab" role="tab" id="tab-book" aria-selected="true"><svg class="ti" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2z"/><path d="M4 14.5a2 2 0 0 1 2-2h9.5M7.5 6.5h5"/></svg><span class="lbl">Sketchbook</span></button>
+    <button class="tab" role="tab" id="tab-photo" aria-selected="false" disabled><span class="num" aria-hidden="true">1</span><span><span class="sr">1 · </span>Photo</span></button>
+    <button class="tab" role="tab" id="tab-sketch" aria-selected="false" disabled><span class="num" aria-hidden="true">2</span><span><span class="sr">2 · </span>Sketch</span></button>
+    <button class="tab" role="tab" id="tab-plan" aria-selected="false" disabled><span class="num" aria-hidden="true">3</span><span><span class="sr">3 · </span><span class="wide">Drawing p</span><span class="narrow">P</span>lan</span></button>
   </div>
 
 
   <section id="view-book" class="panel">
-    <div class="rowbtns"><button class="btn primary" id="newsketch">Start new sketch</button><button class="btn" id="trysample">Try it with a sample photo</button></div>
-    <p class="empty" id="bookempty" hidden>Your sketchbook is empty. Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing. Every sketch is saved here so you can stop and pick it up later.</p>
+    <div class="bookhead">
+      <div><h2>Your sketchbook</h2><p>Every sketch you start is kept here, so you can stop and pick it up later.</p></div>
+      <div class="rowbtns"><button class="btn primary" id="newsketch">Start new sketch</button><button class="btn" id="trysample">Try it with a sample photo</button></div>
+    </div>
+    <div class="empty" id="bookempty" hidden>
+      <svg viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <g transform="rotate(-4 76 60)"><rect x="32" y="10" width="80" height="100" rx="3" fill="var(--sheet)" stroke-width="1.6" opacity=".55"/>
+        <g transform="translate(40 18) scale(.6)"><use href="#gc-mark" width="120" height="120" opacity=".9"/></g>
+        <path d="M44 98h40" stroke-width="1.4" opacity=".35"/></g>
+        <g transform="translate(124 98) rotate(36)" stroke-width="1.6"><path d="M0 0-2-6H2Z" fill="currentColor"/><path d="M-2-6-5.5-17H5.5L2-6M-5.5-17V-66H5.5V-17M-1.8-17V-66"/></g>
+      </svg>
+      <h3>A blank sketchbook</h3>
+      <p>Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing. Every sketch is saved here so you can stop and pick it up later.</p>
+    </div>
     <div class="books" id="books"></div>
+    <details class="about">
+      <summary>About and privacy <span>Your photo never leaves your device</span></summary>
+      <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 3. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022) and the background is removed by U²-Net (Qin et al., 2020), both running on your device. Sketches you start are saved in this browser on this device only.</p>
+    </details>
   </section>
 
   <section id="view-photo" class="grid" hidden>
     <div class="stage">
-      <label class="dropzone" id="dropzone"><input id="file" type="file" accept="image/*"><b>Choose a photo</b><span>A clear, well-lit portrait works best.</span></label>
+      <label class="dropzone" id="dropzone"><input id="file" type="file" accept="image/*"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="12" width="48" height="40" rx="4"/><path d="M8 44l14-13 10 9 7-6 17 14"/><circle cx="42" cy="24" r="4.5"/></svg><b>Choose a photo</b><span>or drop it here. A clear, well-lit portrait works best.</span></label>
       <div class="cropwrap" id="cropwrap" hidden>
         <canvas id="photocanvas"></canvas>
         <div class="croprect" id="croprect"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
@@ -192,15 +564,21 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <div class="grades" id="grades"></div>
         <p class="hint">Harder leads cap how dark the drawing can go. Softer leads reach deeper blacks with more grain.</p>
       </div>
+      <div class="group"><h3>Tone</h3>
       <div class="ctrl"><label for="shade">Shading <output id="shade-o"></output></label><input id="shade" type="range" min="0" max="100" value="55"></div>
-      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
-      <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
-      <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
-      <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
       <div class="ctrl"><label for="bright">Brightness <output id="bright-o"></output></label><input id="bright" type="range" min="-50" max="50" value="0"></div>
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
+      </div>
+      <div class="group"><h3>Lines</h3>
+      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
+      <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
+      <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
+      <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
+      </div>
+      <div class="group"><h3>Paper</h3>
       <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
       <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
+      </div>
       <div class="nav">
         <button class="btn" id="backphoto">Back to photo</button>
         <button class="btn primary" id="planbtn">Plan my drawing</button>
@@ -227,11 +605,11 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <p class="look"><strong>When you're done:</strong> <span id="s-look"></span></p>
         <ul class="checks" id="s-checks"></ul>
       </div>
-      <div class="nav">
+      <div class="nav stepnav">
         <button class="btn" id="prev">Back</button>
         <button class="btn primary" id="next">Next step</button>
+        <button class="btn" id="donebtn">Mark as complete</button>
       </div>
-      <div class="nav"><button class="btn" id="donebtn">Mark as complete</button></div>
       <p id="savestat"></p>
       <div class="ctrl gridctl">
         <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
@@ -250,7 +628,6 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     </div>
   </section>
 
-  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 3. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022) and the background is removed by U²-Net (Qin et al., 2020), both running on your device. Sketches you start are saved in this browser on this device only.</p>
 </div>
 
 <script src="vendor/ort.wasm.min.js"></script>
@@ -483,7 +860,7 @@ async function aiLines(c){
     ox2.imageSmoothingQuality="high";ox2.drawImage(q,ox*k,oy*k,w*k,h*k,0,0,w,h);
     const d=ox2.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=1-d[i*4]/255;
     S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
-    render();renderStep();
+    render();renderStep();saveSoon(); // refresh the sketchbook thumbnail with the finished lines
   }catch(err){console.warn(err);if(job===AIJOB)aiStatus("Basic lines (AI drawing unavailable)");}
 }
 
@@ -708,13 +1085,43 @@ function renderStep(){
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
   $("prev").disabled=S.step===0;$("next").textContent=S.step===STEPS.length-1?"Start over":"Next step";
-  document.querySelectorAll(".dot").forEach((d,i)=>d.classList.toggle("done",!!S.done[i]));
+  document.querySelectorAll(".dot").forEach((d,i)=>{d.classList.toggle("done",!!S.done[i]);d.classList.toggle("past",i<S.step);});
   const d=!!S.done[S.step];$("donebtn").textContent=d?"Completed \u2713 (undo)":"Mark as complete";
   $("donebtn").setAttribute("aria-pressed",d);
 }
-STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>{S.step=i;renderStep();saveSoon();};$("dots").appendChild(d);});
-$("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();saveSoon();};
-$("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();saveSoon();};
+/* moving between steps: the old picture fades off the new one so the step's marks appear on the paper,
+   the step text slides in from the side you are heading, and going forward the new marks glow briefly.
+   Everything is cancelled and restarted on the next click, and skipped with reduced motion. */
+const RM=()=>!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+let FADE=null;
+function goStep(i){
+  const from=S.step,anim=i!==from&&!RM()&&!$("view-plan").hidden&&!!Element.prototype.animate,c=$("stepcanvas");
+  if(anim&&c.width){
+    if(!FADE){FADE=document.createElement("canvas");FADE.className="stepfade";FADE.setAttribute("aria-hidden","true");$("canvaswrap").insertBefore(FADE,$("glowcanvas"));}
+    FADE.getAnimations().forEach(a=>a.cancel());WIPE++;FADE.style.webkitMaskImage=FADE.style.maskImage="";FADE.style.opacity=1;FADE.width=c.width;FADE.height=c.height;FADE.getContext("2d").drawImage(c,0,0);
+  }
+  S.step=i;renderStep();saveSoon();
+  if(!anim)return;
+  const fwd=i>from;
+  if(FADE)wipe(fwd);
+  [...document.querySelector(".stepcard").children].forEach((el,k)=>{el.getAnimations().forEach(a=>a.cancel());
+    el.animate([{opacity:0,transform:`translateX(${fwd?16:-16}px)`},{opacity:1,transform:"none"}],{duration:320,delay:k*30,easing:"cubic-bezier(.2,.75,.25,1)",fill:"backwards"});});
+}
+/* forward: the old picture is rubbed away along a soft 45° edge from the top left, so the new marks
+   appear the way a hand works across the page. Back: a quick fade. */
+let WIPE=0;
+function wipe(fwd){
+  const id=++WIPE,F=FADE,mask=v=>{F.style.webkitMaskImage=F.style.maskImage=v;};
+  if(!fwd){mask("");F.style.opacity="";F.animate([{opacity:1},{opacity:0}],{duration:280,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});return;}
+  F.style.opacity=1;const t0=performance.now(),D=650;
+  const tick=now=>{if(id!==WIPE)return;const u=Math.min(1,(now-t0)/D),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,a=-10+e*150;
+    mask(`linear-gradient(135deg,transparent ${a-40}%,rgba(0,0,0,.35) ${a-22}%,rgba(0,0,0,.8) ${a-8}%,#000 ${a}%)`);
+    if(u<1)requestAnimationFrame(tick);else{F.style.opacity=0;mask("");}};
+  requestAnimationFrame(tick);
+}
+STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>goStep(i);$("dots").appendChild(d);});
+$("prev").onclick=()=>goStep(Math.max(0,S.step-1));
+$("next").onclick=()=>goStep(S.step===STEPS.length-1?0:S.step+1);
 $("ghost").onchange=renderStep;
 // phones have no hover: touching and holding the picture shows the glow until the finger lifts
 {const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
@@ -738,8 +1145,13 @@ const TABS=["book","photo","sketch","plan"];
 // how far the current sketch has got: 0 nothing open, 1 choosing the photo, 2 sketch generated, 3 drawing planned
 S.stage=0;
 function setStage(n){S.stage=n;$("tab-photo").disabled=n<1;$("tab-sketch").disabled=n<2;$("tab-plan").disabled=n<3;}
+/* sliders show how far along they are (the track fills up to the thumb) */
+function fillRange(el){const mn=+el.min||0,mx=+el.max||100;el.style.setProperty("--p",(100*(el.value-mn)/(mx-mn||1))+"%");}
+const fillAll=()=>document.querySelectorAll("input[type=range]").forEach(fillRange);
+document.addEventListener("input",e=>{if(e.target.type==="range")fillRange(e.target);});
 function show(tab){
   TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);});
+  fillAll();
   window.scrollTo({top:0});
   if(tab==="book")drawBook();
   if(tab==="photo")drawPhoto();
@@ -846,7 +1258,7 @@ $("rot-l").onclick=()=>{P.quarter--;P.crop=FULLCROP();photoDirty();};
 $("rot-r").onclick=()=>{P.quarter++;P.crop=FULLCROP();photoDirty();};
 $("tilt").addEventListener("input",e=>{P.tilt=+e.target.value;$("tilt-o").textContent=P.tilt+"°";photoDirty();});
 $("resetphoto").onclick=()=>{P.quarter=0;P.tilt=0;P.crop=FULLCROP();P.bg=false;
-  $("tilt").value=0;$("tilt-o").textContent="0°";$("bgrm").checked=false;setAspect(0);photoDirty();};
+  $("tilt").value=0;$("tilt-o").textContent="0°";$("bgrm").checked=false;setAspect(0);photoDirty();fillAll();};
 $("bgrm").onchange=async e=>{
   P.bg=e.target.checked;
   if(P.bg&&!P.mask){const ok=await cutOut();if(!ok){P.bg=false;e.target.checked=false;}}
@@ -920,7 +1332,7 @@ let saveT=0;
 function saveSoon(){
   if(!S.project||!DBOK)return;clearTimeout(saveT);
   saveT=setTimeout(async()=>{
-    try{const p={...S.project,...snapshot(),updated:Date.now()};S.project=p;await putProject(p);
+    try{const p={...S.project,...snapshot(),updated:Date.now()};if($("out").width>1&&S.cache.sketch)p.thumb=thumbOf($("out"));S.project=p;await putProject(p);
       $("savestat").textContent="Saved to your sketchbook";}catch(e){$("savestat").textContent="This browser would not save the sketch.";}
   },700);
 }
@@ -932,7 +1344,7 @@ const blobOf=c=>new Promise(r=>c.toBlob(r,"image/jpeg",.92));
 function newId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now());}
 function setPhoto(im,name){
   Object.assign(P,{img:im,name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
-  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";
+  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";fillAll();
   $("photoname").textContent=name;$("srcname").textContent=name;
   $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
   setAspect(0);drawPhoto();
@@ -957,6 +1369,7 @@ async function generateSketch(){
     await putProject(S.project);
   }catch(e){console.warn(e);}
   $("projname").value=S.project?S.project.name:P.name;
+  saveSoon(); // swaps the card's thumbnail for the pencil sketch once it is painted
 }
 /* a sketch's name can be changed from its sketchbook card or from the Sketch screen */
 async function renameProject(p,name){
@@ -991,8 +1404,8 @@ async function drawBook(){
   try{list=await allProjects();}catch(e){}
   list.sort((a,b)=>b.updated-a.updated);
   $("bookempty").hidden=list.length>0;
-  $("books").replaceChildren(...list.map(p=>{
-    const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";
+  $("books").replaceChildren(...list.map((p,idx)=>{
+    const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";el.style.setProperty("--i",Math.min(idx,12));
     const img=document.createElement("img");img.src=p.thumb;img.alt="";
     const b=document.createElement("input");b.className="namefield";b.type="text";b.maxLength=80;b.value=p.name;
     b.setAttribute("aria-label","Sketch name");b.title="Click to rename";
@@ -1000,7 +1413,7 @@ async function drawBook(){
     b.onchange=()=>renameProject(p,b.value).then(n=>{b.value=n;});
     const when=document.createElement("span");
     when.textContent="Started "+new Date(p.created||p.updated).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
-    const st=document.createElement("span");st.textContent=p.planned?`Step ${(p.step|0)+1} of ${STEPS.length} · ${done} done`:"Sketch ready, drawing not planned yet";
+    const st=document.createElement("span");st.textContent=p.planned?`${done} of ${STEPS.length} steps done · on step ${(p.step|0)+1}`:"Sketch ready, drawing not planned yet";
     const bar=document.createElement("div");bar.className="bar";const fill=document.createElement("i");
     fill.style.width=Math.round(100*done/STEPS.length)+"%";bar.appendChild(fill);
     const row=document.createElement("div");row.className="rowbtns";
