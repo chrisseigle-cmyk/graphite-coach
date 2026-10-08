@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Graphite Coach</title>
-<meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed seven-step plan.">
+<meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -68,6 +68,8 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 .btn.primary{background:var(--graphite);color:var(--paper)}
 .btn:disabled{opacity:.35;cursor:default}
 .toggle{display:flex;align-items:center;gap:8px;font-size:14px}
+.toggles{display:flex;flex-direction:column;gap:4px}
+.stepcard .look{border-left:3px solid var(--blue);padding:2px 0 2px 10px;font-size:14px}
 .note{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;margin:0;max-width:72ch}
 </style>
 </head>
@@ -76,7 +78,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <header>
     <div>
       <h1>Graphite Coach</h1>
-      <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed seven-step plan.</p>
+      <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.</p>
     </div>
     <label class="upload">Upload photo<input id="file" type="file" accept="image/*"></label>
   </header>
@@ -113,7 +115,8 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <div class="stage">
       <canvas id="stepcanvas"></canvas>
       <div class="cap">
-        <label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
+        <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
+        <label class="toggle"><input id="newmarks" type="checkbox"> Show this step's new marks in blue</label></span>
         <span id="stepcount"></span>
       </div>
     </div>
@@ -123,6 +126,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <span class="pencil" id="s-pencil"></span>
         <h2 id="s-title"></h2>
         <p id="s-body"></p>
+        <p class="look"><strong>When you're done:</strong> <span id="s-look"></span></p>
         <ul class="checks" id="s-checks"></ul>
       </div>
       <div class="nav">
@@ -140,7 +144,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     </div>
   </section>
 
-  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 2. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), running on your device.</p>
+  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 3. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), running on your device.</p>
 </div>
 
 <script src="vendor/ort.wasm.min.js"></script>
@@ -387,54 +391,156 @@ GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="gra
 
 $("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{$("srcname").textContent=f.name;loadSource(im);URL.revokeObjectURL(im.src);};im.onerror=()=>{$("srcname").textContent="That file could not be read as an image. Try a JPEG or PNG.";};im.src=URL.createObjectURL(f);});
 
-/* ---------- drawing plan: fixed step library ---------- */
+/* ---------- drawing plan: fixed step library ----------
+   Each step's picture is the whole drawing as it should look once that step is done:
+   everything from earlier steps stays, and the step adds its own marks on top. */
 function grade(i){return GRADES[Math.max(0,Math.min(GRADES.length-1,i))].id;}
 const STEPS=[
  {title:"Set up a light grid",pencil:()=>"2H · very light",
   body:"Draw the same grid shown here on your paper, with the paper cut to the same proportions as the reference. Change the cell shape and density under Grid to suit your paper. Keep the lines faint enough to erase. The grid lets you place every later shape by its square instead of guessing distances across the whole face.",
-  checks:["Paper ratio matches the photo","Lines barely visible at arm's length"],layer:"grid"},
- {title:"Block in the big shapes",pencil:()=>"2H",
-  body:"Look only at the largest masses: the head as one egg shape, the neck, the shoulder line, the biggest shadow shape. Use straight, angled strokes instead of curves. Squint at the reference to lose the detail.",
-  checks:["Head fits the same grid squares as the photo","Tilt of the head matches","No features drawn yet"],layer:"big"},
+  look:"Just the grid. Nothing of the face yet.",
+  checks:["Paper ratio matches the photo","Lines barely visible at arm's length"]},
+ {title:"Block in the big shapes",pencil:()=>"2H · light",
+  body:"Squint at the reference until the detail disappears. Draw the outline of the head and hair, the neck and shoulders, and the edge of the biggest shadow, using short straight lines. Hold the pencil far back and press lightly: these are guide lines you will mostly erase later.",
+  look:"A few faint, straight-edged shapes, like a paper cut-out. No eyes, nose or mouth yet.",
+  checks:["Head fits the same grid squares as the photo","Tilt of the head matches","No features drawn yet"]},
+ {title:"Place the features",pencil:()=>"2H",
+  body:"Mark where the eyes, nose, mouth and ears sit inside the head shape, counting grid squares from the reference. Keep the marks simple and light. Check the spacing before any detail: the eyes sit about halfway down the head, and the gap between them is about one eye wide.",
+  look:"Light marks for each feature inside the block-in shapes. Still no shading.",
+  checks:["Eyes sit roughly halfway down the head","Gap between the eyes is about one eye width","Nose and mouth line up under the eyes the way they do in the photo"]},
  {title:"Refine the contours",pencil:()=>"H",
-  body:"Now place the features and the edges between light and shadow. Measure each one against its grid square. Draw the shape of the shadow under the nose and inside the eye sockets, not outlines of a nose and eyes.",
-  checks:["Eyes sit roughly halfway down the head","Gap between the eyes is about one eye width","Shadow shapes are closed so you can fill them"],layer:"contour"},
- {title:"Map three values",pencil:()=>"HB · light pressure",
-  body:"Divide everything into three groups: lights (leave as paper), mid-tones, and darks. Fill the mid-tone and dark areas with one even, light layer of HB. This is the step most beginners skip, and it is what makes a drawing look solid.",
-  checks:["Every area belongs to one of three values","Lights are untouched paper","Strokes run in one consistent direction"],layer:"bands"},
- {title:"Commit to the darks",pencil:()=>grade(S.grade)+" · build in layers",
-  body:"Go into the darkest group only: pupils, nostrils, the deepest socket and jaw shadows, hair masses. Build darkness with several light layers rather than one hard press, which burnishes the paper and stops it taking more graphite.",
-  checks:["Darkest darks match the reference","Hard edges only where the photo has hard edges"],layer:"darks"},
- {title:"Shape the mid-tones",pencil:()=>grade(Math.max(1,S.grade-2))+" + blending stump",
-  body:"Work the mid-tones to turn the forms: the side of the nose, the cheek rolling away from the light, the plane change at the temple. Blend toward the light, never from light into dark, so the clean paper stays clean.",
-  checks:["Transitions are gradual on round forms","Core shadow is darker than reflected light"],layer:"mids"},
+  body:"Draw the real edges now: the jaw, the hairline, the shape of each eye, the nostrils, the lips, the collar. Follow the reference square by square. Once a new line is right, lightly erase the straight block-in lines around it so they don't compete.",
+  look:"A clean, light line drawing. The straight block-in lines are faded or gone.",
+  checks:["Every feature is drawn as a shape, not a symbol","Block-in lines are erased where the real edge replaced them"]},
+ {title:"Outline the shadow shapes",pencil:()=>"H · light",
+  body:"Find the darkest third of the picture: under the jaw, the eye sockets, the shadow side of the nose, the hair. Draw a light line around each of those areas, like a map. Close every shape so you can fill it in later.",
+  look:"Your line drawing plus closed outlines around each dark area. Still no shading.",
+  checks:["Every dark area has a closed outline","Shadow shapes match the photo, not what you expect a face to look like"]},
+ {title:"Lay the first light layer",pencil:()=>"HB · light, even pressure",
+  body:"Shade everything except the brightest areas with one light, even layer. Keep your strokes going in one direction and the pressure gentle. You will shade over your lines here, and that's expected: they should still show faintly through the tone. Leave the brightest areas as clean paper.",
+  look:"The drawing is a soft grey everywhere except the bright areas, which are still white paper. Your lines show through the grey.",
+  checks:["Bright areas are untouched paper","One even tone, no dark patches yet","Your lines still show through"]},
+ {title:"Darken the shadow shapes",pencil:()=>grade(Math.max(2,S.grade-1))+" · build in layers",
+  body:"Go back into the shadow shapes you outlined in step 5 and add a second layer, crossing your first strokes at a slight angle. Build the darkness with several light layers rather than one hard press, which polishes the paper so it stops taking graphite.",
+  look:"Three clear values: white paper, light grey, and a darker grey inside each shadow shape.",
+  checks:["Every area is one of three values","Shadow edges are soft where the photo is soft and sharp where it is sharp"]},
+ {title:"Add the darkest accents",pencil:()=>grade(S.grade)+" · firmer pressure",
+  body:"Now the few darkest spots: the pupils, the nostrils, the line between the lips, the deepest parts of the hair and the shadow right under the chin. Press firmer here, but keep these accents small.",
+  look:"A handful of very dark accents that make the face come forward. Everything else is the same as the last step.",
+  checks:["Darkest darks match the reference","Accents are small; most of the drawing is still mid-tone"]},
+ {title:"Blend and turn the forms",pencil:()=>"Blending stump · "+grade(Math.max(1,S.grade-2)),
+  body:"Smooth the shading on the skin with a blending stump or a tissue so the values melt into each other: the cheek rounding away from the light, the side of the nose, the temple. Start each stroke in the lighter area and move into the darker one, so you don't drag graphite into the lights. Leave the hair with visible pencil strokes.",
+  look:"Smooth, gradual shading on the skin; the hair still shows its strokes. The bright areas may have picked up a light grey film, which the next step fixes.",
+  checks:["Round forms turn gradually, with no hard bands","Hair and clothing still show pencil strokes"]},
  {title:"Lift highlights and finish",pencil:()=>"Kneaded eraser · "+grade(S.grade),
-  body:"Press a kneaded eraser into the brightest spots to lift them: the eye catchlights, the bridge of the nose, the lower lip. Erase leftover grid lines. Then step back two metres and compare the drawing to the reference at the same size.",
-  checks:["Catchlights in both eyes","No grid lines left in light areas","Value range runs from paper white to your darkest pencil"],layer:"full"}
+  body:"Press a kneaded eraser into the brightest spots to lift them clean: the catchlights in the eyes, the bridge of the nose, the lower lip. Erase the grid. Then step back two metres and compare the drawing with the reference at the same size.",
+  look:"The finished drawing: clean highlights, no grid, values running from paper white to your darkest pencil.",
+  checks:["Catchlights in both eyes","No grid lines left","Value range runs from paper white to your darkest pencil"]}
 ];
 
-function bands(){
-  if(S.cache.bands)return S.cache.bands;
-  const {w,h}=S,g=blur(contrasted(params().contrast),w,h,3),b=new Uint8Array(g.length);
-  const sorted=Float32Array.from(g).sort(),t1=sorted[Math.floor(g.length*.33)],t2=sorted[Math.floor(g.length*.66)];
-  for(let i=0;i<g.length;i++)b[i]=g[i]<t1?2:g[i]<t2?1:0;
-  return S.cache.bands=b;
+/* contour lines of a field at one level (marching squares on a grid of cs pixels), chained into polylines */
+function isoLines(f,w,h,lv,cs){
+  const gw=Math.floor((w-1)/cs)+1,gh=Math.floor((h-1)/cs)+1;
+  const V=(gx,gy)=>f[Math.min(h-1,Math.round(gy*cs))*w+Math.min(w-1,Math.round(gx*cs))];
+  const pt=new Map(),segs=[],adj=new Map();
+  const P=(gx,gy,v)=>{const k=(gy*gw+gx)*2+v;if(!pt.has(k)){const a=V(gx,gy),b=v?V(gx,gy+1):V(gx+1,gy),t=Math.abs(b-a)<1e-9?.5:(lv-a)/(b-a);pt.set(k,v?[gx*cs,(gy+t)*cs]:[(gx+t)*cs,gy*cs]);}return k;};
+  // cell edges: 0 top, 1 right, 2 bottom, 3 left; corners darker than the level are "inside"
+  const TAB=[[],[3,0],[0,1],[3,1],[1,2],[3,0,1,2],[0,2],[3,2],[2,3],[0,2],[0,1,2,3],[1,2],[1,3],[0,1],[3,0],[]];
+  for(let gy=0;gy<gh-1;gy++)for(let gx=0;gx<gw-1;gx++){
+    const c=(V(gx,gy)<lv?1:0)|(V(gx+1,gy)<lv?2:0)|(V(gx+1,gy+1)<lv?4:0)|(V(gx,gy+1)<lv?8:0),t=TAB[c];
+    for(let j=0;j<t.length;j+=2){const e=[t[j],t[j+1]].map(E=>E===0?P(gx,gy,0):E===1?P(gx+1,gy,1):E===2?P(gx,gy+1,0):P(gx,gy,1));
+      const id=segs.length;segs.push(e);for(const k of e){if(!adj.has(k))adj.set(k,[]);adj.get(k).push(id);}}
+  }
+  const used=new Uint8Array(segs.length),lines=[];
+  for(let s=0;s<segs.length;s++){if(used[s])continue;used[s]=1;const ch=[segs[s][0],segs[s][1]];
+    for(const tail of[true,false])for(;;){const k=tail?ch[ch.length-1]:ch[0],nx=(adj.get(k)||[]).find(i=>!used[i]);if(nx===undefined)break;
+      used[nx]=1;const o=segs[nx][0]===k?segs[nx][1]:segs[nx][0];if(tail)ch.push(o);else ch.unshift(o);}
+    lines.push(ch.map(k=>pt.get(k)));}
+  return lines;
 }
-function stepTone(layer){
-  const {w,h}=S,n=w*h,out=new Float32Array(n).fill(1);
-  if(layer==="grid")return out;
-  const sk=S.cache.sketch||sketchTone(params());
-  if(layer==="full")return sk;
-  const big=edges(blur(S.gray,w,h,4),w,h,2,9,14);
-  if(layer==="big"){for(let i=0;i<n;i++)out[i]=1-big[i]*.75;return out;}
-  const con=S.cache.ailines||edges(contrasted(params().contrast),w,h,1,3.5,12);
-  const lines=i=>1-Math.max(big[i]*.4,con[i]*.7);
-  if(layer==="contour"){for(let i=0;i<n;i++)out[i]=lines(i);return out;}
-  const b=bands();
-  if(layer==="bands"){for(let i=0;i<n;i++)out[i]=Math.min(lines(i),[1,.72,.48][b[i]]);return out;}
-  if(layer==="darks"){for(let i=0;i<n;i++)out[i]=b[i]===2?Math.min(sk[i],.48):Math.min(lines(i),[1,.72][b[i]]);return out;}
-  if(layer==="mids"){for(let i=0;i<n;i++)out[i]=b[i]>0?sk[i]:Math.min(1,Math.max(sk[i],.9));return out;}
-  return sk;
+/* Douglas-Peucker: fewer, straighter segments the larger eps is (block-in lines are drawn straight) */
+function simplify(p,eps){
+  if(p.length<3)return p;
+  if(Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<1e-6){const m=p.length>>1;return simplify(p.slice(0,m+1),eps).concat(simplify(p.slice(m),eps).slice(1));}
+  const keep=new Uint8Array(p.length);keep[0]=keep[p.length-1]=1;const st=[[0,p.length-1]];
+  while(st.length){const[a,b]=st.pop(),[ax,ay]=p[a],dx=p[b][0]-ax,dy=p[b][1]-ay,L=Math.hypot(dx,dy)||1;let md=0,mi=-1;
+    for(let i=a+1;i<b;i++){const d=Math.abs((p[i][0]-ax)*dy-(p[i][1]-ay)*dx)/L;if(d>md){md=d;mi=i;}}
+    if(md>eps){keep[mi]=1;st.push([a,mi],[mi,b]);}}
+  return p.filter((_,i)=>keep[i]);
+}
+const plen=p=>{let l=0;for(let i=1;i<p.length;i++)l+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);return l;};
+/* draw polylines the way a pencil does: thin, light, slightly wobbly, sometimes gone over twice, ends overshooting */
+function pencilLines(lines,o){
+  const {w,h}=S,r=rng(o.seed),c=document.createElement("canvas");c.width=w;c.height=h;
+  const x=c.getContext("2d",{willReadFrequently:true});x.strokeStyle="#000";x.lineCap="round";x.lineJoin="round";
+  for(const p of lines)for(let pass=0;pass<o.passes;pass++){
+    const q=p.map(([px,py])=>[px+(r()-.5)*o.jit,py+(r()-.5)*o.jit]);
+    if(o.over&&q.length>1){const e=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1],l=Math.hypot(dx,dy)||1,k=o.over*(.4+r()*.8)/l;return[a[0]+dx*k,a[1]+dy*k];};
+      q[0]=e(q[0],q[1]);q[q.length-1]=e(q[q.length-1],q[q.length-2]);}
+    x.globalAlpha=o.alpha*(.7+r()*.5);x.lineWidth=o.lw*(.8+r()*.4);x.beginPath();x.moveTo(q[0][0],q[0][1]);
+    for(let i=1;i<q.length;i++)x.lineTo(q[i][0],q[i][1]);x.stroke();
+  }
+  const d=x.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=d[i*4+3]/255;return ink;
+}
+
+/* every mark the plan draws, worked out once per photo and settings */
+function planLayers(){
+  const sk=S.cache.sketch||(S.cache.sketch=sketchTone(params())),AI=S.cache.ailines;
+  if(S.cache.plan&&S.cache.plan.sk===sk&&S.cache.plan.ai===AI)return S.cache.plan;
+  const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,st=strokes(),F=S.focus;
+  // graphite only catches on the raised grain of the paper, so every mark is a little speckled
+  const grain=i=>.5+.5*st.tooth[i];
+  const pct=(a,q)=>Float32Array.from(a).sort()[Math.floor(a.length*q)];
+  // big shapes: the photo blurred until only the large masses are left, outlined with a few straight lines
+  const big=blur(S.gray,w,h,Math.round(9*sc));
+  const blockLines=[pct(big,.3),pct(big,.62)].flatMap(lv=>isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))))
+    .filter(p=>plen(p)>45*sc).map(p=>simplify(p,7*sc));
+  const block=pencilLines(blockLines,{seed:11,passes:2,jit:1.6*sc,over:6*sc,lw:1.1*sc,alpha:.32});
+  // the three-value map, read from the finished drawing so it agrees with it:
+  // lights (left as paper), mid-tones, and the darkest half of the shaded area
+  const g3=blur(sk,w,h,Math.round(3*sc)),t2=.88,shaded=g3.filter(v=>v<t2),t1=shaded.length?pct(shaded,.45):.5;
+  const shadowLines=isoLines(g3,w,h,t1,Math.max(1,Math.round(1.5*sc))).filter(p=>plen(p)>18*sc).map(p=>simplify(p,1.2*sc));
+  const shadow=pencilLines(shadowLines,{seed:23,passes:1,jit:.6*sc,over:0,lw:.9*sc,alpha:.55});
+  // contour lines: the AI line drawing, kept thin (only the core of each line)
+  const con=AI||edges(contrasted(params().contrast),w,h,1,3.5,12);
+  const L={block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),sk,ai:AI};
+  for(let i=0;i<n;i++){
+    const ln=smooth(.2,.75,con[i])*grain(i),x=i%w,y=(i/w)|0;
+    const near=1-smooth(.45,.75,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)); // the face only, not the hair
+    L.feat[i]=.42*ln*near;L.line[i]=.5*ln;
+    L.block[i]*=grain(i);L.shadow[i]*=grain(i);
+    // one light, even hatched layer over everything darker than the lights...
+    const m1=smooth(t2+.015,t2-.015,g3[i]),m2=smooth(t1+.015,t1-.015,g3[i]);
+    const hl=1-(1-st.ink[0][i])*(1-st.ink[1][i])*(1-st.ink[2][i]);
+    L.tone1[i]=m1*clamp(.12+.75*hl)*grain(i);
+    // ...then a second, crossing layer inside the shadow shapes
+    const hd=1-(1-st.ink[3][i])*(1-st.ink[4][i]);
+    L.tone2[i]=m2*clamp(.15+.85*hd)*grain(i);
+  }
+  L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
+  return S.cache.plan=L;
+}
+/* how much graphite is on the paper after step k (0 = paper, 1 = darkest), as tone (1 = paper) */
+function stepTone(k){
+  const L=planLayers();
+  if(!L.tones)L.tones=[];
+  if(L.tones[k])return L.tones[k];
+  const n=S.w*S.h,out=new Float32Array(n),sk=L.sk;
+  for(let i=0;i<n;i++){
+    let lit=1;
+    if(k>=1)lit*=1-L.block[i]*(k>=3?.4:1); // block-in lines are lightly erased once the real contours are in
+    if(k>=2)lit*=1-L.feat[i];
+    if(k>=3)lit*=1-L.line[i];
+    if(k>=4)lit*=1-L.shadow[i];
+    if(k>=5)lit*=1-.3*L.tone1[i];
+    if(k>=6)lit*=1-.32*L.tone2[i];
+    // the darkest accents are taken straight from the finished drawing
+    if(k>=7)lit=Math.min(lit,1-(1-sk[i])*smooth(.5,.28,sk[i]));
+    // blending turns the hatched values into the finished smooth shading, with a grey film over the lights
+    if(k>=8)lit=k>=9?sk[i]:Math.min(sk[i],1-.07*L.film[i]);
+    out[i]=lit;
+  }
+  return L.tones[k]=out;
 }
 /* grid overlay: cells of the chosen width:height, "cols" cells across; rows run from the top and the last row may be partial */
 const RATIOS=[[1,1,"1:1 squares"],[3,4,"3:4"],[4,3,"4:3"],[2,3,"2:3"],[3,2,"3:2"]];
@@ -450,10 +556,17 @@ function drawGrid(ctx,strong){
 function gridLabel(){const {cols,rows}=gridDims();$("gdens-o").textContent=`${cols} × ${rows} cells`;}
 function renderStep(){
   if(!S.gray)return;
-  const st=STEPS[S.step],c=$("stepcanvas");
-  const ctx=paint(c,stepTone(st.layer),$("ghost").checked);
-  if(S.grid.on)drawGrid(ctx,st.layer==="grid");
-  $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;
+  const st=STEPS[S.step],k=S.step,c=$("stepcanvas"),tone=stepTone(k);
+  const ctx=paint(c,tone,$("ghost").checked);
+  if($("newmarks").checked&&k>0){
+    // tint what this step added in blue so it stands apart from the marks already on the paper
+    const prev=stepTone(k-1),img=ctx.getImageData(0,0,S.w,S.h),d=img.data;
+    for(let i=0,j=0;i<tone.length;i++,j+=4){const m=smooth(.015,.08,prev[i]-tone[i]);if(m<=0)continue;const t=tone[i];
+      d[j]+=(25+(250-25)*t-d[j])*m;d[j+1]+=(85+(249-85)*t-d[j+1])*m;d[j+2]+=(185+(245-185)*t-d[j+2])*m;}
+    ctx.putImageData(img,0,0);
+  }
+  if(S.grid.on&&k<STEPS.length-1)drawGrid(ctx,k===0); // the grid is erased in the last step
+  $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;$("s-look").textContent=st.look;
   $("s-checks").replaceChildren(...st.checks.map(t=>{const li=document.createElement("li");li.textContent=t;return li;}));
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
@@ -462,7 +575,7 @@ function renderStep(){
 STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>{S.step=i;renderStep();};$("dots").appendChild(d);});
 $("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();};
 $("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();};
-$("ghost").onchange=renderStep;
+$("ghost").onchange=renderStep;$("newmarks").onchange=renderStep;
 S.grid={on:true,ratio:0,cols:4};
 RATIOS.forEach((r,i)=>{const b=document.createElement("button");b.className="grade ratio";b.textContent=r[2];b.setAttribute("aria-pressed",i===S.grid.ratio);
   b.onclick=()=>{S.grid.ratio=i;document.querySelectorAll(".ratio").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));gridLabel();renderStep();};$("ratios").appendChild(b);});
