@@ -53,6 +53,12 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 .grades{display:flex;flex-wrap:wrap;gap:6px}
 .gridctl{border-top:1px solid var(--rule);padding-top:14px;gap:8px}
 .gridctl .toggle{justify-content:flex-start;font-weight:600}
+.gridopts{display:flex;flex-direction:column;gap:8px}
+.gridopts summary{cursor:pointer;font-weight:600;color:var(--muted);list-style-position:inside}
+.gridopts[open] summary{margin-bottom:4px;color:var(--graphite)}
+.gridopts .ctrl{gap:6px}
+.swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--sheet);box-shadow:0 0 0 1px var(--rule);cursor:pointer;padding:0}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--graphite)}
 .grade{font:500 13px var(--mono);padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--graphite);cursor:pointer}
 .grade[aria-pressed="true"]{background:var(--graphite);color:var(--paper);border-color:var(--graphite)}
 .steplist{display:flex;flex-wrap:wrap;gap:6px}
@@ -135,11 +141,17 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       </div>
       <div class="ctrl gridctl">
         <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
-        <label>Cell shape (width : height)</label>
-        <div class="grades" id="ratios"></div>
-        <label for="gdens">Grid density <output id="gdens-o"></output></label>
-        <input id="gdens" type="range" min="2" max="16" value="4">
-        <p class="hint">Slide right for more, smaller cells. Draw the same grid on your paper so every square matches.</p>
+        <details class="gridopts">
+          <summary>Grid options</summary>
+          <div class="ctrl"><label>Cell shape (width : height)</label><div class="grades" id="ratios"></div></div>
+          <div class="ctrl"><label for="gdens">Grid density <output id="gdens-o"></output></label>
+          <input id="gdens" type="range" min="2" max="16" value="4">
+          <p class="hint">Slide right for more, smaller cells. Draw the same grid on your paper so every square matches.</p></div>
+          <div class="ctrl"><label>Line color</label><div class="grades" id="gcolors"></div></div>
+          <div class="ctrl"><label for="gop">Opacity <output id="gop-o"></output></label><input id="gop" type="range" min="10" max="100" value="35"></div>
+          <div class="ctrl"><label for="gthick">Thickness <output id="gthick-o"></output></label><input id="gthick" type="range" min="1" max="5" step=".5" value="1"></div>
+          <div class="ctrl"><label>Line type</label><div class="grades" id="gtypes"></div></div>
+        </details>
       </div>
     </div>
   </section>
@@ -545,13 +557,17 @@ function stepTone(k){
 /* grid overlay: cells of the chosen width:height, "cols" cells across; rows run from the top and the last row may be partial */
 const RATIOS=[[1,1,"1:1 squares"],[3,4,"3:4"],[4,3,"4:3"],[2,3,"2:3"],[3,2,"3:2"]];
 function gridDims(){const [rw,rh]=RATIOS[S.grid.ratio],cw=S.w/S.grid.cols,ch=cw*rh/rw;return{cw,ch,cols:S.grid.cols,rows:Math.ceil(S.h/ch-1e-6)};}
+const GCOLORS=[["Blue","47,109,181"],["Red","196,56,48"],["Green","34,135,86"],["Graphite","38,41,47"]];
+const GTYPES=["Solid","Dashed","Dotted"];
 function drawGrid(ctx,strong){
-  const {cw,ch,cols,rows}=gridDims(),lw=Math.max(1,Math.round(S.w/640));
-  // every step keeps the grid as faint reference blue; step 1 shows it strongly
-  ctx.strokeStyle=strong?"rgba(47,109,181,.85)":"rgba(47,109,181,.32)";ctx.lineWidth=strong?1.5*lw:lw;ctx.beginPath();
-  for(let k=1;k<cols;k++){const x=Math.round(k*cw)+.5;ctx.moveTo(x,0);ctx.lineTo(x,S.h);}
-  for(let k=1;k<rows;k++){const y=Math.round(k*ch)+.5;ctx.moveTo(0,y);ctx.lineTo(S.w,y);}
-  ctx.stroke();ctx.strokeRect(.5,.5,S.w-1,S.h-1);
+  const {cw,ch,cols,rows}=gridDims(),G=S.grid,lw=G.thick*Math.max(1,S.w/640)*(strong?1.5:1);
+  // step 1 is about drawing the grid, so it shows the grid more strongly than the later steps
+  ctx.strokeStyle=`rgba(${GCOLORS[G.color][1]},${strong?Math.min(1,G.op*2.4):G.op})`;ctx.lineWidth=lw;
+  ctx.lineCap=G.type===2?"round":"butt";ctx.setLineDash(G.type===1?[6*lw,4*lw]:G.type===2?[.01,3*lw]:[]);
+  const a=lw%2?.5:0;ctx.beginPath();
+  for(let k=1;k<cols;k++){const x=Math.round(k*cw)+a;ctx.moveTo(x,0);ctx.lineTo(x,S.h);}
+  for(let k=1;k<rows;k++){const y=Math.round(k*ch)+a;ctx.moveTo(0,y);ctx.lineTo(S.w,y);}
+  ctx.stroke();ctx.strokeRect(lw/2,lw/2,S.w-lw,S.h-lw);ctx.setLineDash([]);
 }
 function gridLabel(){const {cols,rows}=gridDims();$("gdens-o").textContent=`${cols} × ${rows} cells`;}
 function renderStep(){
@@ -576,7 +592,15 @@ STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot"
 $("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();};
 $("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();};
 $("ghost").onchange=renderStep;$("newmarks").onchange=renderStep;
-S.grid={on:true,ratio:0,cols:4};
+S.grid={on:true,ratio:0,cols:4,color:0,op:.35,thick:1,type:0};
+function pickers(id,items,key,cls,make){items.forEach((it,i)=>{const b=document.createElement("button");b.className=cls;make(b,it);b.setAttribute("aria-pressed",i===S.grid[key]);
+  b.onclick=()=>{S.grid[key]=i;document.querySelectorAll("#"+id+" button").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));renderStep();};$(id).appendChild(b);});}
+pickers("gcolors",GCOLORS,"color","swatch",(b,c)=>{b.style.background=`rgb(${c[1]})`;b.title=b.ariaLabel=c[0];});
+pickers("gtypes",GTYPES,"type","grade",(b,t)=>{b.textContent=t;});
+function gridStyleLabels(){$("gop-o").textContent=Math.round(S.grid.op*100)+"%";$("gthick-o").textContent=S.grid.thick+" px";}
+gridStyleLabels();
+$("gop").addEventListener("input",e=>{S.grid.op=e.target.value/100;gridStyleLabels();renderStep();});
+$("gthick").addEventListener("input",e=>{S.grid.thick=+e.target.value;gridStyleLabels();renderStep();});
 RATIOS.forEach((r,i)=>{const b=document.createElement("button");b.className="grade ratio";b.textContent=r[2];b.setAttribute("aria-pressed",i===S.grid.ratio);
   b.onclick=()=>{S.grid.ratio=i;document.querySelectorAll(".ratio").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));gridLabel();renderStep();};$("ratios").appendChild(b);});
 $("grid-on").onchange=e=>{S.grid.on=e.target.checked;renderStep();};
