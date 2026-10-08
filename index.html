@@ -84,6 +84,31 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 @media (prefers-reduced-motion:reduce){#glowcanvas{animation:none!important}}
 .peekhint{font-size:12.5px;color:var(--muted);margin:0}
 .stepcard .look{border-left:3px solid var(--blue);padding:2px 0 2px 10px;font-size:14px}
+/* photo editing: the picture with a drag-to-crop box over it */
+.cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.croprect{position:absolute;box-shadow:0 0 0 9999px rgba(20,22,25,.5);outline:1px solid rgba(255,255,255,.9);cursor:move}
+.croprect i{position:absolute;width:22px;height:22px;background:#fff;border:1px solid var(--graphite);border-radius:3px}
+.croprect i[data-h="nw"]{left:-11px;top:-11px;cursor:nwse-resize}
+.croprect i[data-h="ne"]{right:-11px;top:-11px;cursor:nesw-resize}
+.croprect i[data-h="sw"]{left:-11px;bottom:-11px;cursor:nesw-resize}
+.croprect i[data-h="se"]{right:-11px;bottom:-11px;cursor:nwse-resize}
+.rowbtns{display:flex;flex-wrap:wrap;gap:6px}
+.ctrl label.toggle{justify-content:flex-start}
+#savestat{margin:0}
+/* sketchbook */
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.book{display:flex;flex-direction:column;gap:6px;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:8px;text-align:left}
+.book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:3px;background:var(--paper)}
+.book b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.book span{font-size:12.5px;color:var(--muted)}
+.book .rowbtns{margin-top:2px}
+.book .btn{padding:5px 12px;font-size:13px}
+.bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue)}
+.empty{color:var(--muted);max-width:60ch}
+.dot.done{border-color:var(--blue);color:var(--blue);font-weight:700}
+.dot.done[aria-current="step"]{color:#fff}
+#savestat{font-size:12.5px;color:var(--muted)}
 .note{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;margin:0;max-width:72ch}
 </style>
 </head>
@@ -98,9 +123,47 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   </header>
 
   <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-book" aria-selected="false">Sketchbook</button>
+    <button class="tab" role="tab" id="tab-photo" aria-selected="false">Photo</button>
     <button class="tab" role="tab" id="tab-sketch" aria-selected="true">Sketch</button>
     <button class="tab" role="tab" id="tab-plan" aria-selected="false">Drawing plan</button>
   </div>
+
+
+  <section id="view-book" class="panel" hidden>
+    <p class="empty" id="bookempty" hidden>Your sketchbook is empty. Upload a photo, tidy it up on the Photo tab, then press Start sketching: the drawing plan is saved here so you can stop and pick it up later.</p>
+    <div class="books" id="books"></div>
+  </section>
+
+  <section id="view-photo" class="grid" hidden>
+    <div class="stage">
+      <div class="cropwrap" id="cropwrap">
+        <canvas id="photocanvas"></canvas>
+        <div class="croprect" id="croprect"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+      </div>
+      <div class="cap"><span id="photoname">Sample: plaster head study</span><span id="photostat"></span></div>
+    </div>
+    <div class="panel">
+      <div class="ctrl">
+        <label>Rotate</label>
+        <div class="rowbtns"><button class="btn" id="rot-l">Left 90°</button><button class="btn" id="rot-r">Right 90°</button></div>
+      </div>
+      <div class="ctrl"><label for="tilt">Straighten <output id="tilt-o"></output></label><input id="tilt" type="range" min="-15" max="15" step=".5" value="0"></div>
+      <div class="ctrl">
+        <label>Crop shape</label>
+        <div class="grades" id="aspects"></div>
+        <p class="hint">Drag inside the box to move it, or drag a corner to resize. The part outside the box is cut off.</p>
+      </div>
+      <div class="ctrl">
+        <label class="toggle"><input id="bgrm" type="checkbox"> Remove the background</label>
+        <p class="hint">Keeps the person and turns everything behind them to plain paper. The first use downloads a 4.5 MB model; after that it works offline, and your photo still never leaves your device.</p>
+      </div>
+      <div class="nav">
+        <button class="btn" id="resetphoto">Undo my changes</button>
+        <button class="btn primary" id="startsketch">Start sketching</button>
+      </div>
+    </div>
+  </section>
 
   <section id="view-sketch" class="grid">
     <div class="stage">
@@ -148,6 +211,8 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <button class="btn" id="prev">Back</button>
         <button class="btn primary" id="next">Next step</button>
       </div>
+      <div class="nav"><button class="btn" id="donebtn">Mark as complete</button></div>
+      <p id="savestat"></p>
       <div class="ctrl gridctl">
         <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
         <details class="gridopts">
@@ -165,7 +230,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     </div>
   </section>
 
-  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 3. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), running on your device.</p>
+  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 3. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022) and the background is removed by U²-Net (Qin et al., 2020), both running on your device. Sketches you start are saved in this browser on this device only.</p>
 </div>
 
 <script src="vendor/ort.wasm.min.js"></script>
@@ -175,7 +240,7 @@ const GRADES = [
   {id:"2H", dmin:.58, grain:.6}, {id:"HB", dmin:.38, grain:.8}, {id:"2B", dmin:.24, grain:1},
   {id:"4B", dmin:.14, grain:1.2}, {id:"6B", dmin:.08, grain:1.4}, {id:"8B", dmin:.04, grain:1.6}
 ];
-const S = {grade:3, gray:null, w:0, h:0, step:0, cache:{}};
+const S = {grade:3, gray:null, w:0, h:0, step:0, cache:{}, done:[], project:null};
 const $ = id => document.getElementById(id);
 const MAXW = 1000;
 
@@ -407,10 +472,15 @@ const sliders=["bright","shade","strokes","soft","press","detail","contrast","gr
 function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,bright:$("bright").value/50,grade:S.grade};}
 function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";const b=+$("bright").value;$("bright-o").textContent=(b>0?"+":"")+b;}
 let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;});}
-sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;}));
+sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;saveSoon();}));
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
-$("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{$("srcname").textContent=f.name;loadSource(im);URL.revokeObjectURL(im.src);};im.onerror=()=>{$("srcname").textContent="That file could not be read as an image. Try a JPEG or PNG.";};im.src=URL.createObjectURL(f);});
+$("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const im=new Image();
+  im.onload=()=>{Object.assign(P,{img:im,name:f.name.replace(/\.[^.]+$/,""),quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null,pending:true});
+    $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";
+    $("photoname").textContent=f.name;$("srcname").textContent=f.name;setAspect(0);drawPhoto();show("photo");};
+  im.onerror=()=>{$("photoname").textContent="That file could not be read as an image. Try a JPEG or PNG.";show("photo");};
+  im.src=URL.createObjectURL(f);});
 
 /* ---------- drawing plan: fixed step library ----------
    Each step's picture is the whole drawing as it should look once that step is done:
@@ -617,10 +687,13 @@ function renderStep(){
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
   $("prev").disabled=S.step===0;$("next").textContent=S.step===STEPS.length-1?"Start over":"Next step";
+  document.querySelectorAll(".dot").forEach((d,i)=>d.classList.toggle("done",!!S.done[i]));
+  const d=!!S.done[S.step];$("donebtn").textContent=d?"Completed \u2713 (undo)":"Mark as complete";
+  $("donebtn").setAttribute("aria-pressed",d);
 }
-STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>{S.step=i;renderStep();};$("dots").appendChild(d);});
-$("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();};
-$("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();};
+STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>{S.step=i;renderStep();saveSoon();};$("dots").appendChild(d);});
+$("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();saveSoon();};
+$("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();saveSoon();};
 $("ghost").onchange=renderStep;
 // phones have no hover: touching and holding the picture shows the glow until the finger lifts
 {const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
@@ -640,10 +713,245 @@ RATIOS.forEach((r,i)=>{const b=document.createElement("button");b.className="gra
 $("grid-on").onchange=e=>{S.grid.on=e.target.checked;renderStep();};
 $("gdens").addEventListener("input",e=>{S.grid.cols=+e.target.value;gridLabel();renderStep();});
 
-function show(tab){const plan=tab==="plan";$("view-sketch").hidden=plan;$("view-plan").hidden=!plan;$("tab-sketch").setAttribute("aria-selected",!plan);$("tab-plan").setAttribute("aria-selected",plan);if(plan){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}}
-$("tab-sketch").onclick=()=>show("sketch");$("tab-plan").onclick=()=>show("plan");
+const TABS=["book","photo","sketch","plan"];
+function show(tab){
+  // a photo that has been edited but not started yet gets turned into a drawing first
+  if(P.pending&&(tab==="sketch"||tab==="plan")){P.pending=false;startSketch();return;}
+  TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);});
+  if(tab==="book")drawBook();
+  if(tab==="photo")drawPhoto();
+  if(tab==="plan"){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}
+}
+TABS.forEach(t=>{$("tab-"+t).onclick=()=>show(t);});
 
-loadSource(sample());
+const CUTMODEL="models/cutout.onnx";
+/* ---------- photo editing: straighten, crop, remove the background ----------
+   P.img is the photo as uploaded and is never changed. Everything else is a
+   setting applied on top of it, so "Undo my changes" is just a reset. */
+const P={img:null,name:"",quarter:0,tilt:0,crop:null,bg:false,mask:null,aspect:0,rot:null};
+const ASPECTS=[["Free",0],["1:1",1],["3:4",3/4],["4:3",4/3],["2:3",2/3],["3:2",3/2]];
+const FULLCROP=()=>({x:0,y:0,w:1,h:1});
+
+/* the photo with the background taken out: the subject stays, the rest becomes paper */
+function maskedSource(){
+  const im=P.img;if(!P.bg||!P.mask)return im;
+  const c=document.createElement("canvas");c.width=im.width;c.height=im.height;
+  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
+  const d=x.getImageData(0,0,c.width,c.height),q=d.data,m=P.mask;
+  // feather the mask edge so hair and shoulders don't get a cut-out look
+  for(let i=0,j=0;i<m.length;i++,j+=4){const a=m[i];q[j]=q[j]*a+250*(1-a);q[j+1]=q[j+1]*a+249*(1-a);q[j+2]=q[j+2]*a+245*(1-a);}
+  x.putImageData(d,0,0);return c;
+}
+/* the photo turned by whole quarter-turns plus a small straightening angle */
+function rotated(){
+  if(P.rot)return P.rot;
+  const src=maskedSource(),q=((P.quarter%4)+4)%4,a=q*Math.PI/2+P.tilt*Math.PI/180;
+  const w=src.width,h=src.height,co=Math.abs(Math.cos(a)),si=Math.abs(Math.sin(a));
+  const W=Math.round(w*co+h*si),H=Math.round(w*si+h*co);
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  x.fillStyle="#faf9f5";x.fillRect(0,0,W,H);x.imageSmoothingQuality="high";
+  x.translate(W/2,H/2);x.rotate(a);x.drawImage(src,-w/2,-h/2);
+  return P.rot=c;
+}
+function cropRect(){const r=rotated(),c=P.crop||FULLCROP();
+  return{x:Math.round(c.x*r.width),y:Math.round(c.y*r.height),w:Math.max(8,Math.round(c.w*r.width)),h:Math.max(8,Math.round(c.h*r.height))};}
+/* what the drawing is actually made from: rotated, then cropped */
+function buildPhoto(){
+  const r=rotated(),b=cropRect(),c=document.createElement("canvas");
+  c.width=b.w;c.height=b.h;c.getContext("2d").drawImage(r,b.x,b.y,b.w,b.h,0,0,b.w,b.h);
+  return c;
+}
+function photoDirty(){P.rot=null;drawPhoto();}
+function drawPhoto(){
+  if(!P.img)return;
+  const r=rotated(),c=$("photocanvas"),s=Math.min(1,900/Math.max(r.width,r.height));
+  c.width=Math.round(r.width*s);c.height=Math.round(r.height*s);
+  const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(r,0,0,c.width,c.height);
+  placeCrop();
+}
+function placeCrop(){
+  const c=P.crop||FULLCROP(),e=$("croprect");
+  e.style.left=c.x*100+"%";e.style.top=c.y*100+"%";e.style.width=c.w*100+"%";e.style.height=c.h*100+"%";
+}
+function setAspect(i){
+  P.aspect=i;document.querySelectorAll("#aspects button").forEach((b,k)=>b.setAttribute("aria-pressed",k===i));
+  const ar=ASPECTS[i][1];if(!ar){placeCrop();return;}
+  const r=rotated(),c=P.crop||FULLCROP();
+  // keep the box centred on what it already covers, as large as the chosen shape allows
+  const cx=c.x+c.w/2,cy=c.y+c.h/2;let w=c.w,h=w*r.width/(ar*r.height);
+  if(h>1){h=1;w=h*ar*r.height/r.width;}
+  P.crop={w,h,x:Math.min(1-w,Math.max(0,cx-w/2)),y:Math.min(1-h,Math.max(0,cy-h/2))};
+  placeCrop();
+}
+/* dragging the crop box: inside it moves, a corner resizes */
+{
+  let drag=null;
+  const wrap=()=>$("cropwrap").getBoundingClientRect();
+  $("cropwrap").addEventListener("pointerdown",e=>{
+    if(!P.img)return;
+    const b=wrap(),h=e.target.dataset?e.target.dataset.h:null,c=P.crop||(P.crop=FULLCROP());
+    drag={h,px:(e.clientX-b.left)/b.width,py:(e.clientY-b.top)/b.height,c:{...c}};
+    $("cropwrap").setPointerCapture(e.pointerId);e.preventDefault();
+  });
+  $("cropwrap").addEventListener("pointermove",e=>{
+    if(!drag)return;
+    const b=wrap(),dx=(e.clientX-b.left)/b.width-drag.px,dy=(e.clientY-b.top)/b.height-drag.py,o=drag.c;
+    const r=rotated(),ar=ASPECTS[P.aspect][1],MIN=.08;
+    if(!drag.h){ // move
+      P.crop={...o,x:Math.min(1-o.w,Math.max(0,o.x+dx)),y:Math.min(1-o.h,Math.max(0,o.y+dy))};
+    }else{
+      const west=drag.h[1]==="w",north=drag.h[0]==="n";
+      let x0=west?o.x+dx:o.x,x1=west?o.x+o.w:o.x+o.w+dx;
+      let y0=north?o.y+dy:o.y,y1=north?o.y+o.h:o.y+o.h+dy;
+      x0=Math.max(0,Math.min(x0,x1-MIN));x1=Math.min(1,Math.max(x1,x0+MIN));
+      y0=Math.max(0,Math.min(y0,y1-MIN));y1=Math.min(1,Math.max(y1,y0+MIN));
+      let w=x1-x0,h=y1-y0;
+      if(ar){ // keep the chosen shape: the side that moved least gives way
+        const hh=w*r.width/(ar*r.height);
+        if(hh<=1-(north?0:y0)&&hh+(north?y1-hh:y0)<=1){h=hh;if(north)y0=y1-h;else y1=y0+h;}
+        else{h=Math.min(h,1);w=h*ar*r.height/r.width;if(west)x0=x1-w;else x1=x0+w;}
+      }
+      P.crop={x:Math.max(0,x0),y:Math.max(0,y0),w:Math.min(1,w),h:Math.min(1,h)};
+    }
+    placeCrop();
+  });
+  ["pointerup","pointercancel"].forEach(t=>$("cropwrap").addEventListener(t,()=>{drag=null;}));
+}
+ASPECTS.forEach((a,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=a[0];
+  b.setAttribute("aria-pressed",i===0);b.onclick=()=>setAspect(i);$("aspects").appendChild(b);});
+$("rot-l").onclick=()=>{P.quarter--;P.crop=FULLCROP();photoDirty();};
+$("rot-r").onclick=()=>{P.quarter++;P.crop=FULLCROP();photoDirty();};
+$("tilt").addEventListener("input",e=>{P.tilt=+e.target.value;$("tilt-o").textContent=P.tilt+"°";photoDirty();});
+$("resetphoto").onclick=()=>{P.quarter=0;P.tilt=0;P.crop=FULLCROP();P.bg=false;
+  $("tilt").value=0;$("tilt-o").textContent="0°";$("bgrm").checked=false;setAspect(0);photoDirty();};
+$("bgrm").onchange=async e=>{
+  P.bg=e.target.checked;
+  if(P.bg&&!P.mask){const ok=await cutOut();if(!ok){P.bg=false;e.target.checked=false;}}
+  photoDirty();
+};
+
+/* ---------- background removal (runs on this device) ----------
+   Model: U^2-Net (small), Qin et al. 2020, Apache-2.0; ONNX build from the rembg project (MIT).
+   It reads a 320 x 320 image and returns a map of how much each pixel belongs to the subject. */
+let CUTSESSION=null;
+async function cutOut(){
+  const im=P.img;
+  if(!window.ort){$("photostat").textContent="Background removal is unavailable here.";return false;}
+  try{
+    $("photostat").textContent="Finding the person…";
+    await new Promise(r=>setTimeout(r,30));
+    if(!CUTSESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true;ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
+      CUTSESSION=ort.InferenceSession.create(CUTMODEL,{executionProviders:["wasm"]});}
+    const sess=await CUTSESSION,N=320;
+    const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
+    qx.drawImage(im,0,0,N,N);
+    const px=qx.getImageData(0,0,N,N).data,inp=new Float32Array(3*N*N),M=[.485,.456,.406],SD=[.229,.224,.225];
+    for(let i=0;i<N*N;i++)for(let ch=0;ch<3;ch++)inp[ch*N*N+i]=(px[i*4+ch]/255-M[ch])/SD[ch];
+    const res=await sess.run({[sess.inputNames[0]]:new ort.Tensor("float32",inp,[1,3,N,N])});
+    const y=res[sess.outputNames[0]].data;let mn=1e9,mx=-1e9;
+    for(const v of y){if(v<mn)mn=v;if(v>mx)mx=v;}
+    // paint the map back at the photo's own size, with a soft edge
+    const s=document.createElement("canvas");s.width=s.height=N;const sx=s.getContext("2d",{willReadFrequently:true});
+    const img=sx.createImageData(N,N);for(let i=0;i<N*N;i++){const v=Math.round(255*(y[i]-mn)/(mx-mn+1e-6));
+      img.data[i*4]=img.data[i*4+1]=img.data[i*4+2]=v;img.data[i*4+3]=255;}
+    sx.putImageData(img,0,0);
+    const o=document.createElement("canvas");o.width=im.width;o.height=im.height;
+    const ox=o.getContext("2d",{willReadFrequently:true});ox.imageSmoothingQuality="high";ox.drawImage(s,0,0,im.width,im.height);
+    const d=ox.getImageData(0,0,im.width,im.height).data,m=new Float32Array(im.width*im.height);
+    for(let i=0;i<m.length;i++)m[i]=clamp((d[i*4]/255-.3)/.4);
+    P.mask=m;$("photostat").textContent="Background removed";return true;
+  }catch(err){console.warn(err);$("photostat").textContent="The background could not be removed. Try again, or carry on without it.";return false;}
+}
+
+/* ---------- the sketchbook: projects saved on this device ---------- */
+const DBNAME="graphite-coach",STORE="projects";
+let DBOK=true;
+function db(){return new Promise((res,rej)=>{const r=indexedDB.open(DBNAME,1);
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:"id"});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function store(mode,fn){return db().then(d=>new Promise((res,rej)=>{
+  const t=d.transaction(STORE,mode),q=fn(t.objectStore(STORE));
+  t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>rej(t.error);})).catch(e=>{DBOK=false;console.warn(e);throw e;});}
+const allProjects=()=>store("readonly",s=>s.getAll());
+const putProject=p=>store("readwrite",s=>s.put(p));
+const delProject=id=>store("readwrite",s=>s.delete(id));
+
+function snapshot(){return{params:params(),grade:S.grade,grid:{...S.grid},step:S.step,done:[...S.done]};}
+function applySnapshot(p){
+  if(p.grade!=null)S.grade=p.grade;
+  if(p.grid)S.grid={...S.grid,...p.grid};
+  if(p.params){const v=p.params;
+    $("shade").value=v.shade*100;$("soft").value=v.soft;$("press").value=v.press*100;$("detail").value=v.detail*100;
+    $("contrast").value=v.contrast*100;$("grain").value=v.grain*100;$("strokes").value=v.strokes*100;
+    $("fade").value=v.fade*100;$("bright").value=v.bright*50;}
+  $("grid-on").checked=S.grid.on;$("gdens").value=S.grid.cols;$("gop").value=Math.round(S.grid.op*100);$("gthick").value=S.grid.thick;
+  document.querySelectorAll("#grades button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grade));
+  document.querySelectorAll(".ratio").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.ratio));
+  document.querySelectorAll("#gcolors button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.color));
+  document.querySelectorAll("#gtypes button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.type));
+  S.step=Math.min(STEPS.length-1,Math.max(0,p.step|0));S.done=(p.done||[]).slice(0,STEPS.length);
+  gridStyleLabels();gridLabel();
+}
+let saveT=0;
+function saveSoon(){
+  if(!S.project||!DBOK)return;clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    try{const p={...S.project,...snapshot(),updated:Date.now()};S.project=p;await putProject(p);
+      $("savestat").textContent="Saved to your sketchbook";}catch(e){$("savestat").textContent="This browser would not save the sketch.";}
+  },700);
+}
+function thumbOf(c){const t=document.createElement("canvas"),s=Math.min(1,240/Math.max(c.width,c.height));
+  t.width=Math.round(c.width*s);t.height=Math.round(c.height*s);
+  t.getContext("2d").drawImage(c,0,0,t.width,t.height);return t.toDataURL("image/jpeg",.78);}
+const blobOf=c=>new Promise(r=>c.toBlob(r,"image/jpeg",.92));
+
+async function startSketch(){
+  P.pending=false; // the photo has been turned into a drawing, so switching tabs must not redo it
+  const c=buildPhoto();
+  loadSource(c);
+  S.step=0;S.done=[];
+  try{
+    const p={id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name:P.name||"Untitled sketch",
+      created:Date.now(),updated:Date.now(),photo:await blobOf(c),thumb:thumbOf(c),...snapshot()};
+    S.project=p;await putProject(p);$("savestat").textContent="Saved to your sketchbook";
+  }catch(e){S.project=null;$("savestat").textContent="This browser would not save the sketch, but you can still draw it now.";}
+  show("plan");renderStep();
+}
+function openProject(p){
+  const im=new Image();
+  im.onload=()=>{P.img=im;P.name=p.name;P.quarter=0;P.tilt=0;P.crop=FULLCROP();P.bg=false;P.mask=null;P.rot=null;
+    S.project=p;applySnapshot(p);loadSource(im);
+    $("photoname").textContent=p.name;$("srcname").textContent=p.name;
+    show("plan");renderStep();$("savestat").textContent="Opened from your sketchbook";
+    URL.revokeObjectURL(im.src);};
+  im.src=URL.createObjectURL(p.photo);
+}
+async function drawBook(){
+  let list=[];
+  try{list=await allProjects();}catch(e){}
+  list.sort((a,b)=>b.updated-a.updated);
+  $("bookempty").hidden=list.length>0;
+  $("books").replaceChildren(...list.map(p=>{
+    const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";
+    const img=document.createElement("img");img.src=p.thumb;img.alt="";
+    const b=document.createElement("b");b.textContent=p.name;
+    const st=document.createElement("span");st.textContent=`Step ${(p.step|0)+1} of ${STEPS.length} · ${done} done`;
+    const bar=document.createElement("div");bar.className="bar";const fill=document.createElement("i");
+    fill.style.width=Math.round(100*done/STEPS.length)+"%";bar.appendChild(fill);
+    const row=document.createElement("div");row.className="rowbtns";
+    const open=document.createElement("button");open.className="btn primary";open.textContent="Open";open.onclick=()=>openProject(p);
+    const del=document.createElement("button");del.className="btn";del.textContent="Delete";
+    del.onclick=async()=>{if(!confirm(`Delete "${p.name}"? This cannot be undone.`))return;
+      try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
+    row.append(open,del);el.append(img,b,st,bar,row);return el;
+  }));
+}
+$("startsketch").onclick=startSketch;
+$("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();};
+
+// first run: the built-in sample stands in for a photo until one is uploaded
+P.img=sample();P.name="Sample: plaster head study";P.crop=FULLCROP();
+loadSource(P.img);
 })();
 </script>
 </body>
