@@ -101,6 +101,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 .book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:3px;background:var(--paper)}
 .book b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .book span{font-size:12.5px;color:var(--muted)}
+.namefield{font:inherit;color:var(--ink,inherit);background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;width:100%;box-sizing:border-box}
+.book .namefield{font-weight:600;font-size:14px;padding:3px 5px;margin:0 -6px;width:calc(100% + 12px);border-color:transparent;background:transparent}
+.book .namefield:hover{border-color:var(--rule)}
+.book .namefield:focus{border-color:var(--blue);background:var(--paper)}
 .book .rowbtns{margin-top:2px}
 .book .btn{padding:5px 12px;font-size:13px}
 .bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden}
@@ -182,6 +186,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <div class="cap"><span id="srcname">Sample: plaster head study (upload your own photo)</span><span><span id="aistat"></span> · <span id="dims"></span></span></div>
     </div>
     <div class="panel">
+      <div class="ctrl"><label for="projname">Sketch name</label><input id="projname" class="namefield" type="text" maxlength="80" autocomplete="off"></div>
       <div class="ctrl">
         <label>Darkest pencil</label>
         <div class="grades" id="grades"></div>
@@ -893,6 +898,7 @@ function store(mode,fn){return db().then(d=>new Promise((res,rej)=>{
 const allProjects=()=>store("readonly",s=>s.getAll());
 const putProject=p=>store("readwrite",s=>s.put(p));
 const delProject=id=>store("readwrite",s=>s.delete(id));
+const getProject=id=>store("readonly",s=>s.get(id));
 
 function snapshot(){return{params:params(),grade:S.grade,grid:{...S.grid},step:S.step,done:[...S.done],planned:S.stage>=3};}
 function applySnapshot(p){
@@ -950,7 +956,18 @@ async function generateSketch(){
       :{id:newId(),name:P.name||"Untitled sketch",created:now,updated:now,photo,thumb,planned:false,...snapshot()};
     await putProject(S.project);
   }catch(e){console.warn(e);}
+  $("projname").value=S.project?S.project.name:P.name;
 }
+/* a sketch's name can be changed from its sketchbook card or from the Sketch screen */
+async function renameProject(p,name){
+  name=name.trim()||p.name;p.name=name;
+  if(S.project&&S.project.id===p.id){S.project.name=name;showName(name);}
+  try{const cur=await getProject(p.id);if(cur){cur.name=name;await putProject(cur);}}catch(e){}
+  return name;
+}
+function showName(n){$("projname").value=n;$("srcname").textContent=n;$("photoname").textContent=n;}
+$("projname").addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();});
+$("projname").addEventListener("change",e=>{if(S.project)renameProject(S.project,e.target.value);});
 /* Plan my drawing: the ten steps, built from the sketch as it is now */
 function planDrawing(){
   if(S.project&&!S.project.planned){S.project.planned=true;S.step=0;S.done=[];}
@@ -963,7 +980,7 @@ function openProject(p){
     Object.assign(P,{img:im,name:p.name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
     $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
     $("photoname").textContent=p.name;$("srcname").textContent=p.name;setAspect(0);
-    S.project=p;applySnapshot(p);loadSource(im);
+    S.project=p;applySnapshot(p);loadSource(im);$("projname").value=p.name;
     if(p.planned){setStage(3);show("plan");}else{setStage(2);show("sketch");}
     $("savestat").textContent="Opened from your sketchbook";
     URL.revokeObjectURL(im.src);};
@@ -977,7 +994,12 @@ async function drawBook(){
   $("books").replaceChildren(...list.map(p=>{
     const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";
     const img=document.createElement("img");img.src=p.thumb;img.alt="";
-    const b=document.createElement("b");b.textContent=p.name;
+    const b=document.createElement("input");b.className="namefield";b.type="text";b.maxLength=80;b.value=p.name;
+    b.setAttribute("aria-label","Sketch name");b.title="Click to rename";
+    b.onkeydown=e=>{if(e.key==="Enter")b.blur();if(e.key==="Escape"){b.value=p.name;b.blur();}};
+    b.onchange=()=>renameProject(p,b.value).then(n=>{b.value=n;});
+    const when=document.createElement("span");
+    when.textContent="Started "+new Date(p.created||p.updated).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
     const st=document.createElement("span");st.textContent=p.planned?`Step ${(p.step|0)+1} of ${STEPS.length} · ${done} done`:"Sketch ready, drawing not planned yet";
     const bar=document.createElement("div");bar.className="bar";const fill=document.createElement("i");
     fill.style.width=Math.round(100*done/STEPS.length)+"%";bar.appendChild(fill);
@@ -986,7 +1008,8 @@ async function drawBook(){
     const del=document.createElement("button");del.className="btn";del.textContent="Delete";
     del.onclick=async()=>{if(!confirm(`Delete "${p.name}"? This cannot be undone.`))return;
       try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
-    row.append(open,del);el.append(img,b,st,bar,row);return el;
+    const ren=document.createElement("button");ren.className="btn";ren.textContent="Rename";ren.onclick=()=>{b.focus();b.select();};
+    row.append(open,ren,del);el.append(img,b,when,st,bar,row);return el;
   }));
 }
 $("newsketch").onclick=startNew;
