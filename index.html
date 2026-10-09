@@ -182,6 +182,7 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .peekhint{font-size:12.5px;color:var(--muted);margin:0;display:flex;align-items:center;gap:7px;padding-inline:2px}
 .peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(70,150,255);box-shadow:0 0 0 3px rgba(70,150,255,.18),0 0 8px rgba(70,150,255,.7)}
 .stepcard .look{background:var(--sheet-2);border:1px solid var(--rule);border-left:3px solid var(--blue);border-radius:4px 10px 10px 4px;padding:10px 12px;font-size:14px}
+#stepdl{padding:4px 12px;font-size:12.5px;margin-left:auto;margin-right:10px}
 #stepcount{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
 /* photo editing: the picture with a drag-to-crop box over it */
 .cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:4px;overflow:hidden}
@@ -215,10 +216,13 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .book .namefield:hover{border-color:var(--rule-2)}
 .book .namefield:focus{border-color:var(--blue);background:var(--paper)}
 .book .rowbtns{margin-top:6px;gap:4px;align-items:center}
-.book .rowbtns .primary{flex:1 0 100%;margin-bottom:2px}
-.book .rowbtns .btn:not(.primary){flex:1 1 0}
+.book .rowbtns .primary{flex:1 1 auto;margin-bottom:2px}
+.book .rowbtns .brk{flex-basis:100%;height:0}
+.book .rowbtns .btn:not(.primary){flex:1 1 0;min-width:0;white-space:nowrap}
+.book .rowbtns .btn.dl{flex:0 1 auto;margin-bottom:2px}
+@media (max-width:520px){.book .rowbtns .primary,.book .rowbtns .btn.dl{padding-inline:6px;font-size:12.5px}.book .rowbtns .btn.dl{flex:1 1 auto}}
 .book .btn{padding:6px 13px;font-size:13px}
-.book .btn:not(.primary){border-color:transparent;background:transparent;color:var(--muted);padding-inline:9px}
+.book .btn:not(.primary):not(.dl){border-color:transparent;background:transparent;color:var(--muted);padding-inline:4px;font-size:12.5px}
 .book .btn:not(.primary):hover{color:var(--graphite);background:var(--sheet-2);box-shadow:none}
 .bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden;margin-top:2px}
 .bar i{display:block;height:100%;background:var(--blue);border-radius:2px}
@@ -615,6 +619,7 @@ html.revealing .wrap>header{animation:none!important}
       <div class="cap">
         <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
 </span>
+        <button class="btn small" id="stepdl" type="button">Download this step</button>
         <span id="stepcount"></span>
       </div>
     </div>
@@ -1401,14 +1406,22 @@ let saveT=0;
 function saveSoon(){
   if(!S.project||!DBOK)return;clearTimeout(saveT);
   saveT=setTimeout(async()=>{
-    try{const p={...S.project,...snapshot(),updated:Date.now()};if($("out").width>1&&S.cache.sketch)p.thumb=thumbOf($("out"));S.project=p;await putProject(p);
+    try{const p={...S.project,...snapshot(),updated:Date.now()};if($("out").width>1&&S.cache.sketch){p.thumb=thumbOf($("out"));p.sketch=await blobOf($("out"));}S.project=p;await putProject(p);
       $("savestat").textContent="Saved to your sketchbook";}catch(e){$("savestat").textContent="This browser would not save the sketch.";}
   },700);
 }
 function thumbOf(c){const t=document.createElement("canvas"),s=Math.min(1,240/Math.max(c.width,c.height));
   t.width=Math.round(c.width*s);t.height=Math.round(c.height*s);
   t.getContext("2d").drawImage(c,0,0,t.width,t.height);return t.toDataURL("image/jpeg",.78);}
-const blobOf=c=>new Promise(r=>c.toBlob(r,"image/jpeg",.92));
+const blobOf=(c,type="image/jpeg")=>new Promise(r=>c.toBlob(r,type,.92));
+/* hand the viewer a file: inside claude.ai through its downloads capability, otherwise an ordinary browser download */
+async function saveFile(blob,filename){
+  const dl=window.claude&&window.claude.use?await window.claude.use("downloads").catch(()=>null):null;
+  if(dl){try{await dl.save({filename,data:blob});}catch(e){}return;}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const safeName=t=>(t||"sketch").replace(/[\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim().slice(0,80)||"sketch";
 
 function newId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now());}
 function setPhoto(im,name){
@@ -1491,7 +1504,9 @@ async function drawBook(){
     del.onclick=async()=>{if(!confirm(`Delete "${p.name}"? This cannot be undone.`))return;
       try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
     const ren=document.createElement("button");ren.className="btn";ren.textContent="Rename";ren.onclick=()=>{b.focus();b.select();};
-    row.append(open,ren,del);el.append(img,b,when,st,bar,row);return el;
+    const dlb=document.createElement("button");dlb.className="btn dl";dlb.textContent="Download";
+    dlb.onclick=()=>{const blob=p.sketch||p.photo;if(blob)saveFile(blob,safeName(p.name)+(p.sketch?" - pencil sketch":"")+".jpg");};
+    const brk=document.createElement("i");brk.className="brk";row.append(open,dlb,brk,ren,del);el.append(img,b,when,st,bar,row);return el;
   }));
 }
 $("newsketch").onclick=startNew;
@@ -1499,6 +1514,8 @@ $("trysample").onclick=()=>{startNew();setPhoto(sample(),"Sample: plaster head s
 $("gensketch").onclick=generateSketch;
 $("planbtn").onclick=planDrawing;
 $("backphoto").onclick=()=>show("photo");
+$("stepdl").onclick=async()=>{const blob=await blobOf($("stepcanvas"),"image/png");
+  saveFile(blob,`${safeName(S.project?S.project.name:"sketch")} - step ${S.step+1} - ${safeName(STEPS[S.step].title)}.png`);};
 $("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();};
 
 // clicking the logo replays the full intro (it normally plays in full only on the first visit)
