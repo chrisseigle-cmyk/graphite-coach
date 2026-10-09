@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect x='2' y='2' width='116' height='116' rx='22' fill='%23f6f1e5'/%3E%3Cg fill='none' stroke='%232b2d31' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%2375777c' stroke-width='4.94'%3E%3Cpath d='M60 4V111M14 55H106'/%3E%3C/g%3E%3Cpath stroke-width='8.74' d='M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z'/%3E%3Ccircle cx='47' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Ccircle cx='73' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Cpath stroke-width='5.7' d='M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75'/%3E%3Cpath stroke-width='6.08' d='M51.5 86C56 88.4 64 88.4 68.5 86'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Reenie+Beanie&family=Space+Mono&display=swap">
 <style>
 /* Graphite Coach: warm sketch-paper surfaces, graphite ink, one blue-pencil accent.
    Layout: working canvas left, controls right (stacks on phone); tabs step through Photo / Sketch / Plan */
@@ -60,8 +60,9 @@ header{align-items:flex-end}
 .brand .mark{width:60px;height:60px;flex:none;color:var(--graphite)}
 h1{font-family:var(--display);font-weight:400;margin:0;line-height:1.05}
 .lockup{display:inline-flex;flex-direction:column;gap:5px}
-.lockup .w1{font-size:clamp(28px,4.2vw,34px);line-height:1;letter-spacing:-.005em}
-.lockup .w2{display:flex;align-items:center;gap:10px;font:500 11.5px var(--mono);letter-spacing:.42em;text-transform:uppercase;color:var(--ink-2)}
+/* the wordmark is hand-lettered in pencil (Reenie Beanie), with a hairline stroke so it holds up next to the mark */
+.lockup .w1{font-family:"Reenie Beanie",var(--display);font-size:clamp(38px,5.6vw,47px);line-height:.8;letter-spacing:.01em;-webkit-text-stroke:.7px currentColor;paint-order:stroke fill}
+.lockup .w2{display:flex;align-items:center;gap:10px;font:400 10px "Space Mono",var(--mono);letter-spacing:.42em;text-transform:uppercase;color:var(--ink-2)}
 .lockup .w2::after{content:"";flex:1;min-width:20px;height:1.5px;background:var(--chalk)}
 .sub{color:var(--muted);margin:0;max-width:40ch;text-align:right;text-wrap:pretty;font-size:14px;line-height:1.45}
 @media (max-width:640px){.sub{text-align:left;max-width:none;font-size:13.5px}}
@@ -282,8 +283,8 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 .sp-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding-bottom:3vh}
 .sp-mark{width:min(230px,54vw);height:auto;overflow:visible;mix-blend-mode:multiply;transform-origin:50% 50%;color:var(--sp-ink)}
 .sp-word{width:min(330px,74vw);height:auto;overflow:visible;mix-blend-mode:multiply;color:var(--sp-ink)}
-.sp-word .w1{font-family:var(--display);font-size:50px}
-.sp-word .w2{font:500 14px var(--mono);letter-spacing:.42em}
+.sp-word .w1{font-family:"Reenie Beanie",var(--display);font-size:66px;stroke:currentColor;stroke-width:1;paint-order:stroke fill}
+.sp-word .w2{font:400 12.5px "Space Mono",var(--mono);letter-spacing:.46em}
 .splash.quick .sp-word{display:none}
 .sp-dust,.sp-fly{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply}
 .splash .skip{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sp-ink);opacity:0;transition:opacity .6s}
@@ -344,12 +345,12 @@ html.revealing .wrap>header{animation:none!important}
     </g>
   </g>
 </svg>
-<svg class="sp-word" viewBox="0 0 300 92">
-  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="92"/></clipPath></defs>
+<svg class="sp-word" viewBox="0 0 300 104">
+  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="104"/></clipPath></defs>
   <g filter="url(#sp-graphite)" clip-path="url(#sp-wclip)">
     <text class="w1" id="sp-wtext" x="150" y="50" text-anchor="middle" fill="currentColor" fill-opacity=".88">Graphite</text>
-    <text class="w2" x="153" y="80" text-anchor="middle" fill="currentColor" fill-opacity=".85">COACH</text>
-    <path d="M58 75.5H108M196 75.5H246" style="stroke:var(--sp-chalk)" stroke-width="1.5" opacity=".9"/>
+    <text class="w2" x="153" y="96" text-anchor="middle" fill="currentColor" fill-opacity=".85">COACH</text>
+    <path d="M58 91.5H108M196 91.5H246" style="stroke:var(--sp-chalk)" stroke-width="1.5" opacity=".9"/>
   </g>
 </svg>
 </div>
