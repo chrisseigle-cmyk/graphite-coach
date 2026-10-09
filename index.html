@@ -1072,9 +1072,11 @@ function planLayers(){
   // shadow shapes are outlined on a softer copy, so texture (knit, fur) doesn't break them into crumbs
   const g6=blur(sk,w,h,Math.round(6*sc));
   const closed=p=>Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<3*sc;
-  const g14=blur(sk,w,h,Math.round(14*sc)),gs=new Float32Array(n);
-  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,f=1-smooth(.7,1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));gs[i]=f*g6[i]+(1-f)*g14[i];}
+  const g14=blur(sk,w,h,Math.round(14*sc)),g9=blur(sk,w,h,Math.round(9*sc)),gs=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,f=1-smooth(.7,1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));gs[i]=f*g9[i]+(1-f)*g14[i];}
   const shadowLines=isoLines(gs,w,h,t1,Math.max(1,Math.round(2*sc))).filter(p=>plen(p)>(closed(p)?150:40)*sc)
+    // a small closed loop is a curl of hair or a fold of knit, not a shadow shape
+    .filter(p=>{if(!closed(p))return true;let A=0;for(let j=0;j<p.length;j++){const q=p[j],r=p[(j+1)%p.length];A+=q[0]*r[1]-r[0]*q[1];}return Math.abs(A)/2>1600*sc*sc;})
     // away from the face, short pieces are clothing texture rather than a shadow shape worth outlining
     .filter(p=>{const fw=Math.max(...p.map(([x,y])=>1-smooth(.7,1.1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85))));return fw>.2||plen(p)>320*sc;})
     .map(p=>simplify(p,1.6*sc));
@@ -1133,9 +1135,18 @@ function planLayers(){
       // compact and solid (not a long band along an ear), big enough to read; the strongest few win
       const dm=new Float32Array(n);shine=new Float32Array(n);
       comps.filter(c=>{const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1,a=c.px.length;
-          return a>=n*.0003&&a<=n*.015&&Math.max(bw,bh)<=3*Math.min(bw,bh)&&a>=.35*bw*bh;})
-        .sort((p,q)=>q.v-p.v).slice(0,5).forEach(c=>{let t=0,k=0;for(const i of c.px)if(raw[i]||pd[i]<lo){dm[i]=1;t+=pd[i];k++;}
-          for(const i of c.px)if(!dm[i]&&pd[i]>t/Math.max(1,k)+.2)shine[i]=1;}); // a catchlight in an eye, the shine on a nose
+          return a>=n*.00015&&a<=n*.015&&Math.max(bw,bh)<=3*Math.min(bw,bh)&&a>=.35*bw*bh;})
+        .sort((p,q)=>q.v-p.v).slice(0,7).forEach((c,_,kept)=>{let t=0,k=0;for(const i of c.px)if(raw[i]||pd[i]<lo){dm[i]=1;t+=pd[i];k++;}
+          let found=0;for(const i of c.px)if(!dm[i]&&pd[i]>t/Math.max(1,k)+.12){shine[i]=1;found++;}
+          // an eye in shadow shows almost no catchlight in the photo; a round shape with a twin well apart at the same height
+          // (the other eye, not the other nostril) still gets a small one, where the photo is lightest
+          const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1;
+          const twin=kept.some(o=>{if(o===c)return false;const R0=Math.min(bw,bh)/2,ox=(o.x0+o.x1)/2,oy=(o.y0+o.y1)/2,a0=c.px.length,a1=o.px.length;
+            return Math.max(a0,a1)<2.5*Math.min(a0,a1)&&Math.abs(oy-(c.y0+c.y1)/2)<3*R0&&Math.abs(ox-(c.x0+c.x1)/2)>4*R0;});
+          if(found<4&&twin&&Math.max(bw,bh)<=1.7*Math.min(bw,bh)){const cx=(c.x0+c.x1)/2,cy=(c.y0+c.y1)/2,R=Math.min(bw,bh)/2;let bi=-1,bv=-1;
+            for(const i of c.px){const x=i%w,y=(i/w)|0;if(Math.hypot(x-cx,y-cy)<R*.55&&pd[i]>bv){bv=pd[i];bi=i;}}
+            if(bi>=0){const bx=bi%w,by=(bi/w)|0,r=Math.max(1.5,R*.18);
+              for(let y=Math.floor(by-r);y<=by+r;y++)for(let x=Math.floor(bx-r);x<=bx+r;x++)if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(x-bx,y-by)<=r)shine[y*w+x]=1;}}}); // a catchlight in an eye, the shine on a nose
       const dg=blur(dm,w,h,Math.max(1,Math.round(2*sc)));
       // shaded by the photo inside each shape, so a shine on the nose or in an eye stays lighter instead of a flat stamp
       // drawn like a pencil would: a firm outline round each shape, a softer fill, and the shine left as paper
@@ -1150,7 +1161,7 @@ function planLayers(){
   L.hi=new Float32Array(n);const pg=blur(S.gray,w,h,Math.max(1,Math.round(.8*sc))),around=blur(S.gray,w,h,Math.round(5*sc));
   for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.9,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
     L.hi[i]=smooth(.05,.12,pg[i]-around[i])*smooth(.45,.65,pg[i])*face;}
-  if(shine){const sh=blur(shine,w,h,Math.max(1,Math.round(1.5*sc)));for(let i=0;i<n;i++)L.hi[i]=Math.max(L.hi[i],.5*smooth(.2,.6,sh[i]));}
+  if(shine){const sh=blur(shine,w,h,Math.max(1,Math.round(1.5*sc)));for(let i=0;i<n;i++)L.hi[i]=Math.max(L.hi[i],smooth(.15,.45,sh[i]));}
   L.sc=sc;
   return S.cache.plan=L;
 }
