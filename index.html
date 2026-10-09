@@ -869,6 +869,7 @@ async function aiLines(c){
     const o=document.createElement("canvas");o.width=w;o.height=h;const ox2=o.getContext("2d",{willReadFrequently:true});
     ox2.imageSmoothingQuality="high";ox2.drawImage(q,ox*k,oy*k,w*k,h*k,0,0,w,h);
     const d=ox2.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=1-d[i*4]/255;
+    {const b=3;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<b||y<b||x>=w-b||y>=h-b)ink[y*w+x]=0;} // the photo's own border is not a line
     S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
     render();renderStep();saveSoon(); // refresh the sketchbook thumbnail with the finished lines
   }catch(err){console.warn(err);if(job===AIJOB)aiStatus("Basic lines (AI drawing unavailable)");}
@@ -997,14 +998,15 @@ function planLayers(){
   const big=blur(S.gray,w,h,Math.round(9*sc));
   let blockLines;
   if(SUB){
-    const sub=blur(SUB,w,h,Math.round(4*sc)),inner=blur(SUB,w,h,Math.round(10*sc));
-    const sil=isoLines(sub,w,h,.5,Math.max(2,Math.round(3*sc))).sort((a,b)=>plen(b)-plen(a)).filter((p,i)=>i<2&&plen(p)>150*sc);
+    const sub=blur(SUB,w,h,Math.round(8*sc)),inner=blur(SUB,w,h,Math.round(10*sc));
+    const sil=isoLines(sub,w,h,.5,Math.max(2,Math.round(3*sc))).sort((a,b)=>plen(b)-plen(a)).filter((p,i)=>i<1&&plen(p)>150*sc);
     // shadow edges: the darkest masses of the subject, kept only well inside it and only the longest few
     const keepIn=p=>{const out=[];let cur=[];for(const q of p){const i=Math.min(h-1,Math.round(q[1]))*w+Math.min(w-1,Math.round(q[0]));
       if(inner[i]>.85)cur.push(q);else{if(cur.length>1)out.push(cur);cur=[];}}if(cur.length>1)out.push(cur);return out;};
     const subVals=Array.from(big).filter((v,i)=>SUB[i]>.5),lv=subVals.length?Float32Array.from(subVals).sort()[Math.floor(subVals.length*.3)]:pct(big,.3);
-    const shad=isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))).flatMap(keepIn).filter(p=>plen(p)>90*sc).sort((a,b)=>plen(b)-plen(a)).slice(0,3);
-    blockLines=sil.map(p=>simplify(p,9*sc)).concat(shad.map(p=>simplify(p,8*sc)));
+    const shad=isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))).flatMap(keepIn).map(p=>simplify(p,11*sc)).filter(p=>{if(plen(p)<90*sc)return false;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of p){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+      return plen(p)<3*Math.hypot(x1-x0,y1-y0);}).sort((a,b)=>plen(b)-plen(a)).slice(0,2); // a winding edge reads as clutter, not a big shape
+    blockLines=sil.map(p=>simplify(p,9*sc)).concat(shad);
   }else blockLines=[pct(big,.3),pct(big,.62)].flatMap(lv=>isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))))
     .filter(p=>plen(p)>45*sc).map(p=>simplify(p,7*sc));
   const block=pencilLines(blockLines,{seed:11,passes:2,jit:1.2*sc,over:2*sc,lw:1.1*sc,alpha:.32});
@@ -1019,10 +1021,9 @@ function planLayers(){
   // contour lines: the AI line drawing, kept thin (only the core of each line)
   const con=Float32Array.from(AI||edges(contrasted(params().contrast),w,h,1,3.5,12));
   {const b=Math.max(2,Math.round(3*sc));for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<b||y<b||x>=w-b||y>=h-b)con[y*w+x]=0;} // no lines along the photo's border
-  // the grey each layer aims for: the typical value of the finished drawing in the light and in the dark shapes
-  const mid=a=>a.length?Float32Array.from(a).sort()[a.length>>1]:.6;
-  const v1=Math.min(.9,mid(Array.from(g3).filter(v=>v<t2&&v>=t1))),v2=Math.min(v1-.05,mid(Array.from(g3).filter(v=>v<t1)));
-  const L={sub:SUB,block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),m1:new Float32Array(n),m2:new Float32Array(n),sk,ai:AI};
+  const hw=(w>>2)+1,hr=new Float32Array(hw*((h>>2)+1)),rj=rng(7);for(let i=0;i<hr.length;i++)hr[i]=rj();
+  {const tmp=blur(hr,hw,(h>>2)+1,3);for(let i=0;i<hr.length;i++)hr[i]=tmp[i]*3;}
+  const L={hatch:new Float32Array(n),t7:new Float32Array(n),sub:SUB,block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),m1:new Float32Array(n),m2:new Float32Array(n),sk,ai:AI};
   for(let i=0;i<n;i++){
     const ln=smooth(.2,.75,con[i])*grain(i),x=i%w,y=(i/w)|0;
     const near=1-smooth(.75,1.05,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)); // the face only, not the hair
@@ -1030,19 +1031,27 @@ function planLayers(){
     L.feat[i]=.45*smooth(.35,.8,con[i])*grain(i)*near;L.line[i]=.5*ln;
     L.block[i]*=grain(i);L.shadow[i]*=grain(i);
     // one light, even hatched layer over everything darker than the lights...
-    const m1=smooth(t2+.04,t2-.04,g3[i]),m2=smooth(t1+.03,t1-.03,g3[i]);L.m1[i]=m1;L.m2[i]=m2;
-    const hl=1-(1-st.ink[0][i])*(1-st.ink[1][i])*(1-st.ink[2][i]);
-    L.tone1[i]=clamp(m1*.6*(1-v1)*(.7+.6*hl)*(.6+.4*grain(i)));
+    // (on the softened copy, so knit and fur texture don't punch holes in it); each layer takes the drawing part of the way to its finished value
+    const m1=smooth(.95,.85,g6[i]),m2=smooth(t1+.06,t1-.06,g6[i]);L.m1[i]=m1;L.m2[i]=m2;
+    const hatchAt=(a,per)=>{const u=x*Math.cos(a)+y*Math.sin(a),j=hr[(y>>2)*hw+(x>>2)];const v=x*Math.sin(a)-y*Math.cos(a),br=hr[(((y>>3)+(x>>4))%((h>>2)+1))*hw+((x>>2)%hw)];
+      return smooth(.2,.8,.5+.5*Math.sin(2*Math.PI*u/per+j*3))*(.65+.35*smooth(.3,.7,.5+.5*Math.sin(v/(11*sc)+br*6)));};
+    const hl=hatchAt(.8,3.6*sc);L.hatch[i]=hl;
+    L.tone1[i]=clamp((1-g6[i])*.45*m1*(.7+.6*hl)*(.85+.3*st.tooth[i])*(.9+.1*grain(i)));
     // ...then a second, crossing layer inside the shadow shapes
-    const hd=1-(1-st.ink[3][i])*(1-st.ink[4][i]);
-    L.tone2[i]=clamp(m2*(1-v2/(1-.6*(1-v1)))*(.7+.6*hd)*(.6+.4*grain(i)));
+    const hd=hatchAt(-.45,3.2*sc);
+    L.tone2[i]=clamp(((1-g6[i])*.12*m1+(1-sk[i])*.3*m2)*(.8+.4*hd)*(.9+.1*grain(i)));
+    L.t7[i]=Math.min(1-L.tone1[i]-L.tone2[i],1-(1-sk[i])*.6*m1);
   }
   L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
   // the darkest accents: small spots clearly darker than what is around them (pupils, nostrils, the lip line),
   // plus the very darkest few percent of the drawing, not whole dark areas
-  {const around=blur(sk,w,h,Math.round(10*sc)),deep=pct(sk,.03);L.acc=new Float32Array(n);
-    for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.8,1.1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
-      L.acc[i]=Math.max(smooth(.08,.18,around[i]-sk[i])*smooth(.5,.3,sk[i])*face,smooth(deep+.04,deep,sk[i]));}}
+  {L.acc=new Float32Array(n);
+    const sm=blur(sk,w,h,Math.max(1,Math.round(2*sc))),wide=blur(sk,w,h,Math.round(30*sc)),spot=new Float32Array(n);
+    for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.8,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
+      spot[i]=((wide[i]-sm[i]>.15&&sm[i]<.4)||(con[i]>.7&&sm[i]<.45)?1:0)*face;}
+    // keep spots, not long dark bands: a spot fills little of its neighbourhood
+    const fill=blur(spot,w,h,Math.round(12*sc)),grow=blur(spot,w,h,Math.max(1,Math.round(2*sc)));
+    for(let i=0;i<n;i++)L.acc[i]=smooth(.1,.35,grow[i])*smooth(.55,.35,fill[i]);}
   // the highlights step 10 lifts: the brightest spots inside the face, surrounded by shading
   // (catchlights, the bridge of the nose, the lower lip), not the bare paper around the figure
   // found as spots in the photo that are clearly brighter than what is around them
@@ -1060,17 +1069,19 @@ function stepTone(k){
   const n=S.w*S.h,out=new Float32Array(n),sk=L.sk;
   for(let i=0;i<n;i++){
     let lit=1;
-    if(k>=1)lit*=1-L.block[i]*(k>=3?.4:1); // block-in lines are lightly erased once the real contours are in
+    // block-in lines are lightly erased once the real contours are in, and gone before shading;
+    // the shadow outlines sink into the tone as it builds
+    if(k>=1&&k<5)lit*=1-L.block[i]*(k>=3?.4:1);
     if(k>=2)lit*=1-L.feat[i];
     if(k>=3)lit*=1-L.line[i];
-    if(k>=4)lit*=1-L.shadow[i];
-    if(k>=5)lit*=1-L.tone1[i];
-    if(k>=6)lit*=1-L.tone2[i];
+    if(k>=4)lit*=1-L.shadow[i]*(k>=6?.3:k>=5?.6:1);
+    if(k>=5)lit*=k>=6?L.t7[i]:1-L.tone1[i];
+    if(k>=5&&lit<.55)lit=.55-(.55-lit)*.6; // the layers stay mostly mid-grey (compressed, not clipped): the true darks wait for the accents and the blending
     // the darkest accents are taken straight from the finished drawing
     if(k>=7)lit=Math.min(lit,1-(1-sk[i])*L.acc[i]);
     // blending turns the hatched values into the finished smooth shading, but drags a grey film into the lights
     // next to the shading; the last step lifts it again with the eraser, along with the highlights
-    if(k>=8)lit=k>=9?sk[i]:sk[i]-.18*smooth(.72,.95,sk[i])*L.film[i]*(L.sub?smooth(.3,.6,L.sub[i]):1)-.2*L.hi[i];
+    if(k>=8)lit=k>=9?sk[i]:sk[i]-.16*smooth(.72,.95,sk[i])*L.film[i]*(.4+.6*L.hatch[i])*(L.sub?smooth(.3,.6,L.sub[i]):1)-.2*L.hi[i];
     out[i]=lit;
   }
   return L.tones[k]=out;
