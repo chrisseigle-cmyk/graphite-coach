@@ -1028,7 +1028,7 @@ function faceAccents(P,w,h){
   x.fillStyle=x.strokeStyle="#000";x.lineCap=x.lineJoin="round";
   for(const k of[468,473]){x.beginPath();x.arc(P[k][0],P[k][1],iris*.62,0,7);x.fill();}
   // nostrils: small dark ellipses tucked under the nose, either side of its centre line
-  for(const k of[60,290]){const nx=(P[k][0]*2+P[2][0])/3,ny=(P[k][1]*2+P[2][1])/3;x.beginPath();x.ellipse(nx,ny,iris*.7,iris*.38,Math.atan2(P[290][1]-P[60][1],P[290][0]-P[60][0]),0,7);x.fill();}
+  for(const k of[60,290]){const nx=(P[k][0]*2+P[2][0])/3,ny=(P[k][1]*2+P[2][1])/3;x.beginPath();x.ellipse(nx,ny,iris*.5,iris*.3,Math.atan2(P[290][1]-P[60][1],P[290][0]-P[60][0]),0,7);x.fill();}
   // the lip line, thickest in the middle and fading towards the corners
   const up=[78,191,80,81,82,13,312,311,310,415,308],lo=[78,95,88,178,87,14,317,402,318,324,308];
   for(let j=0;j<up.length-1;j++){const t=Math.sin(Math.PI*(j+.5)/(up.length-1));x.lineWidth=iris*(.1+.28*t);x.globalAlpha=.6+.4*t;x.beginPath();
@@ -1068,7 +1068,9 @@ function planLayers(){
   // shadow shapes are outlined on a softer copy, so texture (knit, fur) doesn't break them into crumbs
   const g6=blur(sk,w,h,Math.round(6*sc));
   const closed=p=>Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<3*sc;
-  const shadowLines=isoLines(g6,w,h,t1,Math.max(1,Math.round(2*sc))).filter(p=>plen(p)>(closed(p)?150:40)*sc).map(p=>simplify(p,1.6*sc));
+  const g14=blur(sk,w,h,Math.round(14*sc)),gs=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,f=1-smooth(.7,1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));gs[i]=f*g6[i]+(1-f)*g14[i];}
+  const shadowLines=isoLines(gs,w,h,t1,Math.max(1,Math.round(2*sc))).filter(p=>plen(p)>(closed(p)?150:40)*sc).map(p=>simplify(p,1.6*sc));
   const shadow=pencilLines(shadowLines,{seed:23,passes:1,jit:.6*sc,over:0,lw:.9*sc,alpha:.55});
   // contour lines: the AI line drawing, kept thin (only the core of each line)
   const con=Float32Array.from(AI||edges(contrasted(params().contrast),w,h,1,3.5,12));
@@ -1082,16 +1084,17 @@ function planLayers(){
     L.block[i]*=grain(i);L.shadow[i]*=grain(i);
     // one light, even hatched layer over everything darker than the lights...
     // (on the softened copy, so knit and fur texture don't punch holes in it); each layer takes the drawing part of the way to its finished value
-    const m1=smooth(.95,.85,g6[i]),m2=smooth(t1+.06,t1-.06,g6[i]);L.m1[i]=m1;L.m2[i]=m2;
+    const m1=smooth(.95,.85,g6[i]),m2=smooth(t1+.1,t1-.1,g6[i]);L.m1[i]=m1;L.m2[i]=m2;
     L.tone1[i]=(1-g6[i])*.45*m1; // target darkness; drawn as strokes below
     // ...then a second, crossing layer inside the shadow shapes
-    L.tone2[i]=(1-g6[i])*.5*m2;
+    L.tone2[i]=clamp(m2*(.5+.7*smooth(t1,t1*.45,g6[i]))*(1-g6[i])*.75);
   }
   // the two shading layers drawn as real hatching: short straight strokes, a little uneven in angle, length and pressure,
   // one direction for the first layer and a clearly crossing one for the second
   const h1=hatchInk(L.tone1,.75,2*sc,31,sc),h2=hatchInk(L.tone2,-.55,2.2*sc,47,sc);
+  L.hst=new Float32Array(n);
   for(let i=0;i<n;i++){const in1=smooth(.04,.1,L.tone1[i]),in2=smooth(.04,.1,L.tone2[i])*L.m2[i]; // strokes stop where their area ends
-    L.hatch[i]=h1[i]; // a soft even layer of graphite with the strokes showing on top of it
+    L.hst[i]=clamp(1.3*(h1[i]+h2[i]));L.hatch[i]=h1[i]; // a soft even layer of graphite with the strokes showing on top of it
     L.tone1[i]=clamp(in1*(.75*L.tone1[i]+.3*Math.min(1,1.6*h1[i])*grain(i)));L.tone2[i]=clamp(in2*(.75*L.tone2[i]+.3*Math.min(1,1.6*h2[i])*grain(i)));
     L.t7[i]=1-L.tone1[i]-L.tone2[i];}
   L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
@@ -1141,6 +1144,7 @@ function stepTone(k){
     // blending turns the hatched values into the finished smooth shading, but drags a grey film into the lights
     // next to the shading; the last step lifts it again with the eraser, along with the highlights
     if(k>=8)lit=k>=9?sk[i]:sk[i]-.16*smooth(.72,.95,sk[i])*L.film[i]*(.4+.6*L.hatch[i])*(L.sub?smooth(.3,.6,L.sub[i]):1)-.2*L.hi[i];
+    if(k>=8)lit*=1-(k>=9?.1:.16)*L.hst[i]; // the hatching still shows faintly through the blended tone
     if(k>=8)lit=Math.min(lit,accT); // the accents stay through blending
     if(k>=9)lit+=(1-lit)*smooth(.25,.6,L.hi[i]); // the eraser lifts the catchlights and shine back to paper
     out[i]=lit;
