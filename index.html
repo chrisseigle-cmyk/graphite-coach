@@ -7,7 +7,7 @@
 <meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.">
 <meta name="theme-color" content="#f2eee5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect x='2' y='2' width='116' height='116' rx='22' fill='%23f6f1e5'/%3E%3Cg fill='none' stroke='%232b2d31' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23b4533a' stroke-width='4.94'%3E%3Cpath d='M60 4V111M14 55H106'/%3E%3C/g%3E%3Cpath stroke-width='8.74' d='M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z'/%3E%3Ccircle cx='47' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Ccircle cx='73' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Cpath stroke-width='5.7' d='M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75'/%3E%3Cpath stroke-width='6.08' d='M51.5 86C56 88.4 64 88.4 68.5 86'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect x='2' y='2' width='116' height='116' rx='22' fill='%23f6f1e5'/%3E%3Cg fill='none' stroke='%232b2d31' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%2375777c' stroke-width='4.94'%3E%3Cpath d='M60 4V111M14 55H106'/%3E%3C/g%3E%3Cpath stroke-width='8.74' d='M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z'/%3E%3Ccircle cx='47' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Ccircle cx='73' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Cpath stroke-width='5.7' d='M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75'/%3E%3Cpath stroke-width='6.08' d='M51.5 86C56 88.4 64 88.4 68.5 86'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -18,7 +18,7 @@
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
   --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
-  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#b4533a;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c;
   --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
   --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
   --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
@@ -30,7 +30,7 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#e3907a;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -38,7 +38,7 @@
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#e3907a;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -265,9 +265,9 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 }
 
 /* ---------- launch splash: an invisible pencil lays in circles and triangles, they settle into the face,
-   red-chalk proportion guides go in, the name is written, and the mark settles into the header.
+   light graphite proportion guides go in, the name is written, and the mark settles into the header.
    Layers: .sp-sheet (paper) / .sp-stage (drawing, multiplied into the paper) / .sp-dust + .sp-fly (graphite specks). */
-.splash{--sp-paper:#f6f1e5;--sp-vig:rgba(120,92,48,.16);--sp-ink:#35363a;--sp-chalk:#b4533a;
+.splash{--sp-paper:#f6f1e5;--sp-vig:rgba(120,92,48,.16);--sp-ink:#35363a;--sp-chalk:#75777c;
   position:fixed;inset:0;z-index:100;overflow:hidden;cursor:pointer;
   animation:splashAuto .5s ease 3.6s forwards}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}}
@@ -358,7 +358,7 @@ html.revealing .wrap>header{animation:none!important}
 </div>
 <script>
 /* Launch splash, drawn by an invisible pencil: circles and triangles first, which then morph into the face;
-   red-chalk proportion guides; the name. Graphite specks flick off the moving stroke end and a few settle as dust.
+   light graphite proportion guides; the name. Graphite specks flick off the moving stroke end and a few settle as dust.
    Independent of the app script below (it never waits on this). A timer always clears it, and the CSS fades it
    out on its own if this script never runs. First launch: the full drawing; later launches: a short morph. */
 (function(){
@@ -446,7 +446,7 @@ html.revealing .wrap>header{animation:none!important}
         r:.55+Math.random()*1.0,a:.5+Math.random()*.4,chalk:chalk,settle:Math.random()<(chalk?.08:.22)});}}
   function specks(dt){fx.clearRect(0,0,fly.width,fly.height);
     for(var i=parts.length-1;i>=0;i--){var q=parts[i];q.age+=dt;var s=dt/1000;q.vy+=150*s;q.vx*=.96;q.x+=q.vx*s;q.y+=q.vy*s;
-      var k=q.age/q.life,col=q.chalk?"150,72,52":"46,47,52";
+      var k=q.age/q.life,col=q.chalk?"100,102,108":"46,47,52";
       if(k>=1){if(q.settle){dx.fillStyle="rgba("+col+","+(q.a*.42).toFixed(3)+")";dx.beginPath();dx.arc(q.x,q.y,q.r*.85,0,7);dx.fill();}parts.splice(i,1);continue;}
       fx.fillStyle="rgba("+col+","+(q.a*(1-k*k)).toFixed(3)+")";fx.beginPath();fx.arc(q.x,q.y,q.r,0,7);fx.fill();}}
 
@@ -454,7 +454,7 @@ html.revealing .wrap>header{animation:none!important}
   function frame(now){
     if(done)return;if(!frame.t0)frame.t0=prevNow=now;var tt=now-frame.t0,dt=Math.min(50,now-prevNow);prevNow=now;
     var tip=null;
-    // drawing: construction shapes, then the red-chalk guides
+    // drawing: construction shapes, then the light graphite guides
     T.forEach(function(S){var u=clamp((tt-S.t0)/S.dd),p=S.e(u);setP(S,p);
       if(tt>=S.t0&&tt<S.t0+S.dd)tip={pt:tipOf(S,p),chalk:!!S.chalk};});
     if(quick){shapeS.concat(guideS).forEach(function(S){var u=clamp((tt-S.t0)/S.dd);setP(S,1);
@@ -491,10 +491,10 @@ html.revealing .wrap>header{animation:none!important}
   window.addEventListener("keydown",function k(){window.removeEventListener("keydown",k);land(true);});
 })();
 </script>
-<!-- the logo mark (header, empty sketchbook): a face laid out with red-chalk proportion guides -->
+<!-- the logo mark (header, empty sketchbook): a face laid out with light graphite proportion guides -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="gc-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-    <g style="stroke:var(--chalk,#b4533a)" stroke-width="2.2"><path d="M60 4V111M14 55H106"/><path d="M44 76H76M47 86H73" opacity=".7"/><path d="M101 33V77M98 33H104M98 55H104M98 77H104" opacity=".8"/></g>
+    <g style="stroke:var(--chalk,#75777c)" stroke-width="2.2"><path d="M60 4V111M14 55H106"/><path d="M44 76H76M47 86H73" opacity=".7"/><path d="M101 33V77M98 33H104M98 55H104M98 77H104" opacity=".8"/></g>
     <path stroke-width="5.4" d="M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z"/>
     <path stroke-width="3.4" d="M38.5 55C42 50.5 52 50.5 55.5 55C52 58.5 42 58.5 38.5 55ZM64.5 55C68 50.5 78 50.5 81.5 55C78 58.5 68 58.5 64.5 55Z"/>
     <g fill="currentColor" stroke="none"><circle cx="47" cy="55" r="3"/><circle cx="73" cy="55" r="3"/></g>
