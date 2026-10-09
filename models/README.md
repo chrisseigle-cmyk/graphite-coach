@@ -12,6 +12,8 @@ The ONNX export comes from https://github.com/Kazuhito00/Informative-Drawings-ON
 
 # Face landmarks
 
-`face.task` is Google's **MediaPipe Face Landmarker** (float16, version 1), https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker, Apache-2.0 License, sha256 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff. It finds 478 points on a face, including the irises, and is used to place the darkest accents (pupils, nostrils, lip line) in step 8. When it finds no face (a pet, for example), the plan falls back to dark spots read from the drawing.
+`face.task` is Google's **MediaPipe Face Landmarker** (float16, version 1), https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker, Apache-2.0 License, sha256 64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff. It finds 478 points on a face, including the irises, and is used to place the darkest accents (pupils, nostrils, lip line) in step 8. When it finds no face (a pet, for example), the plan falls back to the darkest compact spots in the photo, such as a dog's eyes and nose.
+
+`face-detect.tflite` is Google's **MediaPipe BlazeFace (short range)** face detector, https://ai.google.dev/edge/mediapipe/solutions/vision/face_detector, Apache-2.0 License, sha256 b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f. The landmark model will fit a human face onto a pet, so the landmarks are only used when this detector is confident (score 0.82 or more) that the photo shows a person.
 
 `vendor/mediapipe/` holds `@mediapipe/tasks-vision` 0.10.14 (Apache-2.0 License, Google): `vision_bundle.js` (the package's `vision_bundle.mjs`, source-map comment removed) and the SIMD WebAssembly runtime `vision_wasm_internal.js` / `.wasm`.
