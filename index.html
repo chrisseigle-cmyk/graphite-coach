@@ -1107,6 +1107,7 @@ function planLayers(){
   L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
   // the darkest accents: small spots clearly darker than what is around them (pupils, nostrils, the lip line),
   // plus the very darkest few percent of the drawing, not whole dark areas
+  let shine=null;
   {L.acc=new Float32Array(n);
     const sm=blur(sk,w,h,Math.max(1,Math.round(2*sc))),wide=blur(sk,w,h,Math.round(30*sc)),spot=new Float32Array(n);
     for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.8,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
@@ -1130,19 +1131,26 @@ function planLayers(){
           for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&lab[j]<0&&inn(j)){lab[j]=id;st.push(j);}}
         comps.push(c);}
       // compact and solid (not a long band along an ear), big enough to read; the strongest few win
-      const dm=new Float32Array(n);
+      const dm=new Float32Array(n);shine=new Float32Array(n);
       comps.filter(c=>{const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1,a=c.px.length;
           return a>=n*.0003&&a<=n*.015&&Math.max(bw,bh)<=3*Math.min(bw,bh)&&a>=.35*bw*bh;})
-        .sort((p,q)=>q.v-p.v).slice(0,5).forEach(c=>{for(const i of c.px)if(raw[i]||pd[i]<lo)dm[i]=1;});
+        .sort((p,q)=>q.v-p.v).slice(0,5).forEach(c=>{let t=0,k=0;for(const i of c.px)if(raw[i]||pd[i]<lo){dm[i]=1;t+=pd[i];k++;}
+          for(const i of c.px)if(!dm[i]&&pd[i]>t/Math.max(1,k)+.2)shine[i]=1;}); // a catchlight in an eye, the shine on a nose
       const dg=blur(dm,w,h,Math.max(1,Math.round(2*sc)));
       // shaded by the photo inside each shape, so a shine on the nose or in an eye stays lighter instead of a flat stamp
-      for(let i=0;i<n;i++)L.acc[i]=Math.max(L.acc[i]*.25,smooth(.15,.5,dg[i])*(.35+.65*smooth(lo+.06,lo-.14,pd[i]))*(.8+.2*grain(i)));}}
+      // drawn like a pencil would: a firm outline round each shape, a softer fill, and the shine left as paper
+      const db=blur(dm,w,h,Math.max(1,Math.round(3*sc))),sh=blur(shine,w,h,Math.max(1,Math.round(1.5*sc)));
+      for(let i=0;i<n;i++)shine[i]*=smooth(.45,.7,db[i]); // only a shine held inside the dark shape, not the fur at its edge
+      sh.set(blur(shine,w,h,Math.max(1,Math.round(1.5*sc))));
+      for(let i=0;i<n;i++){const ring=Math.max(0,1-Math.abs(2*db[i]-1)*1.6),fill=smooth(.15,.5,dg[i])*(.5+.45*smooth(lo+.06,lo-.14,pd[i]));
+        L.acc[i]=Math.max(L.acc[i]*.25,Math.max(ring*.95,fill)*(.8+.2*grain(i)))*(1-smooth(.2,.5,sh[i]));}}}
   // the highlights step 10 lifts: the brightest spots inside the face, surrounded by shading
   // (catchlights, the bridge of the nose, the lower lip), not the bare paper around the figure
   // found as spots in the photo that are clearly brighter than what is around them
   L.hi=new Float32Array(n);const pg=blur(S.gray,w,h,Math.max(1,Math.round(.8*sc))),around=blur(S.gray,w,h,Math.round(5*sc));
   for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.9,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
     L.hi[i]=smooth(.05,.12,pg[i]-around[i])*smooth(.45,.65,pg[i])*face;}
+  if(shine){const sh=blur(shine,w,h,Math.max(1,Math.round(1.5*sc)));for(let i=0;i<n;i++)L.hi[i]=Math.max(L.hi[i],.5*smooth(.2,.6,sh[i]));}
   L.sc=sc;
   return S.cache.plan=L;
 }
@@ -1161,10 +1169,10 @@ function stepTone(k){
     if(k>=3)lit*=1-L.line[i];
     if(k>=4)lit*=1-L.shadow[i]*(k>=6?.3:k>=5?.6:1);
     if(k>=5)lit*=k>=6?L.t7[i]:1-L.tone1[i];
-    if(k>=5&&k<8)lit*=1-.65*L.line[i]; // the contours are gone over again so the tone doesn't swallow them
     if(k>=5&&lit<.55)lit=.55-(.55-lit)*.6; // the layers stay mostly mid-grey (compressed, not clipped): the true darks wait for the accents and the blending
+    if(k>=5&&k<8)lit=lit*(1-.65*L.line[i])-.3*L.line[i]*(1-lit); // the contours are gone over again, after the squeeze, so dark tone does not swallow them
     // the darkest accents are taken straight from the finished drawing
-    const accT=1-(1-Math.min(sk[i],.12+.22*sk[i]))*L.acc[i];
+    const accT=1-(1-Math.min(sk[i],.05+.15*sk[i]))*L.acc[i];
     if(k>=7)lit=Math.min(lit,accT);
     // blending turns the hatched values into the finished smooth shading, but drags a grey film into the lights
     // next to the shading; the last step lifts it again with the eraser, along with the highlights
