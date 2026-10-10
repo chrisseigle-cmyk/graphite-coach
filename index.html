@@ -689,7 +689,9 @@ const MAXW = 1000;
 /* ---------- image processing ---------- */
 const clamp = v => v<0?0:v>1?1:v;
 function boxH(s,d,w,h,r){const n=2*r+1;for(let y=0;y<h;y++){const o=y*w;let acc=0;for(let k=-r;k<=r;k++)acc+=s[o+Math.min(w-1,Math.max(0,k))];for(let x=0;x<w;x++){d[o+x]=acc/n;acc+=s[o+Math.min(w-1,x+r+1)]-s[o+Math.max(0,x-r)];}}}
-function boxV(s,d,w,h,r){const n=2*r+1;for(let x=0;x<w;x++){let acc=0;for(let k=-r;k<=r;k++)acc+=s[Math.min(h-1,Math.max(0,k))*w+x];for(let y=0;y<h;y++){d[y*w+x]=acc/n;acc+=s[Math.min(h-1,y+r+1)*w+x]-s[Math.max(0,y-r)*w+x];}}}
+function boxV(s,d,w,h,r){const n=2*r+1,acc=new Float64Array(w); // row by row, a running sum per column: walks memory in order
+  for(let k=-r;k<=r;k++){const o=Math.min(h-1,Math.max(0,k))*w;for(let x=0;x<w;x++)acc[x]+=s[o+x];}
+  for(let y=0;y<h;y++){const o=y*w,a=Math.min(h-1,y+r+1)*w,b=Math.max(0,y-r)*w;for(let x=0;x<w;x++){d[o+x]=acc[x]/n;acc[x]+=s[a+x]-s[b+x];}}}
 function blur(src,w,h,r){r=Math.round(r);if(r<1)return src.slice();const a=new Float32Array(w*h),b=new Float32Array(w*h);boxH(src,a,w,h,r);boxV(a,b,w,h,r);boxH(b,a,w,h,Math.max(1,r>>1));boxV(a,b,w,h,Math.max(1,r>>1));return b;}
 function edges(g,w,h,r1,r2,gain){const b1=blur(g,w,h,r1),b2=blur(g,w,h,r2),o=new Float32Array(w*h);for(let i=0;i<o.length;i++)o[i]=clamp((b2[i]-b1[i])*gain-.02);return o;}
 const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t);};
@@ -759,15 +761,29 @@ function guided(I,w,h,r,eps){const n=I.length,II=new Float32Array(n);for(let i=0
   for(let i=0;i<n;i++){const v=Math.max(0,m2[i]-m[i]*m[i]);a[i]=v/(v+eps);b[i]=m[i]-a[i]*m[i];}
   const ma=blur(a,w,h,r),mb=blur(b,w,h,r),q=new Float32Array(n);for(let i=0;i<n;i++)q[i]=ma[i]*I[i]+mb[i];return q;}
 
-function contrasted(c){const g=S.gray,o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
+function contrasted(c,g=S.gray){const o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
 
-function sketchTone(p){
-  const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,g=contrasted(p.contrast),gr=GRADES[p.grade],st=strokes(),F=S.focus;
-  // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
-  // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+/* what the sketch is made from: the photo, its face, the AI lines and the stroke textures.
+   While a slider is moving, a half-size copy is drawn instead (a quarter of the work), and the
+   full-size drawing follows a moment after the slider stops. */
+function fullSrc(){const st=strokes(),c=S.cache.src;
+  if(c&&c.gray===S.gray&&c.ai===S.cache.ailines&&c.st===st)return c;
+  return S.cache.src={w:S.w,h:S.h,gray:S.gray,F:S.focus,ai:S.cache.ailines,st,memo:{}};}
+function halfSrc(){const f=fullSrc(),c=S.cache.half;if(c&&c.of===f)return c;
+  const w=f.w>>1,h=f.h>>1,dn=a=>{const o=new Float32Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=2*y*f.w+2*x;o[y*w+x]=(a[i]+a[i+1]+a[i+f.w]+a[i+f.w+1])/4;}return o;};
+  const st={};for(const k in f.st)st[k]=Array.isArray(f.st[k])?f.st[k].map(dn):dn(f.st[k]);
+  return S.cache.half={of:f,w,h,gray:dn(f.gray),F:{x:f.F.x/2,y:f.F.y/2,r:f.F.r/2},ai:f.ai&&dn(f.ai),st,memo:{}};}
+function sketchTone(p,src=fullSrc()){
+  const {w,h,F,st}=src,n=w*h,sc=Math.max(w,h)/640,gr=GRADES[p.grade],M=src.memo;
+  // the tone stages depend on only a few sliders; moving any other slider reuses them
+  const kT=[p.contrast,p.bright,p.fade].join();
   // the Fade edges slider also sets how much the drawing lightens away from the face (50% = default)
   const fk=Math.min(1.4,p.fade*2);
-  const srt=Float32Array.from(g).sort(),lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
+  if(M.kT!==kT){M.kT=kT;M.kB=M.kE=null;const g=contrasted(p.contrast,src.gray);
+  // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
+  // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+  const srt=M.srt&&M.kC===p.contrast?M.srt:Float32Array.from(g).sort();M.srt=srt;M.kC=p.contrast;
+  const lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
   let T=new Float32Array(n);const fd=new Float32Array(n);
   for(let i=0;i<n;i++){
     // brightness bends the mid-tones lighter or darker; paper white and the darkest dark stay put
@@ -781,13 +797,16 @@ function sketchTone(p){
     T[i]=t;
   }
   const Tr=T,Tg=guided(T,w,h,Math.round(3*sc),.002);T=Tg;
-  const Tb=blur(T,w,h,p.soft*sc*.6),Th=blur(T,w,h,1.5*sc);
+  const Th=blur(T,w,h,1.5*sc);
   // light areas touching paper-white lose their outline ("lost edges")
   const paper=new Float32Array(n);for(let i=0;i<n;i++)paper[i]=T[i]>.97?1:0;const nb=blur(paper,w,h,Math.round(5*sc)),near=nb.map(v=>smooth(.01,.12,v));
-  const lineR=(.5+(1-p.detail)*1.6)*sc;
-  const e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10),AI=S.cache.ailines;
+  Object.assign(M,{Tr,T,Th,near,fd});}
+  const {Tr,T,Th,near,fd}=M,AI=src.ai;
+  const kB=M.kT+"|"+p.soft;if(M.kB!==kB){M.kB=kB;M.Tb=blur(T,w,h,p.soft*sc*.6);}const Tb=M.Tb;
+  const lineR=(.5+(1-p.detail)*1.6)*sc,kE=M.kT+"|"+p.detail+"|"+p.press;
+  if(!AI&&M.kE!==kE){M.kE=kE;M.e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10);}const e=M.e;
   // the line drawing model's ink, softened a little so the shading can darken into each line
-  const aiSoft=AI?blur(AI,w,h,Math.max(1,Math.round(1.5*sc))):null;
+  const aiSoft=AI?(M.aiSoft||(M.aiSoft=blur(AI,w,h,Math.max(1,Math.round(1.5*sc))))):null;
   const out=new Float32Array(n);
   for(let i=0;i<n;i++){
     // the face keeps crisp detail (catchlights, lash line); further out the tone is blended softer
@@ -817,8 +836,8 @@ function sketchTone(p){
   return out;
 }
 
-function paint(canvas,tone,ghost){
-  const {w,h}=S;canvas.width=w;canvas.height=h;
+function paint(canvas,tone,ghost,w=S.w,h=S.h){
+  canvas.width=w;canvas.height=h;
   const ctx=canvas.getContext("2d"),img=ctx.createImageData(w,h),d=img.data;
   // warm paper (250,249,245) to graphite (38,41,47) with a faint cool sheen in the darks
   for(let i=0,j=0;i<tone.length;i++,j+=4){
@@ -851,6 +870,13 @@ function loadSource(src){
    It reads a 512 x 512 image and returns a line drawing; we pad the photo to a square, run it, and crop back. */
 let AISESSION=null,AIJOB=0;
 function aiStatus(t){$("aistat").textContent=t;}
+/* a download that reports how far along it is (the first sketch fetches about 9 MB of AI model) */
+async function fetchBytes(url,onPct){const r=await fetch(url);if(!r.ok)throw new Error(url+" "+r.status);
+  const total=+r.headers.get("content-length")||0;if(!r.body||!total)return new Uint8Array(await r.arrayBuffer());
+  const out=new Uint8Array(total),rd=r.body.getReader();let got=0,last=-1;
+  for(;;){const {done,value}=await rd.read();if(done)break;if(got+value.length>total)return new Uint8Array(await new Response(new Blob([out.subarray(0,got),value])).arrayBuffer());
+    out.set(value,got);got+=value.length;const pc=Math.floor(got/total*100);if(pc!==last){last=pc;onPct(pc);}}
+  return got===total?out:out.subarray(0,got);}
 async function aiLines(c){
   const job=++AIJOB,{w,h}=S;
   if(!window.ort){aiStatus("Basic lines (AI drawing unavailable)");return;}
@@ -858,7 +884,8 @@ async function aiLines(c){
     aiStatus("Drawing lines with AI…");
     if(!AISESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true; // run in a background worker so the page stays responsive
       ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
-      AISESSION=ort.InferenceSession.create("models/lines.onnx",{executionProviders:["wasm"]});}
+      AISESSION=fetchBytes("models/lines.onnx",pc=>{if(job===AIJOB)aiStatus(`Downloading the AI line model (one time only)… ${pc}%`);})
+        .then(buf=>{aiStatus("Drawing lines with AI…");return ort.InferenceSession.create(buf,{executionProviders:["wasm"]});});}
     const sess=await AISESSION;
     const N=512,side=Math.max(w,h),ox=(side-w)/2,oy=(side-h)/2,k=N/side;
     const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
@@ -903,9 +930,16 @@ async function faceLandmarks(c){
 const sliders=["bright","shade","strokes","soft","press","detail","contrast","grain","fade"];
 function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,bright:$("bright").value/50,grade:S.grade};}
 function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";const b=+$("bright").value;$("bright-o").textContent=(b>0?"+":"")+b;}
-let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;
+/* while a slider moves, a half-size sketch is drawn every frame and stretched to fit;
+   the full-size one follows once the slider has been still for a moment */
+let raf=0,fullT=0,HALF=null;
+function render(quick){labels();cancelAnimationFrame(raf);clearTimeout(fullT);raf=requestAnimationFrame(()=>{if(!S.gray)return;const p=params();
+  if(quick){const src=halfSrc(),c=$("out");HALF=HALF||document.createElement("canvas");paint(HALF,sketchTone(p,src),false,src.w,src.h);
+    if(c.width!==S.w||c.height!==S.h){c.width=S.w;c.height=S.h;}const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(HALF,0,0,S.w,S.h);
+    fullT=setTimeout(()=>render(false),250);return;}
+  S.cache.sketch=sketchTone(p);S.cache.sketchKey=JSON.stringify(p);paint($("out"),S.cache.sketch);S.cache.bands=null;
   $("out").setAttribute("aria-label",`Pencil sketch of ${$("srcname").textContent||"your photo"}, ${GRADES[S.grade].id} pencil`);});}
-sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;saveSoon();}));
+sliders.forEach(id=>$(id).addEventListener("input",()=>{render(true);S.cache.planDirty=true;saveSoon();}));
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll("#grades .grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
 function usePhoto(f){if(!f)return;const im=new Image();
@@ -1377,7 +1411,9 @@ function show(tab){
   window.scrollTo({top:0});
   if(tab==="book")drawBook();
   if(tab==="photo")drawPhoto();
-  if(tab==="plan"){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}
+  if(tab==="plan"){const p=params(),k=JSON.stringify(p); // unchanged settings: the finished sketch is reused
+    if(!S.cache.sketch||S.cache.sketchKey!==k||S.cache.sketchAI!==S.cache.ailines){S.cache.sketch=sketchTone(p);S.cache.sketchKey=k;S.cache.bands=null;}
+    S.cache.sketchAI=S.cache.ailines;renderStep();}
 }
 TABS.forEach(t=>{$("tab-"+t).onclick=()=>show(t);});
 // arrow keys move between the steps that are open, as tabs do; Tab itself jumps into the step's content
