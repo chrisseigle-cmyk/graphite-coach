@@ -18,7 +18,7 @@
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
   --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
-  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c; --field:#968a73; --glow:40,130,255;
   --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
   --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
   --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
@@ -28,9 +28,12 @@
   --mono:"IBM Plex Mono",ui-monospace,monospace;
   --ease:cubic-bezier(.2,.75,.25,1);
 }
+html{scrollbar-color:var(--rule-2) var(--paper)}
+::selection{background:var(--blue-soft);color:var(--graphite)}
+input,textarea{caret-color:var(--blue)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -38,7 +41,7 @@
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -204,14 +207,16 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 /* hover (or touch and hold) the step picture: a soft glowing outline around what this step adds */
 .canvaswrap{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-y;border-radius:4px}
 .stepfade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
-#glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 2px rgba(70,150,255,.3))}
+#glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 2px rgba(var(--glow),.3))}
 @media (hover:hover){.canvaswrap:hover #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}}
 .canvaswrap.peek #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}
 @keyframes glow{50%{opacity:.65}}
 @media (prefers-reduced-motion:reduce){#glowcanvas{animation:none!important}}
 .peekhint{font-size:12.5px;color:var(--muted);margin:0;display:flex;align-items:center;gap:7px;padding-inline:2px}
-.peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(70,150,255);box-shadow:0 0 0 3px rgba(70,150,255,.18),0 0 8px rgba(70,150,255,.7)}
-.stepcard .look{background:var(--sheet-2);border:1px solid var(--rule);border-left:3px solid var(--blue);border-radius:4px 10px 10px 4px;padding:10px 12px;font-size:14px}
+.peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(var(--glow));box-shadow:0 0 0 3px rgba(var(--glow),.18),0 0 8px rgba(var(--glow),.7)}
+.stepcard .look{display:grid;grid-template-columns:20px 1fr;gap:10px;align-items:start;background:var(--sheet-2);border:1px solid var(--rule);border-radius:10px;padding:11px 13px;font-size:14px;margin:0}
+.stepcard .look svg{width:20px;height:20px;color:var(--blue);margin-top:1px}
+.stepcard .look strong{color:var(--graphite)}
 #stepdl{padding:4px 12px;font-size:12.5px;margin-left:auto;margin-right:10px}
 #stepcount{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
 /* photo editing: the picture with a drag-to-crop box over it */
@@ -249,10 +254,10 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;background:var(--paper);box-shadow:0 0 0 1px rgba(var(--shadow),.07);margin-bottom:4px}
 .book b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .book span{font-size:12.5px;color:var(--muted);line-height:1.4}
-.namefield{font:inherit;color:var(--graphite);background:var(--sheet);border:1px solid var(--rule-2);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.namefield{font:inherit;color:var(--graphite);background:var(--sheet);border:1px solid var(--field);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
 .namefield:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);outline:none}
 .book .namefield{font-weight:600;font-size:14.5px;padding:3px 5px;margin:0 -6px;width:calc(100% + 12px);border-color:transparent;background:transparent;border-radius:6px}
-.book .namefield:hover{border-color:var(--rule-2)}
+.book .namefield:hover{border-color:var(--field)}
 .book .namefield:focus{border-color:var(--blue);background:var(--paper)}
 .book .rowbtns{margin-top:6px;gap:4px;align-items:center}
 .book .rowbtns .primary{flex:1 1 auto;margin-bottom:2px}
@@ -305,7 +310,8 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 @media (prefers-reduced-motion:reduce){
   #view-book,section.grid>*,.book,html.revealing .wrap>*,.gridopts[open]>.ctrl{animation:none!important}
   .book:hover{transform:none}
-  *{transition-duration:.01ms!important}
+  /* keep colour and fade changes (they show what changed); drop anything that moves or resizes */
+  *{transition-property:opacity,color,background-color,border-color,box-shadow,outline-color,fill,stroke!important}
 }
 
 /* ---------- launch splash: an invisible pencil lays in circles and triangles, they settle into the face,
@@ -331,9 +337,7 @@ html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 .splash.quick .sp-word{display:none}
 .sp-dust,.sp-fly{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply}
 .splash .skip{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sp-ink);opacity:0;transition:opacity .6s}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash .skip{color:#d9d2c3}}
-:root[data-theme="dark"] .splash .skip{color:#d9d2c3}
-.splash.run .skip{opacity:.4;transition-delay:.8s}
+.splash.run .skip{opacity:.78;transition-delay:.8s}
 .splash.static .skip,.splash.quick .skip{display:none}
 .splash.run{animation:none}
 .splash.static{pointer-events:none}
@@ -617,7 +621,7 @@ html.revealing .wrap>header{animation:none!important}
       </div>
       <div class="ctrl">
         <label class="toggle"><input id="bgrm" type="checkbox"> Remove the background</label>
-        <p class="hint">Keeps the person and turns everything behind them to plain paper. The first use downloads a 4.5 MB model; after that it works offline, and your photo still never leaves your device.</p>
+        <p class="hint">Keeps the person and turns everything behind them to plain paper. The first use downloads a 4.5 MB model, which your browser keeps for next time. Your photo never leaves your device.</p>
       </div>
       <div class="nav">
         <button class="btn" id="resetphoto">Undo my changes</button>
@@ -677,7 +681,7 @@ html.revealing .wrap>header{animation:none!important}
         <span class="pencil" id="s-pencil"></span>
         <h2 id="s-title"></h2>
         <p id="s-body"></p>
-        <p class="look"><strong>When you're done:</strong> <span id="s-look"></span></p>
+        <p class="look"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8.2" opacity=".35"/><path d="M6.2 10.4l2.6 2.6 5.2-6"/></svg><span><strong>When you're done:</strong> <span id="s-look"></span></span></p>
         <ul class="checks" id="s-checks"></ul>
       </div>
       <div class="nav stepnav">
@@ -1340,9 +1344,12 @@ function stepGlow(k){
     const e=edgeOf(grow);for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.95,spot[i]*.5);
   }
   const img=new ImageData(w,h),d=img.data;
-  for(let i=0,j=0;i<n;i++,j+=4){d[j]=40;d[j+1]=130;d[j+2]=255;d[j+3]=clamp(a[i])*255;}
+  const [gr,gg,gb]=glowRGB();
+  for(let i=0,j=0;i<n;i++,j+=4){d[j]=gr;d[j+1]=gg;d[j+2]=gb;d[j+3]=clamp(a[i])*255;}
   return L.glows[k]=img;
 }
+/* the glow colour is the --glow token, so the CSS legend dot and the picture always match */
+function glowRGB(){const v=getComputedStyle(document.documentElement).getPropertyValue("--glow").split(",").map(Number);return v.length===3&&v.every(x=>x>=0&&x<=255)?v:[40,130,255];}
 function renderGlow(k){
   const c=$("glowcanvas");c.width=S.w;c.height=S.h;const x=c.getContext("2d");
   if(k===0){if(S.grid.on){x.save();const G=S.grid;S.grid={...G,color:0,op:1,type:0};drawGrid(x,false);S.grid=G;x.restore();}return;} // step 1 adds the grid itself
