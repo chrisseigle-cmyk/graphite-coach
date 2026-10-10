@@ -186,6 +186,7 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 #stepcount{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
 /* photo editing: the picture with a drag-to-crop box over it */
 .cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:4px;overflow:hidden}
+.croprect:focus-visible{outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 0 9999px rgba(20,22,25,.5),inset 0 0 0 5px rgba(20,22,25,.55)}
 .croprect{position:absolute;box-shadow:0 0 0 9999px rgba(20,22,25,.5);outline:1px solid rgba(255,255,255,.9);cursor:move}
 /* corner brackets sit just inside the box, so they stay visible (and grabbable) when the crop is the whole photo */
 .croprect i{position:absolute;width:24px;height:24px;border:0 solid #fff;filter:drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 1px 3px rgba(0,0,0,.4))}
@@ -207,6 +208,8 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .samplerow{display:grid;grid-template-columns:repeat(3,minmax(0,150px));gap:12px}
 .sampletile{display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--rule-2);border-radius:10px;background:var(--paper);color:var(--graphite);font:600 13px var(--body);cursor:pointer;transition:border-color .2s,transform .2s}
 .sampletile:hover,.sampletile:focus-visible{border-color:var(--graphite);transform:translateY(-2px)}
+.sampletile[aria-busy="true"]{opacity:.55;cursor:progress}
+.samplepick .samplemsg{margin:10px 0 0;color:var(--graphite)}.samplepick .samplemsg:empty{display:none}
 .sampletile img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px;display:block}
 .books{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
 @media (max-width:520px){.books{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
@@ -522,15 +525,15 @@ html.revealing .wrap>header{animation:none!important}
     <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-book" aria-selected="true"><svg class="ti" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2z"/><path d="M4 14.5a2 2 0 0 1 2-2h9.5M7.5 6.5h5"/></svg><span class="lbl">Sketchbook</span></button>
-    <button class="tab" role="tab" id="tab-photo" aria-selected="false" disabled><span class="num" aria-hidden="true">1</span><span><span class="sr">1 · </span>Photo</span></button>
-    <button class="tab" role="tab" id="tab-sketch" aria-selected="false" disabled><span class="num" aria-hidden="true">2</span><span><span class="sr">2 · </span>Sketch</span></button>
-    <button class="tab" role="tab" id="tab-plan" aria-selected="false" disabled><span class="num" aria-hidden="true">3</span><span><span class="sr">3 · </span><span class="wide">Drawing p</span><span class="narrow">P</span>lan</span></button>
+  <div class="tabs" role="tablist" aria-label="Sketch steps">
+    <button class="tab" role="tab" id="tab-book" aria-controls="view-book" aria-selected="true"><svg class="ti" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2z"/><path d="M4 14.5a2 2 0 0 1 2-2h9.5M7.5 6.5h5"/></svg><span class="lbl">Sketchbook</span></button>
+    <button class="tab" role="tab" id="tab-photo" aria-controls="view-photo" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">1</span><span><span class="sr">1 · </span>Photo</span></button>
+    <button class="tab" role="tab" id="tab-sketch" aria-controls="view-sketch" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">2</span><span><span class="sr">2 · </span>Sketch</span></button>
+    <button class="tab" role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">3</span><span><span class="sr">3 · </span><span class="wide">Drawing p</span><span class="narrow">P</span>lan</span></button>
   </div>
 
 
-  <section id="view-book" class="panel">
+  <section id="view-book" role="tabpanel" aria-labelledby="tab-book" class="panel">
     <div class="bookhead">
       <div><h2>Your sketchbook</h2><p>Every sketch you start is kept here, so you can stop and pick it up later.</p></div>
       <div class="rowbtns"><button class="btn primary" id="newsketch">Start new sketch</button><button class="btn" id="trysample" aria-expanded="false" aria-controls="samplepick">Try it with a sample photo</button></div>
@@ -542,6 +545,7 @@ html.revealing .wrap>header{animation:none!important}
         <button class="sampletile" type="button" data-src="samples/woman.jpg" data-name="Sample: woman"><img src="samples/woman.jpg" alt="" loading="lazy"><span>Woman</span></button>
         <button class="sampletile" type="button" data-src="samples/dog.jpg" data-name="Sample: dog"><img src="samples/dog.jpg" alt="" loading="lazy"><span>Dog</span></button>
       </div>
+      <p class="samplemsg" id="samplemsg" role="alert"></p>
     </div>
     <div class="empty" id="bookempty" hidden>
       <svg viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -560,14 +564,14 @@ html.revealing .wrap>header{animation:none!important}
     </details>
   </section>
 
-  <section id="view-photo" class="grid" hidden>
+  <section id="view-photo" role="tabpanel" aria-labelledby="tab-photo" class="grid" hidden>
     <div class="stage">
       <label class="dropzone" id="dropzone"><input id="file" type="file" accept="image/*"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="12" width="48" height="40" rx="4"/><path d="M8 44l14-13 10 9 7-6 17 14"/><circle cx="42" cy="24" r="4.5"/></svg><b>Choose a photo</b><span>or drop it here. A clear, well-lit portrait works best.</span></label>
       <div class="cropwrap" id="cropwrap" hidden>
-        <canvas id="photocanvas"></canvas>
-        <div class="croprect" id="croprect"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+        <canvas id="photocanvas" role="img" aria-label="Your photo"></canvas>
+        <div class="croprect" id="croprect" tabindex="0" role="group" aria-label="Crop area. Arrow keys move it, Shift with arrow keys resizes it." aria-roledescription="crop box"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
       </div>
-      <div class="cap"><span id="photoname"></span><span id="photostat"></span></div>
+      <div class="cap"><span id="photoname"></span><span id="photostat" role="status"></span></div>
     </div>
     <div class="panel">
       <label class="upload" id="changephoto" hidden>Choose a different photo<input id="file2" type="file" accept="image/*"></label>
@@ -592,10 +596,10 @@ html.revealing .wrap>header{animation:none!important}
     </div>
   </section>
 
-  <section id="view-sketch" class="grid" hidden>
+  <section id="view-sketch" role="tabpanel" aria-labelledby="tab-sketch" class="grid" hidden>
     <div class="stage">
-      <canvas id="out"></canvas>
-      <div class="cap"><span id="srcname"></span><span><span id="aistat"></span> · <span id="dims"></span></span></div>
+      <canvas id="out" role="img" aria-label="Pencil sketch"></canvas>
+      <div class="cap"><span id="srcname"></span><span><span id="aistat" role="status"></span> · <span id="dims"></span></span></div>
     </div>
     <div class="panel">
       <div class="ctrl"><label for="projname">Sketch name</label><input id="projname" class="namefield" type="text" maxlength="80" autocomplete="off"></div>
@@ -626,15 +630,15 @@ html.revealing .wrap>header{animation:none!important}
     </div>
   </section>
 
-  <section id="view-plan" class="grid" hidden>
+  <section id="view-plan" role="tabpanel" aria-labelledby="tab-plan" class="grid" hidden>
     <div class="stage">
-      <div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas></div>
+      <div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas" role="img" aria-label="Drawing plan step"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas></div>
       <p class="peekhint" id="peekhint">Hover over the picture (or touch and hold it) to see what this step adds.</p>
       <div class="cap">
         <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
 </span>
         <button class="btn small" id="stepdl" type="button">Download this step</button>
-        <span id="stepcount"></span>
+        <span id="stepcount" role="status"></span>
       </div>
     </div>
     <div class="panel">
@@ -651,7 +655,7 @@ html.revealing .wrap>header{animation:none!important}
         <button class="btn primary" id="next">Next step</button>
         <button class="btn" id="donebtn">Mark as complete</button>
       </div>
-      <p id="savestat"></p>
+      <p id="savestat" role="status"></p>
       <div class="ctrl gridctl">
         <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
         <details class="gridopts">
@@ -872,7 +876,8 @@ async function aiLines(c){
     {const b=3;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<b||y<b||x>=w-b||y>=h-b)ink[y*w+x]=0;} // the photo's own border is not a line
     S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
     render();renderStep();saveSoon(); // refresh the sketchbook thumbnail with the finished lines
-  }catch(err){console.warn(err);if(job===AIJOB)aiStatus("Basic lines (AI drawing unavailable)");}
+  }catch(err){console.warn(err);AISESSION=null; // so the next sketch tries the download again
+    if(job===AIJOB)aiStatus(navigator.onLine===false?"Basic lines (you\u2019re offline, so the AI lines couldn\u2019t download)":"Basic lines (AI drawing unavailable)");}
   // the subject's silhouette, so the block-in step outlines the head and shoulders rather than light and dark patches
   try{const m=await subjectMap(c);if(job===AIJOB){S.cache.subject=m;renderStep();}}catch(err){console.warn(err);}
   // and the face's landmarks, so the darkest accents land on the pupils, nostrils and lip line
@@ -888,7 +893,7 @@ async function faceLandmarks(c){
       buf=async u=>new Uint8Array(await (await fetch(u)).arrayBuffer());
     return{det:await mp.FaceDetector.createFromOptions(fs,{baseOptions:{modelAssetBuffer:await buf(FACEDETECT),delegate:"CPU"},runningMode:"IMAGE",minDetectionConfidence:.3}),
       mesh:await mp.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:await buf(FACEMODEL),delegate:"CPU"},runningMode:"IMAGE",numFaces:1})};})();
-  const t=await FACETASK;
+  const t=await FACETASK.catch(e=>{FACETASK=null;throw e;});
   // the mesh model fits a human face onto pets too; the face detector is much surer about real people (about .9 vs .75 on a dog)
   const d=t.det.detect(c).detections,best=Math.max(0,...d.map(x=>x.categories[0].score));if(best<.82)return null;
   const pts=t.mesh.detect(c).faceLandmarks,P=pts&&pts[0]&&pts[0].map(p=>[p.x*c.width,p.y*c.height]);return P||null;
@@ -898,9 +903,10 @@ async function faceLandmarks(c){
 const sliders=["bright","shade","strokes","soft","press","detail","contrast","grain","fade"];
 function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,bright:$("bright").value/50,grade:S.grade};}
 function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";const b=+$("bright").value;$("bright-o").textContent=(b>0?"+":"")+b;}
-let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;});}
+let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;
+  $("out").setAttribute("aria-label",`Pencil sketch of ${$("srcname").textContent||"your photo"}, ${GRADES[S.grade].id} pencil`);});}
 sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;saveSoon();}));
-GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
+GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll("#grades .grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
 function usePhoto(f){if(!f)return;const im=new Image();
   im.onload=()=>{setPhoto(im,f.name.replace(/\.[^.]+$/,""));URL.revokeObjectURL(im.src);};
@@ -1298,6 +1304,7 @@ function renderStep(){
   $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;$("s-look").textContent=st.look;
   $("s-checks").replaceChildren(...st.checks.map(t=>{const li=document.createElement("li");li.textContent=t;return li;}));
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
+  c.setAttribute("aria-label",`Step ${S.step+1} of ${STEPS.length}: ${st.title}. What your drawing should look like after this step.`);
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
   $("prev").disabled=S.step===0;$("next").textContent=S.step===STEPS.length-1?"Start over":"Next step";
   document.querySelectorAll(".dot").forEach((d,i)=>{d.classList.toggle("done",!!S.done[i]);d.classList.toggle("past",i<S.step);});
@@ -1365,7 +1372,7 @@ function fillRange(el){const mn=+el.min||0,mx=+el.max||100;el.style.setProperty(
 const fillAll=()=>document.querySelectorAll("input[type=range]").forEach(fillRange);
 document.addEventListener("input",e=>{if(e.target.type==="range")fillRange(e.target);});
 function show(tab){
-  TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);});
+  TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);$("tab-"+t).tabIndex=t===tab?0:-1;});
   fillAll();
   window.scrollTo({top:0});
   if(tab==="book")drawBook();
@@ -1373,6 +1380,11 @@ function show(tab){
   if(tab==="plan"){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}
 }
 TABS.forEach(t=>{$("tab-"+t).onclick=()=>show(t);});
+// arrow keys move between the steps that are open, as tabs do; Tab itself jumps into the step's content
+document.querySelector(".tabs").addEventListener("keydown",e=>{
+  const open=TABS.filter(t=>!$("tab-"+t).disabled),at=open.indexOf(e.target.id.slice(4));if(at<0)return;
+  const to={ArrowRight:at+1,ArrowLeft:at-1,Home:0,End:open.length-1}[e.key];if(to===undefined)return;
+  e.preventDefault();const t=open[(to+open.length)%open.length];show(t);$("tab-"+t).focus();});
 
 const CUTMODEL="models/cutout.onnx";
 /* ---------- photo editing: straighten, crop, remove the background ----------
@@ -1465,7 +1477,19 @@ function setAspect(i){
     }
     placeCrop();
   });
-  ["pointerup","pointercancel"].forEach(t=>$("cropwrap").addEventListener(t,()=>{drag=null;}));
+  ["pointerup","pointercancel","lostpointercapture"].forEach(t=>$("cropwrap").addEventListener(t,()=>{drag=null;}));
+  window.addEventListener("blur",()=>{drag=null;});
+  // the keyboard way: arrows move the box, Shift+arrows resize it from its bottom-right corner (keeping a chosen shape)
+  $("croprect").addEventListener("keydown",e=>{
+    const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!k||!P.img)return;
+    e.preventDefault();const c=P.crop||(P.crop=FULLCROP()),st=e.altKey?.002:.02,MIN=.08;
+    if(!e.shiftKey)P.crop={...c,x:Math.min(1-c.w,Math.max(0,c.x+k[0]*st)),y:Math.min(1-c.h,Math.max(0,c.y+k[1]*st))};
+    else{let w=Math.min(1-c.x,Math.max(MIN,c.w+k[0]*st)),h=Math.min(1-c.y,Math.max(MIN,c.h+k[1]*st));
+      const ar=ASPECTS[P.aspect][1];
+      if(ar){const r=rotated();if(k[0])h=w*r.width/(ar*r.height);else w=h*ar*r.height/r.width;
+        if(c.x+w>1||c.y+h>1||w<MIN||h<MIN)return;}
+      P.crop={...c,w,h};}
+    placeCrop();});
 }
 ASPECTS.forEach((a,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=a[0];
   b.setAttribute("aria-pressed",i===0);b.onclick=()=>setAspect(i);$("aspects").appendChild(b);});
@@ -1657,9 +1681,11 @@ async function drawBook(){
 }
 $("newsketch").onclick=startNew;
 $("trysample").onclick=()=>{const pk=$("samplepick");pk.hidden=!pk.hidden;$("trysample").setAttribute("aria-expanded",String(!pk.hidden));};
-document.querySelectorAll(".sampletile").forEach(t=>t.onclick=()=>{const im=new Image();
-  im.onload=()=>{$("samplepick").hidden=true;$("trysample").setAttribute("aria-expanded","false");startNew();setPhoto(im,t.dataset.name);};
-  im.src=t.dataset.src;});
+document.querySelectorAll(".sampletile").forEach(t=>t.onclick=()=>{if(t.getAttribute("aria-busy")==="true")return;
+  const im=new Image();t.setAttribute("aria-busy","true");
+  im.onload=()=>{t.removeAttribute("aria-busy");$("samplepick").hidden=true;$("trysample").setAttribute("aria-expanded","false");startNew();setPhoto(im,t.dataset.name);};
+  im.onerror=()=>{t.removeAttribute("aria-busy");$("samplemsg").textContent=`The ${t.dataset.name.replace("Sample: ","")} sample didn't load. Check your connection and tap it again.`;};
+  $("samplemsg").textContent="";im.src=t.dataset.src;});
 $("gensketch").onclick=generateSketch;
 $("planbtn").onclick=planDrawing;
 $("backphoto").onclick=()=>show("photo");
