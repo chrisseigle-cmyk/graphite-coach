@@ -4,117 +4,682 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Graphite Coach</title>
-<meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed seven-step plan.">
+<meta name="description" content="Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten-step plan.">
+<meta name="theme-color" content="#f2eee5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1a18" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect x='2' y='2' width='116' height='116' rx='22' fill='%23f6f1e5'/%3E%3Cg fill='none' stroke='%232b2d31' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%2375777c' stroke-width='4.94'%3E%3Cpath d='M60 4V111M14 55H106'/%3E%3C/g%3E%3Cpath stroke-width='8.74' d='M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z'/%3E%3Ccircle cx='47' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Ccircle cx='73' cy='55' r='3.4' fill='%232b2d31' stroke='none'/%3E%3Cpath stroke-width='5.7' d='M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75'/%3E%3Cpath stroke-width='6.08' d='M51.5 86C56 88.4 64 88.4 68.5 86'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Reenie+Beanie&family=Space+Mono&display=swap">
 <style>
-/* Layout: working canvas left, controls right (stacks on phone); tabs switch Sketch / Plan */
+/* Graphite Coach: warm sketch-paper surfaces, graphite ink, one blue-pencil accent.
+   Layout: working canvas left, controls right (stacks on phone); tabs step through Photo / Sketch / Plan */
 :root{
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
-  --paper:#eceeef; --sheet:#f8f9f9; --graphite:#23272b; --muted:#5d656c;
-  --rule:#d3d8dc; --blue:#2f6db5; --blue-soft:#dbe7f5;
+  --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c; --field:#968a73; --alert:#a8432c; --glow:40,130,255;
+  --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
+  --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
+  --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .27 0 0 0 0 .2 .6 0 0 0 -.24'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --display:"Young Serif",Georgia,serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.75,.25,1);
 }
+html{scrollbar-color:var(--rule-2) var(--paper)}
+::selection{background:var(--blue-soft);color:var(--graphite)}
+input,textarea{caret-color:var(--blue)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#16191c; --sheet:#1f2327; --graphite:#e6e9ec; --muted:#9aa3ab;
-  --rule:#343a40; --blue:#7fb0eb; --blue-soft:#22344a; color-scheme:dark}}
+  --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d; --alert:#eb9a82;
+  --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
+  --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
+  --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .92 0 0 0 0 .85 .28 0 0 0 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#16191c; --sheet:#1f2327; --graphite:#e6e9ec; --muted:#9aa3ab;
-  --rule:#343a40; --blue:#7fb0eb; --blue-soft:#22344a; color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;padding:0;background:var(--paper);color:var(--graphite);font-family:var(--body);font-size:15px;line-height:1.5}
+  --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d; --alert:#eb9a82;
+  --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
+  --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
+  --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .92 0 0 0 0 .85 .28 0 0 0 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(#out,#stepcanvas,.stepfade){filter:brightness(.88) saturate(.55)}}
+:root[data-theme="dark"] :is(#out,#stepcanvas,.stepfade){filter:brightness(.88) saturate(.55)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--paper)}
+body{margin:0;padding:0;background:var(--grain),var(--paper);color:var(--graphite);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
 img{max-width:100%}
 [hidden]:not([hidden=until-found i]){display:none!important}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
-h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,5vw,36px);margin:0;line-height:1.1;text-wrap:balance}
-.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:22px 56px;display:flex;flex-direction:column;gap:22px}
+@media (min-width:761px){.wrap{padding-inline:28px;padding-top:30px}}
+
+/* ---------- brand header ---------- */
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+header{align-items:flex-end}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand .mark{width:60px;height:60px;flex:none;color:var(--graphite)}
+h1{font-family:var(--display);font-weight:400;margin:0;line-height:1.05}
+.lockup{display:inline-flex;flex-direction:column;gap:5px}
+/* the wordmark is hand-lettered in pencil (Reenie Beanie), with a hairline stroke so it holds up next to the mark */
+.lockup .w1{font-family:"Reenie Beanie",var(--display);font-size:clamp(38px,5.6vw,47px);line-height:.8;letter-spacing:.01em;-webkit-text-stroke:.7px currentColor;paint-order:stroke fill}
+.lockup .w2{display:flex;align-items:center;gap:10px;font:400 10px "Space Mono",var(--mono);letter-spacing:.42em;text-transform:uppercase;color:var(--ink-2)}
+.lockup .w2::after{content:"";flex:1;min-width:20px;height:1.5px;background:var(--chalk)}
+.sub{color:var(--muted);margin:0;max-width:40ch;text-align:right;text-wrap:pretty;font-size:14px;line-height:1.45}
+@media (max-width:640px){.sub{text-align:left;max-width:none;font-size:13.5px}}
+@media (max-width:520px){.brand{gap:12px}.brand .mark{width:50px;height:50px}}
+
 .upload{display:inline-flex;align-items:center;gap:8px;background:var(--graphite);color:var(--paper);padding:10px 16px;border-radius:999px;font-weight:600;cursor:pointer}
 .upload:focus-within{outline:3px solid var(--blue);outline-offset:2px}
 .upload input{position:absolute;opacity:0;width:1px;height:1px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--rule)}
-.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 15px var(--body);padding:8px 14px;cursor:pointer}
-.tab[aria-selected="true"]{color:var(--graphite);border-color:var(--blue)}
-.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}
-@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
-.stage{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px}
-canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:2px}
-.cap{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.panel{display:flex;flex-direction:column;gap:16px;min-width:0}
-.ctrl{display:flex;flex-direction:column;gap:4px}
-.ctrl label{display:flex;justify-content:space-between;font-weight:500}
-.ctrl output{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.hint{font-size:12.5px;color:var(--muted);margin:0}
-input[type=range]{width:100%;accent-color:var(--blue)}
+#changephoto{align-self:flex-start;background:transparent;color:var(--graphite);border:1px solid var(--rule-2);font-size:14px;padding:8px 15px;transition:background .2s,border-color .2s}
+#changephoto:hover{border-color:var(--graphite);background:var(--sheet-2)}
+
+/* ---------- stepper tabs: a segmented track; steps unlock in order ---------- */
+.tabs{display:flex;gap:2px;padding:4px;align-self:flex-start;max-width:100%;box-sizing:border-box;
+  background:var(--track);border-radius:999px;box-shadow:inset 0 1px 2px rgba(var(--shadow),.08)}
+.tab{position:relative;display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-radius:999px;color:var(--ink-2);
+  font:600 14.5px var(--body);padding:8px 16px 8px 10px;cursor:pointer;white-space:nowrap;transition:color .2s,background .25s var(--ease),box-shadow .25s var(--ease)}
+.tab .num,.tab .ti{display:inline-grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;font:600 12px var(--mono);
+  border:1.5px solid currentColor;box-sizing:border-box;transition:background .25s,color .25s,border-color .25s}
+.tab .ti{border:0;width:20px;height:20px}
+.tab:hover:not(:disabled):not([aria-selected="true"]){background:color-mix(in srgb,var(--sheet) 55%,transparent)}
+.tab[aria-selected="true"]{color:var(--graphite);background:var(--tab-on);box-shadow:0 1px 2px rgba(var(--shadow),.12),0 4px 12px -4px rgba(var(--shadow),.2)}
+.tab[aria-selected="true"] .num{background:var(--graphite);border-color:var(--graphite);color:var(--tab-on)}
+.tab:disabled{color:var(--muted);opacity:.55;cursor:default}
+.tab:disabled .num{border-style:dashed}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tab .narrow{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (max-width:560px){
+  .tabs{align-self:stretch;gap:0;padding:5px}
+  .tab{flex:1 1 auto;justify-content:center;gap:6px;padding:8px 8px;font-size:13.5px}
+  .tab .wide{display:none}.tab .narrow{display:inline}
+  #tab-book{flex:0 0 auto;padding-inline:11px}
+  #tab-book .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
+
+/* ---------- sheets of paper ---------- */
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr);gap:16px}}
+.stage{background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--lift);position:relative}
+.grid>.panel{background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:14px;padding:22px;box-shadow:var(--lift)}
+@media (max-width:520px){.stage{padding:10px;border-radius:12px}.grid>.panel{padding:18px 16px;border-radius:12px}}
+canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:4px}
+.stage>canvas,.canvaswrap,.cropwrap{box-shadow:0 0 0 1px rgba(var(--shadow),.06)}
+.cap{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-inline:2px}
+.panel{display:flex;flex-direction:column;gap:18px;min-width:0}
+.ctrl{display:flex;flex-direction:column;gap:6px}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-weight:500;font-size:14.5px}
+.ctrl output{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;background:var(--sheet-2);border:1px solid var(--rule);border-radius:6px;padding:0 6px;line-height:20px}
+.group{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--rule);padding-top:14px}
+.group h3{margin:0 0 -4px;font:600 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5}
 .grades{display:flex;flex-wrap:wrap;gap:6px}
-.gridctl{border-top:1px solid var(--rule);padding-top:14px;gap:8px}
+.gridctl{border-top:1px solid var(--rule);padding-top:16px;gap:10px}
 .gridctl .toggle{justify-content:flex-start;font-weight:600}
-.grade{font:500 13px var(--mono);padding:6px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--graphite);cursor:pointer}
-.grade[aria-pressed="true"]{background:var(--graphite);color:var(--paper);border-color:var(--graphite)}
-.steplist{display:flex;flex-wrap:wrap;gap:6px}
-.dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--graphite);font:500 13px var(--mono);cursor:pointer}
-.dot[aria-current="step"]{background:var(--blue);color:#fff;border-color:var(--blue)}
-.stepcard{display:flex;flex-direction:column;gap:10px}
-.stepcard h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;text-wrap:balance}
-.pencil{align-self:start;font:500 12.5px var(--mono);background:var(--blue-soft);color:var(--blue);padding:3px 8px;border-radius:3px;letter-spacing:.03em}
-.stepcard p{margin:0;max-width:60ch}
-.checks{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
-.nav{display:flex;gap:8px}
-.btn{font:600 14px var(--body);padding:9px 16px;border-radius:999px;border:1px solid var(--graphite);background:transparent;color:var(--graphite);cursor:pointer}
-.btn.primary{background:var(--graphite);color:var(--paper)}
-.btn:disabled{opacity:.35;cursor:default}
-.toggle{display:flex;align-items:center;gap:8px;font-size:14px}
-.note{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px;margin:0;max-width:72ch}
+.gridopts{display:flex;flex-direction:column;gap:8px}
+.gridopts summary{cursor:pointer;font-weight:600;color:var(--muted);list-style:none;display:flex;align-items:center;gap:8px;border-radius:6px}
+.gridopts summary::-webkit-details-marker{display:none}
+.gridopts summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .25s var(--ease);margin-left:2px}
+.gridopts[open] summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+.gridopts[open] summary{margin-bottom:6px;color:var(--graphite)}
+.gridopts .ctrl{gap:6px}
+.gridopts[open]>.ctrl{animation:viewIn .3s var(--ease) both}
+
+/* sliders: thin graphite track, filled up to the thumb (--p set from JS; falls back to unfilled) */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;margin:0;background:transparent;cursor:pointer;--p:0%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(var(--graphite),var(--graphite)) 0/var(--p) 100% no-repeat,var(--rule-2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:var(--sheet);border:2px solid var(--graphite);box-shadow:0 1px 3px rgba(var(--shadow),.25);transition:transform .15s var(--ease)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:var(--rule-2)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--graphite)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--sheet);border:2px solid var(--graphite);box-shadow:0 1px 3px rgba(var(--shadow),.25)}
+input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:0}
+
+.swatch{width:30px;height:30px;border-radius:50%;border:3px solid var(--sheet);box-shadow:0 0 0 1px var(--rule-2);cursor:pointer;padding:0;transition:box-shadow .2s,transform .2s var(--ease)}
+.swatch:hover{transform:scale(1.08)}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--graphite)}
+.grade{font:500 13px var(--mono);padding:6px 12px;border:1px solid var(--rule-2);border-radius:999px;background:var(--sheet);color:var(--graphite);cursor:pointer;transition:background .2s,color .2s,border-color .2s,transform .15s}
+.grade:hover{border-color:var(--graphite)}
+.grade:active{transform:scale(.96)}
+.grade[aria-pressed="true"]{background:var(--graphite);color:var(--sheet);border-color:var(--graphite)}
+
+/* ---------- drawing plan ---------- */
+.steplist{display:grid;grid-template-columns:repeat(10,minmax(0,36px));gap:6px}
+.dot{width:100%;height:auto;aspect-ratio:1;border-radius:50%;border:1px solid var(--rule-2);background:var(--sheet);color:var(--ink-2);font:500 13px var(--mono);cursor:pointer;padding:0;
+  transition:background .25s,color .25s,border-color .25s,transform .25s var(--ease),box-shadow .25s}
+.dot:hover{border-color:var(--graphite);transform:translateY(-1px)}
+.dot[aria-current="step"]{background:var(--blue);color:var(--on-blue);border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);transform:scale(1.06)}
+@media (max-width:420px){.steplist{gap:4px}.dot{font-size:12px}}
+.stepcard{display:flex;flex-direction:column;gap:12px}
+.stepcard h2{font-family:var(--display);font-weight:400;font-size:clamp(23px,3vw,27px);line-height:1.15;margin:0;text-wrap:balance}
+.pencil{align-self:start;display:inline-flex;align-items:center;gap:7px;font:500 12.5px var(--mono);background:var(--blue-soft);color:var(--blue);padding:4px 11px;border-radius:999px;letter-spacing:.03em}
+.stepcard p{margin:0;max-width:62ch}
+.checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.checks li{position:relative;padding-left:22px;font-size:14.5px}
+.checks li::before{content:"";position:absolute;left:3px;top:8px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--muted);box-sizing:border-box}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:600 14px var(--body);padding:10px 18px;border-radius:999px;border:1px solid var(--rule-2);background:var(--sheet);color:var(--graphite);cursor:pointer;
+  transition:background .2s,border-color .2s,box-shadow .2s,transform .15s var(--ease)}
+.btn:hover:not(:disabled){border-color:var(--graphite);box-shadow:0 2px 8px -3px rgba(var(--shadow),.25)}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.98)}
+.btn.primary{background:var(--graphite);border-color:var(--graphite);color:var(--paper);box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 4px 12px -4px rgba(var(--shadow),.45)}
+.btn.primary:hover:not(:disabled){background:var(--ink-2);box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 8px 18px -6px rgba(var(--shadow),.5);transform:translateY(-1px)}
+.btn:disabled{opacity:.38;cursor:default;box-shadow:none}
+.stepnav #donebtn{margin-left:auto}
+@media (max-width:520px){.stepnav #donebtn{margin-left:0;flex:1 1 100%}}
+/* phones: Back, the step and Next live in a bar at the bottom of the screen, under the thumb,
+   so the picture stays in view while stepping through; the full step card stays below */
+.stepbar{display:none}
+@media (max-width:760px){
+  #view-plan:not([hidden]){padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .stepbar{display:flex;align-items:center;gap:10px;position:fixed;z-index:20;left:0;right:0;bottom:0;
+    padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+    background:color-mix(in srgb,var(--sheet) 94%,transparent);border-top:1px solid var(--rule);box-shadow:0 -6px 18px -10px rgba(var(--shadow),.3);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .stepbar .btn{min-height:48px;flex:none}
+  #sb-prev{width:48px;padding:0;display:grid;place-items:center}
+  #sb-next{padding-inline:22px}
+  .sb-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+  #sb-n{font:500 11.5px var(--mono);color:var(--muted);letter-spacing:.03em}
+  #sb-title{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stepnav #prev,.stepnav #next{display:none}
+  #stepcount{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} /* the bar shows it; still announced */
+  .stepnav #donebtn{margin-left:0;flex:1 1 100%}
+}
+/* phones: everything tappable is at least a fingertip (44px) */
+@media (max-width:560px){
+  .tab{min-height:44px}
+  .btn,.grade{min-height:44px}
+  .grade{padding-inline:14px}
+  .swatch{position:relative}.swatch::after{content:"";position:absolute;inset:-8px;border-radius:50%}
+  .steplist{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+  .dot{aspect-ratio:auto;height:44px;border-radius:999px}
+  .toggle{min-height:44px}
+  .gridopts summary,.about summary{min-height:44px;align-items:center}
+}
+#donebtn[aria-pressed="true"]{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+#donebtn svg{width:15px;height:15px;vertical-align:-2px;margin-right:6px}
+.dot.justdone{animation:doneRing .5s cubic-bezier(.16,1,.3,1)}
+@keyframes doneRing{from{box-shadow:0 0 0 0 var(--blue)}to{box-shadow:0 0 0 9px transparent}}
+.toggle{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
+.toggles{display:flex;flex-direction:column;gap:4px}
+/* hover (or touch and hold) the step picture: a soft glowing outline around what this step adds */
+.canvaswrap{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:pan-y;border-radius:4px}
+.stepfade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
+#glowcanvas{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 0 2px rgba(var(--glow),.3))}
+@media (hover:hover){.canvaswrap:hover #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}}
+.canvaswrap.peek #glowcanvas{opacity:1;animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{opacity:.65}}
+@media (prefers-reduced-motion:reduce){#glowcanvas{animation:none!important}}
+.peekhint{font-size:12.5px;color:var(--muted);margin:0;display:flex;align-items:center;gap:7px;padding-inline:2px}
+.peekhint::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:rgb(var(--glow));box-shadow:0 0 0 3px rgba(var(--glow),.18),0 0 8px rgba(var(--glow),.7)}
+.stepcard .look{display:grid;grid-template-columns:20px 1fr;gap:10px;align-items:start;background:var(--sheet-2);border:1px solid var(--rule);border-radius:10px;padding:11px 13px;font-size:14px;margin:0}
+.stepcard .look svg{width:20px;height:20px;color:var(--blue);margin-top:1px}
+.stepcard .look strong{color:var(--graphite)}
+#stepdl{padding:4px 12px;font-size:12.5px;margin-left:auto;margin-right:10px}
+#stepcount{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+/* photo editing: the picture with a drag-to-crop box over it */
+.cropwrap{position:relative;line-height:0;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:4px;overflow:hidden}
+.croprect:focus-visible{outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 0 9999px rgba(20,22,25,.5),inset 0 0 0 5px rgba(20,22,25,.55)}
+.croprect{position:absolute;box-shadow:0 0 0 9999px rgba(20,22,25,.5);outline:1px solid rgba(255,255,255,.9);cursor:move}
+/* corner brackets sit just inside the box, so they stay visible (and grabbable) when the crop is the whole photo */
+.croprect i{position:absolute;width:24px;height:24px;border:0 solid #fff;filter:drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 0 .6px rgba(0,0,0,.95)) drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.croprect i[data-h="nw"]{left:-1px;top:-1px;border-width:4px 0 0 4px;cursor:nwse-resize}
+.croprect i[data-h="ne"]{right:-1px;top:-1px;border-width:4px 4px 0 0;cursor:nesw-resize}
+.croprect i[data-h="sw"]{left:-1px;bottom:-1px;border-width:0 0 4px 4px;cursor:nesw-resize}
+.croprect i[data-h="se"]{right:-1px;bottom:-1px;border-width:0 4px 4px 0;cursor:nwse-resize}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px}
+.ctrl label.toggle{justify-content:flex-start}
+#savestat{margin:0}
+
+/* ---------- sketchbook ---------- */
+.bookhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 20px}
+.bookhead h2{font-family:var(--display);font-weight:400;font-size:clamp(22px,3vw,26px);margin:0;line-height:1.15}
+.bookhead p{margin:4px 0 0;color:var(--muted);font-size:14px}
+@media (max-width:520px){.bookhead>.rowbtns{width:100%}.bookhead>.rowbtns .btn{flex:1 1 100%}}
+.samplepick{margin:16px 0 4px;padding:14px;background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:12px;box-shadow:var(--lift);animation:viewIn .35s ease both}
+.samplepick p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+.samplerow{display:grid;grid-template-columns:repeat(3,minmax(0,150px));gap:12px}
+.sampletile{display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--rule-2);border-radius:10px;background:var(--paper);color:var(--graphite);font:600 13px var(--body);cursor:pointer;transition:border-color .2s,transform .2s}
+.sampletile:hover,.sampletile:focus-visible{border-color:var(--graphite);transform:translateY(-2px)}
+.sampletile[aria-busy="true"]{opacity:.55;cursor:progress}
+.samplepick .samplemsg{margin:10px 0 0;color:var(--alert)}
+/* something didn't work: the message takes the alert colour (red chalk), and its wording says what to do next */
+.alert{color:var(--alert)!important}.samplepick .samplemsg:empty{display:none}
+.sampletile img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px;display:block}
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
+@media (max-width:520px){.books{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.book{display:flex;flex-direction:column;gap:6px;background:var(--sheet);border:1px solid color-mix(in srgb,var(--rule) 80%,transparent);border-radius:12px;padding:10px 10px 12px;text-align:left;box-shadow:var(--lift);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);animation:cardIn .45s var(--ease) both;animation-delay:calc(var(--i,0)*45ms)}
+.book:hover{transform:translateY(-3px) rotate(-.25deg);box-shadow:var(--lift-hi)}
+.book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;background:var(--paper);box-shadow:0 0 0 1px rgba(var(--shadow),.07);margin-bottom:4px}
+.book b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.book span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.namefield{font:inherit;color:var(--graphite);background:var(--sheet);border:1px solid var(--field);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.namefield:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);outline:none}
+.book .namefield{font-weight:600;font-size:14.5px;padding:3px 5px;margin:0 -6px;width:calc(100% + 12px);border-color:transparent;background:transparent;border-radius:6px}
+.book .namefield:hover{border-color:var(--field)}
+.book .namefield:focus{border-color:var(--blue);background:var(--paper)}
+.book .rowbtns{margin-top:6px;gap:4px;align-items:center}
+.book .rowbtns .primary{flex:1 1 auto;margin-bottom:2px}
+.book .rowbtns .brk{flex-basis:100%;height:0}
+.book .rowbtns .btn:not(.primary){flex:1 1 0;min-width:0;white-space:nowrap}
+.book .rowbtns .btn.dl{flex:0 1 auto;margin-bottom:2px}
+@media (max-width:520px){.book .rowbtns .primary,.book .rowbtns .btn.dl{padding-inline:6px;font-size:12.5px}.book .rowbtns .btn.dl{flex:1 1 auto}}
+.book .btn{padding:6px 13px;font-size:13px}
+.book .btn:not(.primary):not(.dl){border-color:transparent;background:transparent;color:var(--muted);padding-inline:4px;font-size:12.5px}
+.book .btn:not(.primary):hover{color:var(--graphite);background:var(--sheet-2);box-shadow:none}
+.bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:2px}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;color:var(--muted);padding:36px 22px 40px;border:1.5px dashed var(--rule-2);border-radius:16px;background:color-mix(in srgb,var(--sheet) 55%,transparent)}
+.empty svg{width:150px;height:auto;color:var(--graphite);margin-bottom:4px}
+.empty h3{font-family:var(--display);font-weight:400;font-size:21px;color:var(--graphite);margin:0}
+.empty p{margin:0;max-width:52ch;font-size:14.5px}
+.dot.past{background:var(--sheet-2);border-color:var(--rule-2);color:var(--graphite)}
+.dot.past::after{content:"";display:block;width:4px;height:4px;margin:-1px auto 0;border-radius:50%;background:var(--muted);opacity:.6}
+.dot.done{border-color:var(--blue);color:var(--blue);font-weight:700;background:var(--blue-soft)}
+.dot.done[aria-current="step"]{color:var(--on-blue);background:var(--blue)}
+#savestat{font-size:12.5px;color:var(--muted)}
+.dropzone{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;border:1.5px dashed var(--rule-2);border-radius:10px;cursor:pointer;text-align:center;padding:24px;
+  background:radial-gradient(ellipse at 50% 40%,var(--sheet) 0,var(--sheet-2) 100%);transition:border-color .25s,background .25s}
+.dropzone:hover{border-color:var(--graphite)}
+.dropzone svg{width:64px;height:64px;color:var(--muted);transition:transform .35s var(--ease)}
+.dropzone:hover svg{transform:translateY(-3px) rotate(-3deg)}
+.dropzone b{background:var(--graphite);color:var(--paper);padding:10px 20px;border-radius:999px;font-weight:600;box-shadow:0 4px 12px -4px rgba(var(--shadow),.45)}
+.dropzone span{color:var(--muted);font-size:13px}
+.dropzone:focus-within{outline:3px solid var(--blue);outline-offset:2px}
+.dropzone input{position:absolute;opacity:0;width:1px;height:1px}
+.dropzone.over{border-color:var(--blue);background:var(--blue-soft)}
+.about{border-top:1px solid var(--rule);padding-top:14px;margin-top:10px;font-size:13px;color:var(--muted)}
+.about summary{cursor:pointer;font-weight:600;color:var(--ink-2);list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;border-radius:6px}
+.about summary::-webkit-details-marker{display:none}
+.about summary::before{content:"";align-self:center;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .25s var(--ease)}
+.about[open] summary::before{transform:rotate(45deg)}
+.about summary span{font-weight:400;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);margin:10px 0 0;max-width:78ch;line-height:1.6}
+
+/* ---------- motion: screens rise in, cards settle, steps slide ---------- */
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.985)}}
+/* a screen replays its entrance each time it is unhidden (display:none restarts CSS animations) */
+#view-book{animation:viewIn .38s var(--ease) both}
+section.grid>*{animation:viewIn .42s var(--ease) both}
+section.grid>*+*{animation-delay:70ms}
+html.revealing .wrap>*{animation:viewIn .6s var(--ease) both}
+html.revealing .wrap>:nth-child(2){animation-delay:80ms}
+html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
+@media (prefers-reduced-motion:reduce){
+  #view-book,section.grid>*,.book,html.revealing .wrap>*,.gridopts[open]>.ctrl,.samplepick{animation-name:fadeIn!important;animation-delay:0s!important}
+  .dot.justdone{animation:none!important}
+  .book:hover{transform:none}
+  /* keep colour and fade changes (they show what changed); drop anything that moves or resizes */
+  *{transition-property:opacity,color,background-color,border-color,box-shadow,outline-color,fill,stroke!important}
+}
+
+/* ---------- launch splash: an invisible pencil lays in circles and triangles, they settle into the face,
+   light graphite proportion guides go in, the name is written, and the mark settles into the header.
+   Layers: .sp-sheet (paper) / .sp-stage (drawing, multiplied into the paper) / .sp-dust + .sp-fly (graphite specks). */
+.splash{--sp-paper:#f6f1e5;--sp-vig:rgba(120,92,48,.16);--sp-ink:#35363a;--sp-chalk:#75777c;
+  position:fixed;inset:0;z-index:100;overflow:hidden;cursor:pointer;
+  animation:splashAuto .5s ease 3.6s forwards}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}}
+:root[data-theme="dark"] .splash{--sp-paper:#d9d2c3;--sp-vig:rgba(16,14,11,.55)}
+/* the paper's tooth is meant to be seen: a fine grain plus a softer, larger mottle */
+.sp-sheet{position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 95% 85% at 50% 46%,transparent 45%,var(--sp-vig) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .28 0 0 0 0 .23 0 0 0 0 .16 1.25 0 0 0 -.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .33 0 0 0 0 .22 .22 0 0 0 -.07'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E"),
+    var(--sp-paper)}
+.sp-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding-bottom:3vh}
+.sp-mark{width:min(230px,54vw);height:auto;overflow:visible;mix-blend-mode:multiply;transform-origin:50% 50%;color:var(--sp-ink)}
+.sp-word{width:min(330px,74vw);height:auto;overflow:visible;mix-blend-mode:multiply;color:var(--sp-ink)}
+.sp-word .w1{font-family:"Reenie Beanie",var(--display);font-size:66px;stroke:currentColor;stroke-width:1;paint-order:stroke fill}
+.sp-word .w2{font:400 12.5px "Space Mono",var(--mono);letter-spacing:.46em}
+.splash.quick .sp-word{display:none}
+.sp-dust,.sp-fly{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply}
+.splash .skip{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sp-ink);opacity:0;transition:opacity .6s}
+.splash.run .skip{opacity:.78;transition-delay:.8s}
+.splash.static .skip,.splash.quick .skip{display:none}
+.splash.run{animation:none}
+.splash.static{pointer-events:none}
+.splash.static.out{opacity:0;transition:opacity .4s ease}
+/* landing: name, dust and paper fade while the mark flies to the header */
+.splash.landing{pointer-events:none}
+.splash.landing .skip,.splash.landing .sp-fly{opacity:0;transition:opacity .15s}
+.splash.landing .sp-word{opacity:0;transition:opacity .2s ease}
+.splash.landing .sp-sheet,.splash.landing .sp-dust{opacity:0;transition:opacity .42s ease .08s}
+.splash.landing .sp-mark{mix-blend-mode:normal;color:var(--graphite);transition:transform var(--fly,.5s) cubic-bezier(.55,0,.2,1),color var(--fly,.5s),opacity .18s ease}
+html.splashing .brand .mark{opacity:0}
+.brand .mark{transition:opacity .18s ease}
+html.revealing .wrap>header{animation:none!important}
+@keyframes splashAuto{to{opacity:0;visibility:hidden;pointer-events:none}}
+@media (prefers-reduced-motion:reduce){.splash{animation-delay:.9s}}
 </style>
 </head>
 <body>
+<!-- launch splash. Without JS the finished logo shows and the CSS fades it out by itself. -->
+<div class="splash" id="splash" aria-hidden="true">
+<div class="sp-sheet"></div>
+<div class="sp-stage">
+<svg class="sp-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <!-- graphite: a slightly wobbly edge, and the paper's tooth breaking the line up a little -->
+    <filter id="sp-graphite" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="wob"/>
+      <feDisplacementMap in="SourceGraphic" in2="wob" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="11" result="tooth"/>
+      <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -.05" result="speck"/>
+      <feComposite in="rough" in2="speck" operator="in"/>
+    </filter>
+  </defs>
+  <!-- the finished mark; the script swaps these for construction shapes and morphs them back -->
+  <g filter="url(#sp-graphite)">
+    <g id="sp-guides" style="stroke:var(--sp-chalk)">
+      <path data-g="230" data-w="1.25" data-o=".85" d="M60 4V111"/>
+      <path data-g="230" data-w="1.25" data-o=".85" d="M14 55H106"/>
+      <path data-g="100" data-w="1.1" data-o=".7" d="M44 76H76"/>
+      <path data-g="90" data-w="1.1" data-o=".7" d="M47 86H73"/>
+      <path data-g="140" data-w="1.1" data-o=".75" d="M101 33V77"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 33H104"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 55H104"/>
+      <path data-g="40" data-w="1.1" data-o=".75" d="M98 77H104"/>
+    </g>
+    <g id="sp-face">
+      <path id="sp-head" stroke-width="3" opacity=".92" d="M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z"/>
+      <path id="sp-eyes" stroke-width="2" opacity=".85" d="M38.5 55C42 50.5 52 50.5 55.5 55C52 58.5 42 58.5 38.5 55ZM64.5 55C68 50.5 78 50.5 81.5 55C78 58.5 68 58.5 64.5 55Z"/>
+      <path id="sp-nose" stroke-width="2.2" opacity=".88" d="M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75"/>
+      <path id="sp-mouth" stroke-width="2.3" opacity=".88" d="M51.5 86C56 88.4 64 88.4 68.5 86"/>
+      <g id="sp-pupils" fill="currentColor" stroke="none"><circle cx="47" cy="55" r="2.5"/><circle cx="73" cy="55" r="2.5"/></g>
+    </g>
+  </g>
+</svg>
+<svg class="sp-word" viewBox="0 0 300 104">
+  <defs><clipPath id="sp-wclip"><rect id="sp-wrect" x="0" y="0" width="300" height="104"/></clipPath></defs>
+  <g filter="url(#sp-graphite)" clip-path="url(#sp-wclip)">
+    <text class="w1" id="sp-wtext" x="150" y="50" text-anchor="middle" fill="currentColor" fill-opacity=".88">Graphite</text>
+    <text class="w2" x="153" y="96" text-anchor="middle" fill="currentColor" fill-opacity=".85">COACH</text>
+    <path d="M58 91.5H108M196 91.5H246" style="stroke:var(--sp-chalk)" stroke-width="1.5" opacity=".9"/>
+  </g>
+</svg>
+</div>
+<canvas class="sp-dust"></canvas><canvas class="sp-fly"></canvas>
+<div class="skip">Tap to skip</div>
+</div>
+<script>
+/* Launch splash, drawn by an invisible pencil: circles and triangles first, which then morph into the face;
+   light graphite proportion guides; the name. Graphite specks flick off the moving stroke end and a few settle as dust.
+   Independent of the app script below (it never waits on this). A timer always clears it, and the CSS fades it
+   out on its own if this script never runs. First launch: the full drawing; later launches: a short morph. */
+(function(){
+  var sp=document.getElementById("splash");if(!sp)return;
+  var root=document.documentElement,done=false,raf=0,quick=false,reduce=false;
+  try{quick=localStorage.getItem("gc-splash-seen")==="1";}catch(e){}
+  try{reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+  function remember(){try{localStorage.setItem("gc-splash-seen","1");}catch(e){}}
+  function gone(){if(sp.parentNode)sp.parentNode.removeChild(sp);root.classList.remove("splashing");}
+  if(reduce){sp.classList.add("run","static","quick");remember();
+    setTimeout(function(){sp.classList.add("out");setTimeout(gone,450);},700);return;}
+  root.classList.add("splashing");sp.classList.add("run");if(quick)sp.classList.add("quick");
+  var safety=setTimeout(function(){land(true);},quick?3000:8000);
+
+  var NS="http://www.w3.org/2000/svg",mark=sp.querySelector(".sp-mark"),wtext=document.getElementById("sp-wtext"),wrect=document.getElementById("sp-wrect");
+  var clamp=function(v){return v<0?0:v>1?1:v;},lerp=function(a,b,t){return a+(b-a)*t;};
+  var EASE={lin:function(p){return .8*p+.2*p*p*(3-2*p);},io:function(p){return p*p*(3-2*p);},out:function(p){return 1-Math.pow(1-p,2.4);}};
+
+  /* ---- geometry: every shape is a start point plus cubic segments, so a construction shape and the
+     feature it becomes have the same structure and can be interpolated point by point ---- */
+  function circ(cx,cy,r,a0){var k=.5523*r,s=[],R=Math.PI/180;
+    for(var i=0;i<4;i++){var a=(a0+90*i)*R,b=(a0+90*(i+1))*R;
+      s.push([cx+r*Math.cos(a)-k*Math.sin(a),cy+r*Math.sin(a)+k*Math.cos(a),cx+r*Math.cos(b)+k*Math.sin(b),cy+r*Math.sin(b)-k*Math.cos(b),cx+r*Math.cos(b),cy+r*Math.sin(b)]);}
+    return{m:[cx+r*Math.cos(a0*R),cy+r*Math.sin(a0*R)],s:s,z:1};}
+  function poly(pts,z){var s=[];for(var i=1;i<pts.length;i++){var a=pts[i-1],b=pts[i];s.push([a[0]+(b[0]-a[0])/3,a[1]+(b[1]-a[1])/3,a[0]+2*(b[0]-a[0])/3,a[1]+2*(b[1]-a[1])/3,b[0],b[1]]);}return{m:pts[0],s:s,z:z};}
+  function shift(g,dx){return{m:[g.m[0]+dx,g.m[1]],s:g.s.map(function(c){return[c[0]+dx,c[1],c[2]+dx,c[3],c[4]+dx,c[5]];}),z:g.z};}
+  function D(g){var d="M"+g.m[0].toFixed(2)+" "+g.m[1].toFixed(2);g.s.forEach(function(c){d+="C"+c.map(function(v){return v.toFixed(2);}).join(" ");});return d+(g.z?"Z":"");}
+  function mix(a,b,t){return{m:[lerp(a.m[0],b.m[0],t),lerp(a.m[1],b.m[1],t)],s:a.s.map(function(c,i){return c.map(function(v,j){return lerp(v,b.s[i][j],t);});}),z:a.z};}
+  var EGG={m:[60,14],s:[[80,14,92,31,92,52],[92,77,77,101,60,101],[43,101,28,77,28,52],[28,31,40,14,60,14]],z:1};
+  var ALM={m:[38.5,55],s:[[39.8,53.2,43.5,51.4,47,51.4],[50.5,51.4,54.2,53.2,55.5,55],[54.2,56.8,50.5,58.6,47,58.6],[43.5,58.6,39.8,56.8,38.5,55]],z:1};
+  var NOSE={m:[60.5,61],s:[[59.5,66,57.5,71,57,74],[57,76,60,76.6,63.5,75],[63.5,75,63.5,75,63.5,75]],z:0};
+  var MOUTH={m:[51.5,86],s:[[56,88.4,64,88.4,68.5,86],[68.5,86,68.5,86,68.5,86],[68.5,86,68.5,86,68.5,86]],z:0};
+  // construction shapes -> the features they turn into, with stroke weight/darkness before and after
+  var SHAPES=[
+    {a:circ(60,47,31,-90),b:EGG,w:[1.7,3],o:[.68,.92],d:320},                                   // cranium circle -> head
+    {a:poly([[60,60],[87,60],[60,103],[33,60],[60,60]],1),b:EGG,w:[1.5,3],o:[.6,0],d:260},     // jaw wedge -> merges into the head
+    {a:circ(47,55,6.5,180),b:ALM,w:[1.4,2],o:[.65,.85],d:120},                                   // eye circles -> almond eyes
+    {a:circ(73,55,6.5,180),b:shift(ALM,26),w:[1.4,2],o:[.65,.85],d:120},
+    {a:poly([[60,60],[54.5,75],[65.5,75],[60,60]],0),b:NOSE,w:[1.4,2.2],o:[.65,.88],d:140},      // nose triangle -> nose
+    {a:poly([[51.5,85],[68.5,85],[60,91],[51.5,85]],0),b:MOUTH,w:[1.4,2.3],o:[.65,.88],d:120}    // mouth triangle -> lips
+  ];
+
+  /* ---- graphite line: a few offset sub-strokes of different weight and length, so it swells and tapers ---- */
+  var face=document.getElementById("sp-face"),guides=document.getElementById("sp-guides"),pupils=document.getElementById("sp-pupils");
+  ["sp-head","sp-eyes","sp-nose","sp-mouth"].forEach(function(id){document.getElementById(id).style.display="none";});
+  var SPEC=[[.5,1,0,1,0,0],[1,.6,.06,.92,.25,-.2],[.75,.4,.14,.98,-.22,.24]];
+  function stroke(parent,d,w,o,color){
+    var base=document.createElementNS(NS,"path");base.setAttribute("d",d);base.style.visibility="hidden";parent.appendChild(base);
+    var cl=SPEC.map(function(s){var c=document.createElementNS(NS,"path");c.setAttribute("d",d);if(color)c.setAttribute("stroke",color);
+      c.setAttribute("transform","translate("+s[4]+" "+s[5]+")");c.style.visibility="hidden";parent.insertBefore(c,base);return{c:c,s:s};});
+    var S={base:base,cl:cl,L:base.getTotalLength(),p:0,w:w,o:o};style(S);return S;}
+  function style(S){S.cl.forEach(function(k){k.c.setAttribute("stroke-width",(S.w*k.s[0]).toFixed(2));k.c.style.opacity=(S.o*k.s[1]).toFixed(3);});}
+  function setD(S,d){S.base.setAttribute("d",d);S.cl.forEach(function(k){k.c.setAttribute("d",d);});S.L=S.base.getTotalLength();setP(S,S.p);}
+  function setP(S,p){S.p=p;for(var i=0;i<S.cl.length;i++){var k=S.cl[i],a=k.s[2],seg=Math.min(k.s[3],p)-a;
+    if(seg<=.004){k.c.style.visibility="hidden";continue;}
+    k.c.style.visibility="visible";k.c.style.strokeDasharray=(seg*S.L)+" "+(S.L*3);k.c.style.strokeDashoffset=-a*S.L;}}
+  function tipOf(S,p){var q=S.base.getPointAtLength(clamp(p)*S.L),m=S.base.getScreenCTM(),P=mark.createSVGPoint();P.x=q.x;P.y=q.y;return P.matrixTransform(m);}
+
+  var shapeS=SHAPES.map(function(o){var S=stroke(face,D(o.a),o.w[0],o.o[0]);S.def=o;return S;});
+  var guideS=[].slice.call(guides.querySelectorAll("path")).map(function(el){el.style.display="none";
+    var S=stroke(guides,el.getAttribute("d"),+el.getAttribute("data-w"),+el.getAttribute("data-o"));S.d=+el.getAttribute("data-g");S.chalk=true;return S;});
+  pupils.style.opacity=0;
+
+  /* ---- the timeline ---- */
+  var T=[],t=150;
+  function draw(S,d,e,gap){S.t0=t;S.dd=d;S.e=e;T.push(S);t+=d+gap;}
+  if(!quick){
+    shapeS.forEach(function(S,i){draw(S,S.def.d,i<2?EASE.io:EASE.out,i<2?80:60);});
+  }else{shapeS.forEach(function(S){S.t0=0;S.dd=180;S.e=EASE.lin;S.fadeIn=true;});t=200;}
+  var M0=t+(quick?20:100),MD=quick?430:620;              // the morph: head first, the features just after
+  shapeS.forEach(function(S,i){S.m0=M0+(i<2?0:quick?40:90+40*(i-2));S.md=i<2?MD:MD-(quick?60:140);});
+  var morphEnd=M0+MD,G0=morphEnd+(quick?-120:70);
+  if(!quick){t=G0;guideS.forEach(function(S,i){draw(S,S.d,EASE.lin,i>=5?25:45);});}
+  else guideS.forEach(function(S){S.t0=G0;S.dd=200;S.e=EASE.lin;S.fadeIn=true;});
+  var W0=quick?0:t+20,WD=440,END=(quick?G0+200:W0+WD)+(quick?120:330);
+  if(!quick)wrect.setAttribute("width",0);
+
+  /* ---- graphite specks: flick off the moving stroke end, drift and fall a little; some settle as dust ---- */
+  var dust=sp.querySelector(".sp-dust"),fly=sp.querySelector(".sp-fly"),dx=dust.getContext("2d"),fx=fly.getContext("2d"),dpr=Math.min(2,window.devicePixelRatio||1),parts=[];
+  function size(){[dust,fly].forEach(function(c){c.width=innerWidth*dpr;c.height=innerHeight*dpr;});dx.setTransform(dpr,0,0,dpr,0,0);fx.setTransform(dpr,0,0,dpr,0,0);}
+  size();
+  function emit(p,speed,chalk){var n=Math.min(5,.7+speed*.14);n=Math.floor(n)+(Math.random()<n%1?1:0);
+    for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,v=18+Math.random()*70;
+      parts.push({x:p.x+(Math.random()-.5)*2,y:p.y+(Math.random()-.5)*2,vx:Math.cos(a)*v,vy:Math.sin(a)*v-12,life:200+Math.random()*400,age:0,
+        r:.55+Math.random()*1.0,a:.5+Math.random()*.4,chalk:chalk,settle:Math.random()<(chalk?.08:.22)});}}
+  function specks(dt){fx.clearRect(0,0,fly.width,fly.height);
+    for(var i=parts.length-1;i>=0;i--){var q=parts[i];q.age+=dt;var s=dt/1000;q.vy+=150*s;q.vx*=.96;q.x+=q.vx*s;q.y+=q.vy*s;
+      var k=q.age/q.life,col=q.chalk?"100,102,108":"46,47,52";
+      if(k>=1){if(q.settle){dx.fillStyle="rgba("+col+","+(q.a*.42).toFixed(3)+")";dx.beginPath();dx.arc(q.x,q.y,q.r*.85,0,7);dx.fill();}parts.splice(i,1);continue;}
+      fx.fillStyle="rgba("+col+","+(q.a*(1-k*k)).toFixed(3)+")";fx.beginPath();fx.arc(q.x,q.y,q.r,0,7);fx.fill();}}
+
+  var last=null,prevNow=0;
+  function frame(now){
+    if(done)return;if(!frame.t0)frame.t0=prevNow=now;var tt=now-frame.t0,dt=Math.min(50,now-prevNow);prevNow=now;
+    var tip=null;
+    // drawing: construction shapes, then the light graphite guides
+    T.forEach(function(S){var u=clamp((tt-S.t0)/S.dd),p=S.e(u);setP(S,p);
+      if(tt>=S.t0&&tt<S.t0+S.dd)tip={pt:tipOf(S,p),chalk:!!S.chalk};});
+    if(quick){shapeS.concat(guideS).forEach(function(S){var u=clamp((tt-S.t0)/S.dd);setP(S,1);
+      S.cl.forEach(function(k){k.c.style.opacity=(S.o*k.s[1]*u).toFixed(3);});});}
+    // the morph: each shape eases into its feature; the line firms up from construction weight to the final line
+    shapeS.forEach(function(S){var u=clamp((tt-S.m0)/S.md);if(u<=0&&!S.morphed)return;var e=EASE.io(u),o=S.def;
+      setD(S,D(mix(o.a,o.b,e)));S.w=lerp(o.w[0],o.w[1],e);S.o=lerp(o.o[0],o.o[1],e);if(!quick||u>0)style(S);S.morphed=u<1;});
+    pupils.style.opacity=clamp((tt-(morphEnd-120))/220).toFixed(3);
+    // the name, written left to right; the specks come off the writing edge
+    if(!quick){var wp=EASE.lin(clamp((tt-W0)/WD)),b=wtext.getBBox();wrect.setAttribute("x",-10);wrect.setAttribute("width",Math.max(0,(b.x+10)+b.width*1.12*wp));
+      if(tt>=W0&&tt<W0+WD){var m=wtext.getScreenCTM(),P=wtext.ownerSVGElement.createSVGPoint();P.x=b.x+b.width*1.12*wp-4;P.y=b.y+b.height*(.3+.55*Math.random());tip={pt:P.matrixTransform(m),chalk:false};}}
+    if(tip){var sp2=last?Math.hypot(tip.pt.x-last.x,tip.pt.y-last.y):0;emit(tip.pt,sp2,tip.chalk);last=tip.pt;}else last=null;
+    specks(dt);
+    if(tt>=END){land(false);return;}
+    raf=requestAnimationFrame(frame);
+  }
+  /* the finished mark flies into the header logo while the paper fades away */
+  function land(fast){
+    if(done)return;done=true;clearTimeout(safety);cancelAnimationFrame(raf);remember();
+    try{shapeS.forEach(function(S){var o=S.def;setD(S,D(o.b));S.w=o.w[1];S.o=o.o[1];style(S);setP(S,1);});
+      guideS.forEach(function(S){style(S);setP(S,1);});pupils.style.opacity=1;}catch(e){}
+    if(wrect){wrect.setAttribute("x",-100);wrect.setAttribute("width",9999);}
+    var dur=fast?320:500,hm=document.querySelector(".brand .mark");
+    sp.style.setProperty("--fly",dur+"ms");sp.classList.add("landing");root.classList.add("revealing");
+    try{var a=mark.getBoundingClientRect(),b=hm.getBoundingClientRect();
+      if(b.width>0){mark.style.transform="translate("+((b.left+b.width/2)-(a.left+a.width/2))+"px,"+((b.top+b.height/2)-(a.top+a.height/2))+"px) scale("+(b.width/a.width)+")";}
+      else mark.style.opacity=0;}catch(e){mark.style.opacity=0;}
+    setTimeout(function(){root.classList.remove("splashing");mark.style.opacity=0;},dur);
+    setTimeout(gone,dur+220);
+    setTimeout(function(){root.classList.remove("revealing");},dur+1300);
+  }
+  raf=requestAnimationFrame(frame);
+  sp.addEventListener("pointerdown",function(){land(true);});
+  window.addEventListener("keydown",function k(){window.removeEventListener("keydown",k);land(true);});
+})();
+</script>
+<!-- the logo mark (header, empty sketchbook): a face laid out with light graphite proportion guides -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="gc-mark" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <g style="stroke:var(--chalk,#75777c)" stroke-width="2.2"><path d="M60 4V111M14 55H106"/><path d="M44 76H76M47 86H73" opacity=".7"/><path d="M101 33V77M98 33H104M98 55H104M98 77H104" opacity=".8"/></g>
+    <path stroke-width="5.4" d="M60 14C80 14 92 31 92 52C92 77 77 101 60 101C43 101 28 77 28 52C28 31 40 14 60 14Z"/>
+    <path stroke-width="3.4" d="M38.5 55C42 50.5 52 50.5 55.5 55C52 58.5 42 58.5 38.5 55ZM64.5 55C68 50.5 78 50.5 81.5 55C78 58.5 68 58.5 64.5 55Z"/>
+    <g fill="currentColor" stroke="none"><circle cx="47" cy="55" r="3"/><circle cx="73" cy="55" r="3"/></g>
+    <path stroke-width="3.8" d="M60.5 61C59.5 66 57.5 71 57 74C57 76 60 76.6 63.5 75"/>
+    <path stroke-width="4" d="M51.5 86C56 88.4 64 88.4 68.5 86"/>
+  </symbol>
+</svg>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Graphite Coach</h1>
-      <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed seven-step plan.</p>
+    <div class="brand" id="brand" title="Replay the intro">
+      <svg class="mark" aria-hidden="true"><use href="#gc-mark"/></svg>
+      <h1 class="lockup"><span class="w1">Graphite</span> <span class="w2">Coach</span></h1>
     </div>
-    <label class="upload">Upload photo<input id="file" type="file" accept="image/*"></label>
+    <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-sketch" aria-selected="true">Sketch</button>
-    <button class="tab" role="tab" id="tab-plan" aria-selected="false">Drawing plan</button>
+  <div class="tabs" role="tablist" aria-label="App sections">
+    <button class="tab" role="tab" id="tab-book" aria-controls="view-book" aria-selected="true"><svg class="ti" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2z"/><path d="M4 14.5a2 2 0 0 1 2-2h9.5M7.5 6.5h5"/></svg><span class="lbl">Sketchbook</span></button>
+    <button class="tab" role="tab" id="tab-photo" aria-controls="view-photo" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">1</span><span><span class="sr">1 · </span>Photo</span></button>
+    <button class="tab" role="tab" id="tab-sketch" aria-controls="view-sketch" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">2</span><span><span class="sr">2 · </span>Sketch</span></button>
+    <button class="tab" role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">3</span><span><span class="sr">3 · </span><span class="wide">Drawing p</span><span class="narrow">P</span>lan</span></button>
   </div>
 
-  <section id="view-sketch" class="grid">
+
+  <section id="view-book" role="tabpanel" aria-labelledby="tab-book" class="panel">
+    <div class="bookhead">
+      <div><h2>Your sketchbook</h2><p>Every sketch you start is kept here, so you can stop and pick it up later.</p></div>
+      <div class="rowbtns"><button class="btn primary" id="newsketch">Start new sketch</button><button class="btn" id="trysample" aria-expanded="false" aria-controls="samplepick">Try it with a sample photo</button></div>
+    </div>
+    <div class="samplepick" id="samplepick" hidden>
+      <p>Pick a sample to practise on</p>
+      <div class="samplerow">
+        <button class="sampletile" type="button" data-src="samples/man.jpg" data-name="Sample: man"><img src="samples/man.jpg" alt="" loading="lazy"><span>Man</span></button>
+        <button class="sampletile" type="button" data-src="samples/woman.jpg" data-name="Sample: woman"><img src="samples/woman.jpg" alt="" loading="lazy"><span>Woman</span></button>
+        <button class="sampletile" type="button" data-src="samples/dog.jpg" data-name="Sample: dog"><img src="samples/dog.jpg" alt="" loading="lazy"><span>Dog</span></button>
+      </div>
+      <p class="samplemsg" id="samplemsg" role="alert"></p>
+    </div>
+    <div class="empty" id="bookempty" hidden>
+      <svg viewBox="0 0 160 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <g transform="rotate(-4 76 60)"><rect x="32" y="10" width="80" height="100" rx="3" fill="var(--sheet)" stroke-width="1.6" opacity=".55"/>
+        <g transform="translate(40 18) scale(.6)"><use href="#gc-mark" width="120" height="120" opacity=".9"/></g>
+        <path d="M44 98h40" stroke-width="1.4" opacity=".35"/></g>
+        <g transform="translate(124 98) rotate(36)" stroke-width="1.6"><path d="M0 0-2-6H2Z" fill="currentColor"/><path d="M-2-6-5.5-17H5.5L2-6M-5.5-17V-66H5.5V-17M-1.8-17V-66"/></g>
+      </svg>
+      <h3>A blank sketchbook</h3>
+      <p>Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing.</p>
+    </div>
+    <div class="books" id="books"></div>
+    <details class="about">
+      <summary>About and privacy <span>Your photo never leaves your device</span></summary>
+      <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), the subject is found by U²-Net (Qin et al., 2020) and facial features by Google's MediaPipe Face Landmarker (Apache-2.0), all running on your device. Sketches you start are saved in this browser on this device only.</p>
+    </details>
+  </section>
+
+  <section id="view-photo" role="tabpanel" aria-labelledby="tab-photo" class="grid" hidden>
     <div class="stage">
-      <canvas id="out"></canvas>
-      <div class="cap"><span id="srcname">Sample: plaster head study (upload your own photo)</span><span><span id="aistat"></span> · <span id="dims"></span></span></div>
+      <label class="dropzone" id="dropzone"><input id="file" type="file" accept="image/*"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="12" width="48" height="40" rx="4"/><path d="M8 44l14-13 10 9 7-6 17 14"/><circle cx="42" cy="24" r="4.5"/></svg><b>Choose a photo</b><span>or drop it here. A clear, well-lit portrait works best.</span></label>
+      <div class="cropwrap" id="cropwrap" hidden>
+        <canvas id="photocanvas" role="img" aria-label="Your photo"></canvas>
+        <div class="croprect" id="croprect" tabindex="0" role="group" aria-label="Crop area. Arrow keys move it, Shift with arrow keys resizes it." aria-roledescription="crop box"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+      </div>
+      <div class="cap"><span id="photoname"></span><span id="photostat" role="status"></span></div>
     </div>
     <div class="panel">
+      <label class="upload" id="changephoto" hidden>Choose a different photo<input id="file2" type="file" accept="image/*"></label>
+      <div class="ctrl">
+        <label>Rotate</label>
+        <div class="rowbtns"><button class="btn" id="rot-l">Left 90°</button><button class="btn" id="rot-r">Right 90°</button></div>
+      </div>
+      <div class="ctrl"><label for="tilt">Straighten <output id="tilt-o"></output></label><input id="tilt" type="range" min="-15" max="15" step=".5" value="0"></div>
+      <div class="ctrl">
+        <label>Crop shape</label>
+        <div class="grades" id="aspects"></div>
+        <p class="hint">Drag inside the box to move it, or drag a corner to resize. The part outside the box is cut off.</p>
+      </div>
+      <div class="ctrl">
+        <label class="toggle"><input id="bgrm" type="checkbox"> Remove the background</label>
+        <p class="hint">Keeps the person and turns everything behind them to plain paper. The first use downloads a 4.5 MB model, which your browser keeps for next time. Your photo never leaves your device.</p>
+      </div>
+      <div class="nav">
+        <button class="btn" id="resetphoto">Undo my changes</button>
+        <button class="btn primary" id="gensketch" disabled>Generate sketch</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-sketch" role="tabpanel" aria-labelledby="tab-sketch" class="grid" hidden>
+    <div class="stage">
+      <canvas id="out" role="img" aria-label="Pencil sketch"></canvas>
+      <div class="cap"><span id="srcname"></span><span><span id="aistat" role="status"></span> · <span id="dims"></span></span></div>
+    </div>
+    <div class="panel">
+      <div class="ctrl"><label for="projname">Sketch name</label><input id="projname" class="namefield" type="text" maxlength="80" autocomplete="off"></div>
       <div class="ctrl">
         <label>Darkest pencil</label>
         <div class="grades" id="grades"></div>
         <p class="hint">Harder leads cap how dark the drawing can go. Softer leads reach deeper blacks with more grain.</p>
       </div>
+      <div class="group"><h3>Tone</h3>
       <div class="ctrl"><label for="shade">Shading <output id="shade-o"></output></label><input id="shade" type="range" min="0" max="100" value="55"></div>
-      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
-      <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
-      <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
-      <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
       <div class="ctrl"><label for="bright">Brightness <output id="bright-o"></output></label><input id="bright" type="range" min="-50" max="50" value="0"></div>
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
+      </div>
+      <div class="group"><h3>Lines</h3>
+      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
+      <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
+      <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
+      <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
+      </div>
+      <div class="group"><h3>Paper</h3>
       <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
       <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
+      </div>
+      <div class="nav">
+        <button class="btn" id="backphoto">Back to photo</button>
+        <button class="btn primary" id="planbtn">Plan my drawing</button>
+      </div>
     </div>
   </section>
 
-  <section id="view-plan" class="grid" hidden>
+  <section id="view-plan" role="tabpanel" aria-labelledby="tab-plan" class="grid" hidden>
     <div class="stage">
-      <canvas id="stepcanvas"></canvas>
+      <div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas" role="img" aria-label="Drawing plan step"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas></div>
+      <p class="peekhint" id="peekhint">Hover over the picture (or touch and hold it) to see what this step adds.</p>
       <div class="cap">
-        <label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
-        <span id="stepcount"></span>
+        <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
+</span>
+        <button class="btn small" id="stepdl" type="button">Download this step</button>
+        <span id="stepcount" role="status"></span>
       </div>
     </div>
     <div class="panel">
@@ -123,24 +688,37 @@ input[type=range]{width:100%;accent-color:var(--blue)}
         <span class="pencil" id="s-pencil"></span>
         <h2 id="s-title"></h2>
         <p id="s-body"></p>
+        <p class="look"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8.2" opacity=".35"/><path d="M6.2 10.4l2.6 2.6 5.2-6"/></svg><span><strong>When you're done:</strong> <span id="s-look"></span></span></p>
         <ul class="checks" id="s-checks"></ul>
       </div>
-      <div class="nav">
+      <div class="nav stepnav">
         <button class="btn" id="prev">Back</button>
         <button class="btn primary" id="next">Next step</button>
+        <button class="btn" id="donebtn">Mark as complete</button>
       </div>
+      <p id="savestat" role="status"></p>
+      <nav class="stepbar" aria-label="Step controls">
+        <button class="btn" type="button" id="sb-prev" aria-label="Previous step"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5"/></svg></button>
+        <span class="sb-t" aria-hidden="true"><span id="sb-n"></span><span id="sb-title"></span></span>
+        <button class="btn primary" type="button" id="sb-next">Next</button>
+      </nav>
       <div class="ctrl gridctl">
         <label class="toggle"><input id="grid-on" type="checkbox" checked> Show grid</label>
-        <label>Cell shape (width : height)</label>
-        <div class="grades" id="ratios"></div>
-        <label for="gdens">Grid density <output id="gdens-o"></output></label>
-        <input id="gdens" type="range" min="2" max="16" value="4">
-        <p class="hint">Slide right for more, smaller cells. Draw the same grid on your paper so every square matches.</p>
+        <details class="gridopts">
+          <summary>Grid options</summary>
+          <div class="ctrl"><label>Cell shape (width : height)</label><div class="grades" id="ratios"></div></div>
+          <div class="ctrl"><label for="gdens">Grid density <output id="gdens-o"></output></label>
+          <input id="gdens" type="range" min="2" max="16" value="4">
+          <p class="hint">Slide right for more, smaller cells. Draw the same grid on your paper so every square matches.</p></div>
+          <div class="ctrl"><label>Line color</label><div class="grades" id="gcolors"></div></div>
+          <div class="ctrl"><label for="gop">Opacity <output id="gop-o"></output></label><input id="gop" type="range" min="10" max="100" value="35"></div>
+          <div class="ctrl"><label for="gthick">Thickness <output id="gthick-o"></output></label><input id="gthick" type="range" min="1" max="5" step=".5" value="1"></div>
+          <div class="ctrl"><label>Line type</label><div class="grades" id="gtypes"></div></div>
+        </details>
       </div>
     </div>
   </section>
 
-  <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. In the iPhone version, face landmarks will add proportion guides (eye line, nose and mouth thirds) to step 2. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), running on your device.</p>
 </div>
 
 <script src="vendor/ort.wasm.min.js"></script>
@@ -150,14 +728,16 @@ const GRADES = [
   {id:"2H", dmin:.58, grain:.6}, {id:"HB", dmin:.38, grain:.8}, {id:"2B", dmin:.24, grain:1},
   {id:"4B", dmin:.14, grain:1.2}, {id:"6B", dmin:.08, grain:1.4}, {id:"8B", dmin:.04, grain:1.6}
 ];
-const S = {grade:3, gray:null, w:0, h:0, step:0, cache:{}};
+const S = {grade:3, gray:null, w:0, h:0, step:0, cache:{}, done:[], project:null};
 const $ = id => document.getElementById(id);
 const MAXW = 1000;
 
 /* ---------- image processing ---------- */
 const clamp = v => v<0?0:v>1?1:v;
 function boxH(s,d,w,h,r){const n=2*r+1;for(let y=0;y<h;y++){const o=y*w;let acc=0;for(let k=-r;k<=r;k++)acc+=s[o+Math.min(w-1,Math.max(0,k))];for(let x=0;x<w;x++){d[o+x]=acc/n;acc+=s[o+Math.min(w-1,x+r+1)]-s[o+Math.max(0,x-r)];}}}
-function boxV(s,d,w,h,r){const n=2*r+1;for(let x=0;x<w;x++){let acc=0;for(let k=-r;k<=r;k++)acc+=s[Math.min(h-1,Math.max(0,k))*w+x];for(let y=0;y<h;y++){d[y*w+x]=acc/n;acc+=s[Math.min(h-1,y+r+1)*w+x]-s[Math.max(0,y-r)*w+x];}}}
+function boxV(s,d,w,h,r){const n=2*r+1,acc=new Float64Array(w); // row by row, a running sum per column: walks memory in order
+  for(let k=-r;k<=r;k++){const o=Math.min(h-1,Math.max(0,k))*w;for(let x=0;x<w;x++)acc[x]+=s[o+x];}
+  for(let y=0;y<h;y++){const o=y*w,a=Math.min(h-1,y+r+1)*w,b=Math.max(0,y-r)*w;for(let x=0;x<w;x++){d[o+x]=acc[x]/n;acc[x]+=s[a+x]-s[b+x];}}}
 function blur(src,w,h,r){r=Math.round(r);if(r<1)return src.slice();const a=new Float32Array(w*h),b=new Float32Array(w*h);boxH(src,a,w,h,r);boxV(a,b,w,h,r);boxH(b,a,w,h,Math.max(1,r>>1));boxV(a,b,w,h,Math.max(1,r>>1));return b;}
 function edges(g,w,h,r1,r2,gain){const b1=blur(g,w,h,r1),b2=blur(g,w,h,r2),o=new Float32Array(w*h);for(let i=0;i<o.length;i++)o[i]=clamp((b2[i]-b1[i])*gain-.02);return o;}
 const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t);};
@@ -227,15 +807,29 @@ function guided(I,w,h,r,eps){const n=I.length,II=new Float32Array(n);for(let i=0
   for(let i=0;i<n;i++){const v=Math.max(0,m2[i]-m[i]*m[i]);a[i]=v/(v+eps);b[i]=m[i]-a[i]*m[i];}
   const ma=blur(a,w,h,r),mb=blur(b,w,h,r),q=new Float32Array(n);for(let i=0;i<n;i++)q[i]=ma[i]*I[i]+mb[i];return q;}
 
-function contrasted(c){const g=S.gray,o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
+function contrasted(c,g=S.gray){const o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=clamp((g[i]-.5)*c+.5);return o;}
 
-function sketchTone(p){
-  const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,g=contrasted(p.contrast),gr=GRADES[p.grade],st=strokes(),F=S.focus;
-  // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
-  // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+/* what the sketch is made from: the photo, its face, the AI lines and the stroke textures.
+   While a slider is moving, a half-size copy is drawn instead (a quarter of the work), and the
+   full-size drawing follows a moment after the slider stops. */
+function fullSrc(){const st=strokes(),c=S.cache.src;
+  if(c&&c.gray===S.gray&&c.ai===S.cache.ailines&&c.st===st)return c;
+  return S.cache.src={w:S.w,h:S.h,gray:S.gray,F:S.focus,ai:S.cache.ailines,st,memo:{}};}
+function halfSrc(){const f=fullSrc(),c=S.cache.half;if(c&&c.of===f)return c;
+  const w=f.w>>1,h=f.h>>1,dn=a=>{const o=new Float32Array(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=2*y*f.w+2*x;o[y*w+x]=(a[i]+a[i+1]+a[i+f.w]+a[i+f.w+1])/4;}return o;};
+  const st={};for(const k in f.st)st[k]=Array.isArray(f.st[k])?f.st[k].map(dn):dn(f.st[k]);
+  return S.cache.half={of:f,w,h,gray:dn(f.gray),F:{x:f.F.x/2,y:f.F.y/2,r:f.F.r/2},ai:f.ai&&dn(f.ai),st,memo:{}};}
+function sketchTone(p,src=fullSrc()){
+  const {w,h,F,st}=src,n=w*h,sc=Math.max(w,h)/640,gr=GRADES[p.grade],M=src.memo;
+  // the tone stages depend on only a few sliders; moving any other slider reuses them
+  const kT=[p.contrast,p.bright,p.fade].join();
   // the Fade edges slider also sets how much the drawing lightens away from the face (50% = default)
   const fk=Math.min(1.4,p.fade*2);
-  const srt=Float32Array.from(g).sort(),lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
+  if(M.kT!==kT){M.kT=kT;M.kB=M.kE=null;const g=contrasted(p.contrast,src.gray);
+  // stretch the photo's own range to paper white .. darkest, then lighten the mid-tones the way
+  // an artist does: lit skin stays close to paper, hair and shadows carry the darks
+  const srt=M.srt&&M.kC===p.contrast?M.srt:Float32Array.from(g).sort();M.srt=srt;M.kC=p.contrast;
+  const lo=srt[Math.floor(n*.01)],hi=Math.max(lo+.1,srt[Math.floor(n*.995)]);
   let T=new Float32Array(n);const fd=new Float32Array(n);
   for(let i=0;i<n;i++){
     // brightness bends the mid-tones lighter or darker; paper white and the darkest dark stay put
@@ -249,13 +843,16 @@ function sketchTone(p){
     T[i]=t;
   }
   const Tr=T,Tg=guided(T,w,h,Math.round(3*sc),.002);T=Tg;
-  const Tb=blur(T,w,h,p.soft*sc*.6),Th=blur(T,w,h,1.5*sc);
+  const Th=blur(T,w,h,1.5*sc);
   // light areas touching paper-white lose their outline ("lost edges")
   const paper=new Float32Array(n);for(let i=0;i<n;i++)paper[i]=T[i]>.97?1:0;const nb=blur(paper,w,h,Math.round(5*sc)),near=nb.map(v=>smooth(.01,.12,v));
-  const lineR=(.5+(1-p.detail)*1.6)*sc;
-  const e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10),AI=S.cache.ailines;
+  Object.assign(M,{Tr,T,Th,near,fd});}
+  const {Tr,T,Th,near,fd}=M,AI=src.ai;
+  const kB=M.kT+"|"+p.soft;if(M.kB!==kB){M.kB=kB;M.Tb=blur(T,w,h,p.soft*sc*.6);}const Tb=M.Tb;
+  const lineR=(.5+(1-p.detail)*1.6)*sc,kE=M.kT+"|"+p.detail+"|"+p.press;
+  if(!AI&&M.kE!==kE){M.kE=kE;M.e=edges(Tr,w,h,lineR*.5,lineR*2,4+p.press*10);}const e=M.e;
   // the line drawing model's ink, softened a little so the shading can darken into each line
-  const aiSoft=AI?blur(AI,w,h,Math.max(1,Math.round(1.5*sc))):null;
+  const aiSoft=AI?(M.aiSoft||(M.aiSoft=blur(AI,w,h,Math.max(1,Math.round(1.5*sc))))):null;
   const out=new Float32Array(n);
   for(let i=0;i<n;i++){
     // the face keeps crisp detail (catchlights, lash line); further out the tone is blended softer
@@ -285,8 +882,8 @@ function sketchTone(p){
   return out;
 }
 
-function paint(canvas,tone,ghost){
-  const {w,h}=S;canvas.width=w;canvas.height=h;
+function paint(canvas,tone,ghost,w=S.w,h=S.h){
+  canvas.width=w;canvas.height=h;
   const ctx=canvas.getContext("2d"),img=ctx.createImageData(w,h),d=img.data;
   // warm paper (250,249,245) to graphite (38,41,47) with a faint cool sheen in the darks
   for(let i=0,j=0;i<tone.length;i++,j+=4){
@@ -296,37 +893,6 @@ function paint(canvas,tone,ghost){
   }
   ctx.putImageData(img,0,0);
   return ctx;
-}
-
-/* ---------- sample image: plaster head ---------- */
-function sample(){
-  const w=480,h=600,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");
-  let g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#9a9a9a");g.addColorStop(1,"#4a4a4a");x.fillStyle=g;x.fillRect(0,0,w,h);
-  // neck
-  g=x.createLinearGradient(190,0,300,0);g.addColorStop(0,"#bdbdbd");g.addColorStop(1,"#555");x.fillStyle=g;x.fillRect(195,400,100,200);
-  // cast shadow on background
-  x.fillStyle="rgba(0,0,0,.28)";x.beginPath();x.ellipse(330,300,120,190,.15,0,7);x.fill();
-  // head
-  g=x.createRadialGradient(190,200,20,240,280,220);g.addColorStop(0,"#f4f4f4");g.addColorStop(.55,"#c4c4c4");g.addColorStop(1,"#3c3c3c");
-  x.fillStyle=g;x.beginPath();x.ellipse(240,280,130,175,0,0,7);x.fill();
-  // under-jaw shadow
-  x.fillStyle="rgba(0,0,0,.35)";x.beginPath();x.ellipse(250,430,70,22,0,0,7);x.fill();
-  // eye sockets
-  const sock=(cx,a)=>{const s=x.createRadialGradient(cx,268,4,cx,268,38);s.addColorStop(0,`rgba(0,0,0,${a})`);s.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=s;x.beginPath();x.ellipse(cx,268,40,24,0,0,7);x.fill();};
-  sock(190,.45);sock(292,.6);
-  x.fillStyle="#2a2a2a";x.beginPath();x.ellipse(190,270,14,6,0,0,7);x.fill();x.beginPath();x.ellipse(292,270,14,6,0,0,7);x.fill();
-  // brow ridge light
-  x.fillStyle="rgba(255,255,255,.25)";x.beginPath();x.ellipse(205,240,50,10,-.1,0,7);x.fill();
-  // nose: lit plane + shadow side
-  x.fillStyle="rgba(0,0,0,.42)";x.beginPath();x.moveTo(248,270);x.lineTo(272,345);x.lineTo(245,352);x.closePath();x.fill();
-  x.fillStyle="rgba(255,255,255,.3)";x.beginPath();x.moveTo(242,272);x.lineTo(222,342);x.lineTo(244,350);x.closePath();x.fill();
-  x.fillStyle="rgba(0,0,0,.55)";x.beginPath();x.ellipse(250,355,26,6,0,0,7);x.fill();
-  // mouth
-  x.strokeStyle="rgba(0,0,0,.6)";x.lineWidth=4;x.beginPath();x.moveTo(210,392);x.quadraticCurveTo(245,400,284,390);x.stroke();
-  x.fillStyle="rgba(0,0,0,.25)";x.beginPath();x.ellipse(247,410,28,7,0,0,7);x.fill();
-  // ear
-  x.fillStyle="rgba(0,0,0,.35)";x.beginPath();x.ellipse(368,290,14,36,0,0,7);x.fill();
-  return c;
 }
 
 function loadSource(src){
@@ -349,15 +915,24 @@ function loadSource(src){
    Model: "Informative Drawings" (Chan, Durand & Isola, CVPR 2022), trained on artists' line drawings. MIT licence.
    It reads a 512 x 512 image and returns a line drawing; we pad the photo to a square, run it, and crop back. */
 let AISESSION=null,AIJOB=0;
-function aiStatus(t){$("aistat").textContent=t;}
+function aiStatus(t,bad){note("aistat",t,bad);}
+function note(id,t,bad){const e=$(id);e.textContent=t;e.classList.toggle("alert",!!bad);}
+/* a download that reports how far along it is (the first sketch fetches about 9 MB of AI model) */
+async function fetchBytes(url,onPct){const r=await fetch(url);if(!r.ok)throw new Error(url+" "+r.status);
+  const total=+r.headers.get("content-length")||0;if(!r.body||!total)return new Uint8Array(await r.arrayBuffer());
+  const out=new Uint8Array(total),rd=r.body.getReader();let got=0,last=-1;
+  for(;;){const {done,value}=await rd.read();if(done)break;if(got+value.length>total)return new Uint8Array(await new Response(new Blob([out.subarray(0,got),value])).arrayBuffer());
+    out.set(value,got);got+=value.length;const pc=Math.floor(got/total*100);if(pc!==last){last=pc;onPct(pc);}}
+  return got===total?out:out.subarray(0,got);}
 async function aiLines(c){
   const job=++AIJOB,{w,h}=S;
-  if(!window.ort){aiStatus("Basic lines (AI drawing unavailable)");return;}
+  if(!window.ort){aiStatus("Basic lines: AI drawing can\u2019t run in this browser",1);return;}
   try{
-    aiStatus("Drawing lines with AI…");
+    aiStatus("Drawing lines with AI (up to a minute)…");
     if(!AISESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true; // run in a background worker so the page stays responsive
       ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
-      AISESSION=ort.InferenceSession.create("models/lines.onnx",{executionProviders:["wasm"]});}
+      AISESSION=fetchBytes("models/lines.onnx",pc=>{if(job===AIJOB)aiStatus(`Downloading the AI line model (one time only)… ${pc}%`);})
+        .then(buf=>{aiStatus("Drawing lines with AI (up to a minute)…");return ort.InferenceSession.create(buf,{executionProviders:["wasm"]});});}
     const sess=await AISESSION;
     const N=512,side=Math.max(w,h),ox=(side-w)/2,oy=(side-h)/2,k=N/side;
     const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
@@ -372,107 +947,850 @@ async function aiLines(c){
     const o=document.createElement("canvas");o.width=w;o.height=h;const ox2=o.getContext("2d",{willReadFrequently:true});
     ox2.imageSmoothingQuality="high";ox2.drawImage(q,ox*k,oy*k,w*k,h*k,0,0,w,h);
     const d=ox2.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=1-d[i*4]/255;
+    {const b=3;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<b||y<b||x>=w-b||y>=h-b)ink[y*w+x]=0;} // the photo's own border is not a line
     S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
-    render();renderStep();
-  }catch(err){console.warn(err);if(job===AIJOB)aiStatus("Basic lines (AI drawing unavailable)");}
+    render();renderStep();saveSoon(); // refresh the sketchbook thumbnail with the finished lines
+  }catch(err){console.warn(err);AISESSION=null; // so the next sketch tries the download again
+    if(job===AIJOB)aiStatus(navigator.onLine===false?"Basic lines: you\u2019re offline. Generate again when connected for AI lines":"Basic lines: AI drawing didn\u2019t start. Generating again may fix it",1);}
+  // the subject's silhouette, so the block-in step outlines the head and shoulders rather than light and dark patches
+  try{const m=await subjectMap(c);if(job===AIJOB){S.cache.subject=m;renderStep();}}catch(err){console.warn(err);}
+  // and the face's landmarks, so the darkest accents land on the pupils, nostrils and lip line
+  try{const f=await faceLandmarks(c);if(job===AIJOB){S.cache.face=f;renderStep();}}catch(err){console.warn(err);}
+}
+/* ---------- face landmarks (runs on this device) ----------
+   MediaPipe Face Landmarker (Google), Apache-2.0: 478 points on the face, including the irises.
+   Loaded only once a photo is in; when no face is found (a pet, a back view) the plan works without it. */
+const FACEMODEL="models/face.task",FACEDETECT="models/face-detect.tflite";let FACETASK=null;
+async function faceLandmarks(c){
+  if(!FACETASK)FACETASK=(async()=>{const mp=await import("./vendor/mediapipe/vision_bundle.js"),
+      base=new URL("vendor/mediapipe/",location.href).href,fs={wasmLoaderPath:base+"vision_wasm_internal.js",wasmBinaryPath:base+"vision_wasm_internal.wasm"},
+      buf=async u=>new Uint8Array(await (await fetch(u)).arrayBuffer());
+    return{det:await mp.FaceDetector.createFromOptions(fs,{baseOptions:{modelAssetBuffer:await buf(FACEDETECT),delegate:"CPU"},runningMode:"IMAGE",minDetectionConfidence:.3}),
+      mesh:await mp.FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:await buf(FACEMODEL),delegate:"CPU"},runningMode:"IMAGE",numFaces:1})};})();
+  const t=await FACETASK.catch(e=>{FACETASK=null;throw e;});
+  // the mesh model fits a human face onto pets too; the face detector is much surer about real people (about .9 vs .75 on a dog)
+  const d=t.det.detect(c).detections,best=Math.max(0,...d.map(x=>x.categories[0].score));if(best<.82)return null;
+  const pts=t.mesh.detect(c).faceLandmarks,P=pts&&pts[0]&&pts[0].map(p=>[p.x*c.width,p.y*c.height]);return P||null;
 }
 
 /* ---------- controls ---------- */
 const sliders=["bright","shade","strokes","soft","press","detail","contrast","grain","fade"];
 function params(){return{shade:$("shade").value/100,soft:+$("soft").value,press:$("press").value/100,detail:$("detail").value/100,contrast:$("contrast").value/100,grain:$("grain").value/100,strokes:$("strokes").value/100,fade:$("fade").value/100,bright:$("bright").value/50,grade:S.grade};}
 function labels(){$("shade-o").textContent=$("shade").value+"%";$("soft-o").textContent=$("soft").value+" px";$("press-o").textContent=$("press").value+"%";$("detail-o").textContent=$("detail").value+"%";$("contrast-o").textContent=($("contrast").value/100).toFixed(2)+"×";$("grain-o").textContent=$("grain").value+"%";$("strokes-o").textContent=$("strokes").value+"%";$("fade-o").textContent=$("fade").value+"%";const b=+$("bright").value;$("bright-o").textContent=(b>0?"+":"")+b;}
-let raf=0;function render(){labels();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(!S.gray)return;S.cache.sketch=sketchTone(params());paint($("out"),S.cache.sketch);S.cache.bands=null;});}
-sliders.forEach(id=>$(id).addEventListener("input",()=>{render();S.cache.planDirty=true;}));
-GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll(".grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
+/* while a slider moves, a half-size sketch is drawn every frame and stretched to fit;
+   the full-size one follows once the slider has been still for a moment */
+let raf=0,fullT=0,HALF=null;
+function render(quick){labels();cancelAnimationFrame(raf);clearTimeout(fullT);raf=requestAnimationFrame(()=>{if(!S.gray)return;const p=params();
+  if(quick){const src=halfSrc(),c=$("out");HALF=HALF||document.createElement("canvas");paint(HALF,sketchTone(p,src),false,src.w,src.h);
+    if(c.width!==S.w||c.height!==S.h){c.width=S.w;c.height=S.h;}const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(HALF,0,0,S.w,S.h);
+    fullT=setTimeout(()=>render(false),250);return;}
+  S.cache.sketch=sketchTone(p);S.cache.sketchKey=JSON.stringify(p);paint($("out"),S.cache.sketch);S.cache.bands=null;
+  $("out").setAttribute("aria-label",`Pencil sketch of ${$("srcname").textContent||"your photo"}, ${GRADES[S.grade].id} pencil`);});}
+sliders.forEach(id=>$(id).addEventListener("input",()=>{render(true);S.cache.planDirty=true;saveSoon();}));
+GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll("#grades .grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
-$("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{$("srcname").textContent=f.name;loadSource(im);URL.revokeObjectURL(im.src);};im.onerror=()=>{$("srcname").textContent="That file could not be read as an image. Try a JPEG or PNG.";};im.src=URL.createObjectURL(f);});
+function usePhoto(f){if(!f)return;const im=new Image();
+  im.onload=()=>{setPhoto(im,f.name.replace(/\.[^.]+$/,""));URL.revokeObjectURL(im.src);};
+  im.onerror=()=>{note("photostat","That file could not be read as an image. Try a JPEG or PNG.",1);};
+  im.src=URL.createObjectURL(f);}
+["file","file2"].forEach(id=>$(id).addEventListener("change",e=>{usePhoto(e.target.files[0]);e.target.value="";}));
+{const z=$("dropzone");z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});
+  z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("over");usePhoto(e.dataTransfer.files[0]);});}
 
-/* ---------- drawing plan: fixed step library ---------- */
+/* ---------- drawing plan: fixed step library ----------
+   Each step's picture is the whole drawing as it should look once that step is done:
+   everything from earlier steps stays, and the step adds its own marks on top. */
 function grade(i){return GRADES[Math.max(0,Math.min(GRADES.length-1,i))].id;}
 const STEPS=[
  {title:"Set up a light grid",pencil:()=>"2H · very light",
   body:"Draw the same grid shown here on your paper, with the paper cut to the same proportions as the reference. Change the cell shape and density under Grid to suit your paper. Keep the lines faint enough to erase. The grid lets you place every later shape by its square instead of guessing distances across the whole face.",
-  checks:["Paper ratio matches the photo","Lines barely visible at arm's length"],layer:"grid"},
- {title:"Block in the big shapes",pencil:()=>"2H",
-  body:"Look only at the largest masses: the head as one egg shape, the neck, the shoulder line, the biggest shadow shape. Use straight, angled strokes instead of curves. Squint at the reference to lose the detail.",
-  checks:["Head fits the same grid squares as the photo","Tilt of the head matches","No features drawn yet"],layer:"big"},
+  look:"Just the grid. Nothing of the face yet.",
+  checks:["Paper ratio matches the photo","Lines barely visible at arm's length"]},
+ {title:"Block in the big shapes",pencil:()=>"2H · light",
+  body:"Squint at the reference until the detail disappears. Draw the outline of the head and hair, the neck and shoulders, and the edge of the biggest shadow, using short straight lines. Hold the pencil far back and press lightly: these are guide lines you will mostly erase later.",
+  look:"A few faint, straight-edged shapes, like a paper cut-out. No eyes, nose or mouth yet.",
+  checks:["Head fits the same grid squares as the photo","Tilt of the head matches","No features drawn yet"]},
+ {title:"Place the features",pencil:()=>"2H",
+  body:"Mark where the eyes, nose, mouth and ears sit inside the head shape, counting grid squares from the reference. Keep the marks simple and light. Check the spacing before any detail: the eyes sit about halfway down the head, and the gap between them is about one eye wide.",
+  look:"Light marks for each feature inside the block-in shapes. Still no shading.",
+  checks:["Eyes sit roughly halfway down the head","Gap between the eyes is about one eye width","Nose and mouth line up under the eyes the way they do in the photo"]},
  {title:"Refine the contours",pencil:()=>"H",
-  body:"Now place the features and the edges between light and shadow. Measure each one against its grid square. Draw the shape of the shadow under the nose and inside the eye sockets, not outlines of a nose and eyes.",
-  checks:["Eyes sit roughly halfway down the head","Gap between the eyes is about one eye width","Shadow shapes are closed so you can fill them"],layer:"contour"},
- {title:"Map three values",pencil:()=>"HB · light pressure",
-  body:"Divide everything into three groups: lights (leave as paper), mid-tones, and darks. Fill the mid-tone and dark areas with one even, light layer of HB. This is the step most beginners skip, and it is what makes a drawing look solid.",
-  checks:["Every area belongs to one of three values","Lights are untouched paper","Strokes run in one consistent direction"],layer:"bands"},
- {title:"Commit to the darks",pencil:()=>grade(S.grade)+" · build in layers",
-  body:"Go into the darkest group only: pupils, nostrils, the deepest socket and jaw shadows, hair masses. Build darkness with several light layers rather than one hard press, which burnishes the paper and stops it taking more graphite.",
-  checks:["Darkest darks match the reference","Hard edges only where the photo has hard edges"],layer:"darks"},
- {title:"Shape the mid-tones",pencil:()=>grade(Math.max(1,S.grade-2))+" + blending stump",
-  body:"Work the mid-tones to turn the forms: the side of the nose, the cheek rolling away from the light, the plane change at the temple. Blend toward the light, never from light into dark, so the clean paper stays clean.",
-  checks:["Transitions are gradual on round forms","Core shadow is darker than reflected light"],layer:"mids"},
+  body:"Draw the real edges now: the jaw, the hairline, the shape of each eye, the nostrils, the lips, the collar. Follow the reference square by square. Once a new line is right, lightly erase the straight block-in lines around it so they don't compete.",
+  look:"A clean, light line drawing. The straight block-in lines are faded or gone.",
+  checks:["Every feature is drawn as a shape, not a symbol","Block-in lines are erased where the real edge replaced them"]},
+ {title:"Outline the shadow shapes",pencil:()=>"H · light",
+  body:"Find the darkest third of the picture: under the jaw, the eye sockets, the shadow side of the nose, the hair. Draw a light line around each of those areas, like a map. Close every shape so you can fill it in later.",
+  look:"Your line drawing plus closed outlines around each dark area. Still no shading.",
+  checks:["Every dark area has a closed outline","Shadow shapes match the photo, not what you expect a face to look like"]},
+ {title:"Lay the first light layer",pencil:()=>"HB · light, even pressure",
+  body:"Shade everything except the brightest areas with one light, even layer. Keep your strokes going in one direction and the pressure gentle. You will shade over your lines here, and that's expected: they should still show faintly through the tone. Leave the brightest areas as clean paper.",
+  look:"The drawing is a soft grey everywhere except the bright areas, which are still white paper. Your lines show through the grey.",
+  checks:["Bright areas are untouched paper","One even tone, no dark patches yet","Your lines still show through"]},
+ {title:"Darken the shadow shapes",pencil:()=>grade(Math.max(2,S.grade-1))+" · build in layers",
+  body:"Go back into the shadow shapes you outlined in step 5 and add a second layer, crossing your first strokes at a slight angle. Build the darkness with several light layers rather than one hard press, which polishes the paper so it stops taking graphite.",
+  look:"Three clear values: white paper, light grey, and a darker grey inside each shadow shape.",
+  checks:["Every area is one of three values","Shadow edges are soft where the photo is soft and sharp where it is sharp"]},
+ {title:"Add the darkest accents",pencil:()=>grade(S.grade)+" · firmer pressure",
+  body:"Now the few darkest spots: the pupils, the nostrils, the line between the lips, the deepest parts of the hair and the shadow right under the chin. Press firmer here, but keep these accents small.",
+  look:"A handful of very dark accents that make the face come forward. Everything else is the same as the last step.",
+  checks:["Darkest darks match the reference","Accents are small; most of the drawing is still mid-tone"]},
+ {title:"Blend and turn the forms",pencil:()=>"Blending stump · "+grade(Math.max(1,S.grade-2)),
+  body:"Smooth the shading on the skin with a blending stump or a tissue so the values melt into each other: the cheek rounding away from the light, the side of the nose, the temple. Start each stroke in the lighter area and move into the darker one, so you don't drag graphite into the lights. Leave the hair with visible pencil strokes.",
+  look:"Smooth, gradual shading on the skin; the hair still shows its strokes. The bright areas may have picked up a light grey film, which the next step fixes.",
+  checks:["Round forms turn gradually, with no hard bands","Hair and clothing still show pencil strokes"]},
  {title:"Lift highlights and finish",pencil:()=>"Kneaded eraser · "+grade(S.grade),
-  body:"Press a kneaded eraser into the brightest spots to lift them: the eye catchlights, the bridge of the nose, the lower lip. Erase leftover grid lines. Then step back two metres and compare the drawing to the reference at the same size.",
-  checks:["Catchlights in both eyes","No grid lines left in light areas","Value range runs from paper white to your darkest pencil"],layer:"full"}
+  body:"Press a kneaded eraser into the small bright spots to lift them back to clean paper: the catchlights in the eyes, the bridge and tip of the nose, the lower lip, any shine along the cheek. Hover over the picture (or touch and hold it) to see where they are in your photo. Then erase the grid, step back two metres and compare the drawing with the reference at the same size.",
+  look:"The finished drawing: clean highlights, no grid, values running from paper white to your darkest pencil.",
+  checks:["Catchlights in both eyes","No grid lines left","Value range runs from paper white to your darkest pencil"]}
 ];
 
-function bands(){
-  if(S.cache.bands)return S.cache.bands;
-  const {w,h}=S,g=blur(contrasted(params().contrast),w,h,3),b=new Uint8Array(g.length);
-  const sorted=Float32Array.from(g).sort(),t1=sorted[Math.floor(g.length*.33)],t2=sorted[Math.floor(g.length*.66)];
-  for(let i=0;i<g.length;i++)b[i]=g[i]<t1?2:g[i]<t2?1:0;
-  return S.cache.bands=b;
+/* contour lines of a field at one level (marching squares on a grid of cs pixels), chained into polylines */
+function isoLines(f,w,h,lv,cs){
+  const gw=Math.floor((w-1)/cs)+1,gh=Math.floor((h-1)/cs)+1;
+  const V=(gx,gy)=>f[Math.min(h-1,Math.round(gy*cs))*w+Math.min(w-1,Math.round(gx*cs))];
+  const pt=new Map(),segs=[],adj=new Map();
+  const P=(gx,gy,v)=>{const k=(gy*gw+gx)*2+v;if(!pt.has(k)){const a=V(gx,gy),b=v?V(gx,gy+1):V(gx+1,gy),t=Math.abs(b-a)<1e-9?.5:(lv-a)/(b-a);pt.set(k,v?[gx*cs,(gy+t)*cs]:[(gx+t)*cs,gy*cs]);}return k;};
+  // cell edges: 0 top, 1 right, 2 bottom, 3 left; corners darker than the level are "inside"
+  const TAB=[[],[3,0],[0,1],[3,1],[1,2],[3,0,1,2],[0,2],[3,2],[2,3],[0,2],[0,1,2,3],[1,2],[1,3],[0,1],[3,0],[]];
+  for(let gy=0;gy<gh-1;gy++)for(let gx=0;gx<gw-1;gx++){
+    const c=(V(gx,gy)<lv?1:0)|(V(gx+1,gy)<lv?2:0)|(V(gx+1,gy+1)<lv?4:0)|(V(gx,gy+1)<lv?8:0),t=TAB[c];
+    for(let j=0;j<t.length;j+=2){const e=[t[j],t[j+1]].map(E=>E===0?P(gx,gy,0):E===1?P(gx+1,gy,1):E===2?P(gx,gy+1,0):P(gx,gy,1));
+      const id=segs.length;segs.push(e);for(const k of e){if(!adj.has(k))adj.set(k,[]);adj.get(k).push(id);}}
+  }
+  const used=new Uint8Array(segs.length),lines=[];
+  for(let s=0;s<segs.length;s++){if(used[s])continue;used[s]=1;const ch=[segs[s][0],segs[s][1]];
+    for(const tail of[true,false])for(;;){const k=tail?ch[ch.length-1]:ch[0],nx=(adj.get(k)||[]).find(i=>!used[i]);if(nx===undefined)break;
+      used[nx]=1;const o=segs[nx][0]===k?segs[nx][1]:segs[nx][0];if(tail)ch.push(o);else ch.unshift(o);}
+    lines.push(ch.map(k=>pt.get(k)));}
+  return lines;
 }
-function stepTone(layer){
-  const {w,h}=S,n=w*h,out=new Float32Array(n).fill(1);
-  if(layer==="grid")return out;
-  const sk=S.cache.sketch||sketchTone(params());
-  if(layer==="full")return sk;
-  const big=edges(blur(S.gray,w,h,4),w,h,2,9,14);
-  if(layer==="big"){for(let i=0;i<n;i++)out[i]=1-big[i]*.75;return out;}
-  const con=S.cache.ailines||edges(contrasted(params().contrast),w,h,1,3.5,12);
-  const lines=i=>1-Math.max(big[i]*.4,con[i]*.7);
-  if(layer==="contour"){for(let i=0;i<n;i++)out[i]=lines(i);return out;}
-  const b=bands();
-  if(layer==="bands"){for(let i=0;i<n;i++)out[i]=Math.min(lines(i),[1,.72,.48][b[i]]);return out;}
-  if(layer==="darks"){for(let i=0;i<n;i++)out[i]=b[i]===2?Math.min(sk[i],.48):Math.min(lines(i),[1,.72][b[i]]);return out;}
-  if(layer==="mids"){for(let i=0;i<n;i++)out[i]=b[i]>0?sk[i]:Math.min(1,Math.max(sk[i],.9));return out;}
-  return sk;
+/* Douglas-Peucker: fewer, straighter segments the larger eps is (block-in lines are drawn straight) */
+function simplify(p,eps){
+  if(p.length<3)return p;
+  if(Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<1e-6){const m=p.length>>1;return simplify(p.slice(0,m+1),eps).concat(simplify(p.slice(m),eps).slice(1));}
+  const keep=new Uint8Array(p.length);keep[0]=keep[p.length-1]=1;const st=[[0,p.length-1]];
+  while(st.length){const[a,b]=st.pop(),[ax,ay]=p[a],dx=p[b][0]-ax,dy=p[b][1]-ay,L=Math.hypot(dx,dy)||1;let md=0,mi=-1;
+    for(let i=a+1;i<b;i++){const d=Math.abs((p[i][0]-ax)*dy-(p[i][1]-ay)*dx)/L;if(d>md){md=d;mi=i;}}
+    if(md>eps){keep[mi]=1;st.push([a,mi],[mi,b]);}}
+  return p.filter((_,i)=>keep[i]);
+}
+/* drop needle-thin spikes (a vertex where the line doubles straight back on itself) */
+function despike(p,lim=.85){let q=p.slice(),hit=true;
+  while(hit&&q.length>2){hit=false;for(let i=1;i<q.length-1;i++){const ax=q[i-1][0]-q[i][0],ay=q[i-1][1]-q[i][1],bx=q[i+1][0]-q[i][0],by=q[i+1][1]-q[i][1];
+    if((ax*bx+ay*by)/(Math.hypot(ax,ay)*Math.hypot(bx,by)+1e-9)>lim){q.splice(i,1);hit=true;break;}}}
+  return q;}
+const plen=p=>{let l=0;for(let i=1;i<p.length;i++)l+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);return l;};
+/* draw polylines the way a pencil does: thin, light, slightly wobbly, sometimes gone over twice, ends overshooting */
+function pencilLines(lines,o){
+  const {w,h}=S,r=rng(o.seed),c=document.createElement("canvas");c.width=w;c.height=h;
+  const x=c.getContext("2d",{willReadFrequently:true});x.strokeStyle="#000";x.lineCap="round";x.lineJoin="round";
+  for(const p of lines)for(let pass=0;pass<o.passes;pass++){
+    const q=p.map(([px,py])=>[px+(r()-.5)*o.jit,py+(r()-.5)*o.jit]);
+    if(o.over&&q.length>1){const e=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1],l=Math.hypot(dx,dy)||1,k=o.over*(.4+r()*.8)/l;return[a[0]+dx*k,a[1]+dy*k];};
+      q[0]=e(q[0],q[1]);q[q.length-1]=e(q[q.length-1],q[q.length-2]);}
+    x.globalAlpha=o.alpha*(.7+r()*.5);x.lineWidth=o.lw*(.8+r()*.4);x.beginPath();x.moveTo(q[0][0],q[0][1]);
+    for(let i=1;i<q.length;i++)x.lineTo(q[i][0],q[i][1]);x.stroke();
+  }
+  const d=x.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=d[i*4+3]/255;return ink;
+}
+
+/* hatching: short, nearly parallel pencil strokes laid where dark[] asks for tone, each as dark as the tone there;
+   the angle drifts slowly across the page and every stroke varies a little, as a hand's do */
+function hatchInk(dark,ang,gap,seed,sc){
+  const {w,h}=S,r=rng(seed),c=document.createElement("canvas");c.width=w;c.height=h;
+  const x=c.getContext("2d",{willReadFrequently:true});x.strokeStyle="#000";x.lineCap="round";
+  const ca=Math.cos(ang),sa=Math.sin(ang),diag=Math.hypot(w,h);
+  for(let v=-diag;v<diag;v+=gap*(.8+.4*r()))for(let u=-diag;u<diag;){
+    const len=(18+18*r())*sc,px=w/2+u*ca-v*sa,py=h/2+u*sa+v*ca;u+=len*(1+.35*r());
+    if(px<-len||py<-len||px>w+len||py>h+len)continue;
+    const d=dark[Math.min(h-1,Math.max(0,Math.round(py)))*w+Math.min(w-1,Math.max(0,Math.round(px)))];
+    if(d<.05||r()>Math.min(1,d*5))continue;
+    const a=ang+.12*Math.sin(px/(90*sc)+py/(130*sc))+(r()-.5)*.1,dx=Math.cos(a)*len/2,dy=Math.sin(a)*len/2;
+    x.globalAlpha=Math.min(.6,d*(2.6+.8*r()));x.lineWidth=(.65+.35*r())*sc;
+    x.beginPath();x.moveTo(px-dx,py-dy);x.quadraticCurveTo(px+(r()-.5)*sc,py+(r()-.5)*sc,px+dx,py+dy);x.stroke();
+  }
+  const dd=x.getImageData(0,0,w,h).data,ink=new Float32Array(w*h);for(let i=0;i<ink.length;i++)ink[i]=dd[i*4+3]/255;return ink;
+}
+/* the darkest accents of a face, placed from its landmarks: the pupils, the nostrils, the line between the lips and its corners */
+function faceAccents(P,w,h){
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});
+  const d=(a,b)=>Math.hypot(P[a][0]-P[b][0],P[a][1]-P[b][1]),iris=(d(469,471)+d(474,476))/4; // iris radius
+  x.fillStyle=x.strokeStyle="#000";x.lineCap=x.lineJoin="round";
+  for(const k of[468,473]){x.beginPath();x.arc(P[k][0],P[k][1],iris*.62,0,7);x.fill();}
+  // nostrils: small dark ellipses tucked under the nose, either side of its centre line
+  for(const k of[60,290]){const nx=(P[k][0]*2+P[2][0])/3,ny=(P[k][1]*2+P[2][1])/3;x.beginPath();x.ellipse(nx,ny,iris*.5,iris*.3,Math.atan2(P[290][1]-P[60][1],P[290][0]-P[60][0]),0,7);x.fill();}
+  // the lip line, thickest in the middle and fading towards the corners
+  const up=[78,191,80,81,82,13,312,311,310,415,308],lo=[78,95,88,178,87,14,317,402,318,324,308];
+  for(let j=0;j<up.length-1;j++){const t=Math.sin(Math.PI*(j+.5)/(up.length-1));x.lineWidth=iris*(.1+.28*t);x.globalAlpha=.6+.4*t;x.beginPath();
+    x.moveTo((P[up[j]][0]+P[lo[j]][0])/2,(P[up[j]][1]+P[lo[j]][1])/2);x.lineTo((P[up[j+1]][0]+P[lo[j+1]][0])/2,(P[up[j+1]][1]+P[lo[j+1]][1])/2);x.stroke();}
+  x.globalAlpha=1;
+  const dd=x.getImageData(0,0,w,h).data,m=new Float32Array(w*h);for(let i=0;i<m.length;i++)m[i]=dd[i*4+3]/255;
+  const t=strokes().tooth;for(let i=0;i<m.length;i++)m[i]*=.7+.3*t[i];
+  return blur(m,w,h,1);
+}
+/* every mark the plan draws, worked out once per photo and settings */
+function planLayers(){
+  const sk=S.cache.sketch||(S.cache.sketch=sketchTone(params())),AI=S.cache.ailines,SUB=S.cache.subject,FACE=S.cache.face;
+  if(S.cache.plan&&S.cache.plan.sk===sk&&S.cache.plan.ai===AI&&S.cache.plan.sub===SUB&&S.cache.plan.face===FACE)return S.cache.plan;
+  const {w,h}=S,n=w*h,sc=Math.max(w,h)/640,st=strokes(),F=S.focus;
+  // graphite only catches on the raised grain of the paper, so every mark is a little speckled
+  const grain=i=>.5+.5*st.tooth[i];
+  const pct=(a,q)=>Float32Array.from(a).sort()[Math.floor(a.length*q)];
+  // big shapes: the outline of the head, hair and shoulders, plus the edge of the biggest shadows, in a few straight lines
+  const big=blur(S.gray,w,h,Math.round(9*sc));
+  let blockLines;
+  if(SUB){
+    const sub=blur(SUB,w,h,Math.round(12*sc)),inner=blur(SUB,w,h,Math.round(28*sc));
+    const sil=isoLines(sub,w,h,.5,Math.max(2,Math.round(3*sc))).sort((a,b)=>plen(b)-plen(a)).filter((p,i)=>i<1&&plen(p)>150*sc);
+    // shadow edges: the darkest masses of the subject, kept only well inside it and only the longest few
+    const keepIn=p=>{const out=[];let cur=[];for(const q of p){const i=Math.min(h-1,Math.round(q[1]))*w+Math.min(w-1,Math.round(q[0]));
+      if(inner[i]>.97)cur.push(q);else{if(cur.length>1)out.push(cur);cur=[];}}if(cur.length>1)out.push(cur);return out;};
+    const subVals=Array.from(big).filter((v,i)=>SUB[i]>.5),lv=subVals.length?Float32Array.from(subVals).sort()[Math.floor(subVals.length*.3)]:pct(big,.3);
+    const shad=isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))).flatMap(keepIn).map(p=>despike(simplify(p,18*sc),.5)).filter(p=>{if(plen(p)<90*sc||p.length>6)return false; /* a big shape edge turns only a few times */
+      if(Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<4*sc){let A=0;for(let j=0;j<p.length;j++){const q=p[j],r=p[(j+1)%p.length];A+=q[0]*r[1]-r[0]*q[1];}if(Math.abs(A)/2<4000*sc*sc)return false;} /* a thin sliver, not a mass */let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of p){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+      return plen(p)<2.4*Math.hypot(x1-x0,y1-y0);}).sort((a,b)=>plen(b)-plen(a)).slice(0,2); // a winding edge reads as clutter, not a big shape
+    blockLines=sil.map(p=>despike(simplify(p,9*sc),.6)).concat(shad);
+  }else blockLines=[pct(big,.3),pct(big,.62)].flatMap(lv=>isoLines(big,w,h,lv,Math.max(2,Math.round(3*sc))))
+    .filter(p=>plen(p)>45*sc).map(p=>simplify(p,7*sc));
+  const block=pencilLines(blockLines,{seed:11,passes:2,jit:1.2*sc,over:2*sc,lw:1.1*sc,alpha:.32});
+  // the three-value map, read from the finished drawing so it agrees with it:
+  // lights (left as paper), mid-tones, and the darkest half of the shaded area
+  const g3=blur(sk,w,h,Math.round(3*sc)),t2=.88,shaded=g3.filter(v=>v<t2),t1=shaded.length?pct(shaded,.45):.5;
+  // shadow shapes are outlined on a softer copy, so texture (knit, fur) doesn't break them into crumbs
+  const g6=blur(sk,w,h,Math.round(6*sc));
+  const closed=p=>Math.hypot(p[0][0]-p[p.length-1][0],p[0][1]-p[p.length-1][1])<3*sc;
+  const g14=blur(sk,w,h,Math.round(14*sc)),g9=blur(sk,w,h,Math.round(9*sc)),gs=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,f=1-smooth(.7,1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));gs[i]=f*g9[i]+(1-f)*g14[i];}
+  // where the drawing is busy texture (hair, a beard, knit) a shadow edge wanders, so it is cut out there
+  const fine=blur(sk,w,h,Math.max(1,Math.round(2*sc))),busy=new Float32Array(n);for(let i=0;i<n;i++)busy[i]=Math.abs(sk[i]-fine[i]);
+  const tex=blur(busy,w,h,Math.round(8*sc)),texIn=Array.from(tex).filter((v,i)=>!SUB||SUB[i]>.5).sort((a,b)=>a-b),tLim=texIn[Math.floor(texIn.length*.7)]||1;
+  const part=(p,keep)=>{const out=[];let cur=[];for(const q of p){const i=Math.min(h-1,Math.round(q[1]))*w+Math.min(w-1,Math.round(q[0]));
+    if(keep(tex[i]))cur.push(q);else{if(cur.length>1)out.push(cur);cur=[];}}if(cur.length>1)out.push(cur);return out;};
+  const whole=(p,c)=>c.length===1&&c[0].length===p.length?[p]:c;
+  // there the big dark mass still gets an outline, traced on a much softer copy so it is one smooth line
+  const g24=blur(sk,w,h,Math.round(24*sc));
+  const roughLines=isoLines(g24,w,h,t1,Math.max(1,Math.round(3*sc))).flatMap(p=>whole(p,part(p,v=>v>=tLim))).filter(p=>plen(p)>70*sc).map(p=>simplify(p,4*sc));
+  const shadowLines=isoLines(gs,w,h,t1,Math.max(1,Math.round(2*sc))).flatMap(p=>whole(p,part(p,v=>v<tLim))).filter(p=>plen(p)>(closed(p)?150:40)*sc)
+    // a small closed loop is a curl of hair or a fold of knit, not a shadow shape
+    .filter(p=>{if(!closed(p))return true;let A=0;for(let j=0;j<p.length;j++){const q=p[j],r=p[(j+1)%p.length];A+=q[0]*r[1]-r[0]*q[1];}return Math.abs(A)/2>1600*sc*sc;})
+    // away from the face, short pieces are clothing texture rather than a shadow shape worth outlining
+    .filter(p=>{const fw=Math.max(...p.map(([x,y])=>1-smooth(.7,1.1,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85))));return fw>.2||plen(p)>320*sc;})
+    .map(p=>simplify(p,1.6*sc)).concat(roughLines);
+  const shadow=pencilLines(shadowLines,{seed:23,passes:1,jit:.6*sc,over:0,lw:.9*sc,alpha:.55});
+  // contour lines: the AI line drawing, kept thin (only the core of each line)
+  const con=Float32Array.from(AI||edges(contrasted(params().contrast),w,h,1,3.5,12));
+  {const b=Math.max(2,Math.round(3*sc));for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<b||y<b||x>=w-b||y>=h-b)con[y*w+x]=0;} // no lines along the photo's border
+  const L={face:FACE,hatch:new Float32Array(n),t7:new Float32Array(n),sub:SUB,block,shadow,feat:new Float32Array(n),line:new Float32Array(n),tone1:new Float32Array(n),tone2:new Float32Array(n),m1:new Float32Array(n),m2:new Float32Array(n),sk,ai:AI};
+  for(let i=0;i<n;i++){
+    const ln=smooth(.2,.75,con[i])*grain(i),x=i%w,y=(i/w)|0;
+    const near=1-smooth(.75,1.05,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85)); // the face only, not the hair
+    // feature marks: only the strongest lines (eye shapes, nostrils, mouth), kept light
+    L.feat[i]=.45*smooth(.35,.8,con[i])*grain(i)*near;L.line[i]=.5*ln;
+    L.block[i]*=grain(i);L.shadow[i]*=grain(i);
+    // one light, even hatched layer over everything darker than the lights...
+    // (on the softened copy, so knit and fur texture don't punch holes in it); each layer takes the drawing part of the way to its finished value
+    const m1=smooth(.95,.85,g6[i]),m2=smooth(t1+.1,t1-.1,g6[i]);L.m1[i]=m1;L.m2[i]=m2;
+    L.tone1[i]=(1-g6[i])*.45*m1; // target darkness; drawn as strokes below
+    // ...then a second, crossing layer inside the shadow shapes
+    L.tone2[i]=clamp(m2*(.5+.7*smooth(t1,t1*.45,g6[i]))*(1-g6[i])*.75);
+  }
+  // the two shading layers drawn as real hatching: short straight strokes, a little uneven in angle, length and pressure,
+  // one direction for the first layer and a clearly crossing one for the second
+  const h1=hatchInk(L.tone1,.75,2*sc,31,sc),h2=hatchInk(L.tone2,-.55,2.2*sc,47,sc);
+  L.hst=new Float32Array(n);
+  for(let i=0;i<n;i++){const in1=smooth(.04,.1,L.tone1[i]),in2=smooth(.04,.1,L.tone2[i])*L.m2[i]; // strokes stop where their area ends
+    L.hst[i]=clamp(1.3*(h1[i]+h2[i]));L.hatch[i]=h1[i]; // a soft even layer of graphite with the strokes showing on top of it
+    L.tone1[i]=clamp(in1*(.75*L.tone1[i]+.3*Math.min(1,1.6*h1[i])*grain(i)));L.tone2[i]=clamp(in2*(.75*L.tone2[i]+.3*Math.min(1,1.6*h2[i])*grain(i)));
+    L.t7[i]=Math.min(1-L.tone1[i]-L.tone2[i],1-(1-sk[i])*.55*L.m1[i]);}
+  L.film=blur(Float32Array.from(g3,v=>v<t2?1:0),w,h,Math.round(6*sc));
+  // the darkest accents: small spots clearly darker than what is around them (pupils, nostrils, the lip line),
+  // plus the very darkest few percent of the drawing, not whole dark areas
+  let shine=null;
+  {L.acc=new Float32Array(n);
+    const sm=blur(sk,w,h,Math.max(1,Math.round(2*sc))),wide=blur(sk,w,h,Math.round(30*sc)),spot=new Float32Array(n);
+    for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.8,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
+      spot[i]=FACE?((wide[i]-sm[i]>.15&&sm[i]<.4)||(con[i]>.7&&sm[i]<.45)?1:0)*face:(((wide[i]-sm[i]>.08&&sm[i]<.35)||(con[i]>.7&&sm[i]<.3))&&(!SUB||SUB[i]>.5)?1:0);}
+    // keep spots, not long dark bands: a spot fills little of its neighbourhood
+    const fill=blur(spot,w,h,Math.round((FACE?12:30)*sc)),grow=blur(spot,w,h,Math.max(1,Math.round(2*sc)));
+    for(let i=0;i<n;i++)L.acc[i]=smooth(.1,.35,grow[i])*smooth(.55,.35,fill[i]);
+    if(FACE)L.acc=faceAccents(FACE,w,h);
+    else{ // no face found (a pet): the few darkest compact shapes inside the subject, such as the nose and the eyes,
+      // filled solid; long dark bands (the shadow along an ear) and scattered specks are left to the shading
+      // found in the photo: spots much darker than the fur around them, closed up so a shine on the nose doesn't split it
+      const pd=blur(S.gray,w,h,Math.max(1,Math.round(2*sc))),pw=blur(S.gray,w,h,Math.round(24*sc));
+      const vals=[];for(let i=0;i<n;i+=7)if(!SUB||SUB[i]>.5)vals.push(pd[i]);vals.sort((a,b)=>a-b);const lo=vals[Math.floor(vals.length*.3)]||0;
+      const raw=new Float32Array(n);for(let i=0;i<n;i++)raw[i]=pw[i]-pd[i]>.12&&pd[i]<lo&&(!SUB||SUB[i]>.5)?1:0;
+      const cl=blur(raw,w,h,Math.max(1,Math.round(4*sc))),inn=i=>cl[i]>.45;
+      const lab=new Int32Array(n).fill(-1),comps=[],st=[];
+      for(let i0=0;i0<n;i0++){if(lab[i0]>=0||!inn(i0))continue;
+        const id=comps.length,c={px:[],x0:w,x1:0,y0:h,y1:0,v:0};lab[i0]=id;st.push(i0);
+        while(st.length){const i=st.pop(),x=i%w,y=(i/w)|0;c.px.push(i);c.v+=pw[i]-pd[i];
+          if(x<c.x0)c.x0=x;if(x>c.x1)c.x1=x;if(y<c.y0)c.y0=y;if(y>c.y1)c.y1=y;
+          for(const j of [x>0?i-1:-1,x<w-1?i+1:-1,y>0?i-w:-1,y<h-1?i+w:-1])if(j>=0&&lab[j]<0&&inn(j)){lab[j]=id;st.push(j);}}
+        comps.push(c);}
+      // compact and solid (not a long band along an ear), big enough to read; the strongest few win
+      const dm=new Float32Array(n);shine=new Float32Array(n);
+      comps.filter(c=>{const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1,a=c.px.length;
+          return a>=n*.00015&&a<=n*.015&&Math.max(bw,bh)<=3*Math.min(bw,bh)&&a>=.35*bw*bh;})
+        .sort((p,q)=>q.v-p.v).slice(0,7).forEach((c,_,kept)=>{let t=0,k=0;for(const i of c.px)if(raw[i]||pd[i]<lo){dm[i]=1;t+=pd[i];k++;}
+          let found=0;const nat=c.px.filter(i=>!dm[i]&&pd[i]>t/Math.max(1,k)+.12);if(nat.length>=n*.00002)for(const i of nat){shine[i]=1;found++;}
+          // an eye in shadow shows almost no catchlight in the photo; a round shape with a twin well apart at the same height
+          // (the other eye, not the other nostril) still gets a small one, where the photo is lightest
+          const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1;
+          const twin=kept.some(o=>{if(o===c)return false;const R0=Math.min(bw,bh)/2,ox=(o.x0+o.x1)/2,oy=(o.y0+o.y1)/2,a0=c.px.length,a1=o.px.length;
+            return Math.max(a0,a1)<2.5*Math.min(a0,a1)&&Math.abs(oy-(c.y0+c.y1)/2)<3*R0&&Math.abs(ox-(c.x0+c.x1)/2)>4*R0;});
+          if(found<4&&twin&&Math.max(bw,bh)<=1.7*Math.min(bw,bh)){const cx=(c.x0+c.x1)/2,cy=(c.y0+c.y1)/2,R=Math.min(bw,bh)/2;let bi=-1,bv=-1;
+            for(const i of c.px){const x=i%w,y=(i/w)|0;if(Math.hypot(x-cx,y-cy)<R*.55&&pd[i]>bv){bv=pd[i];bi=i;}}
+            if(bi>=0){const bx=bi%w,by=(bi/w)|0,r=Math.max(1.5,R*.18);
+              for(let y=Math.floor(by-r);y<=by+r;y++)for(let x=Math.floor(bx-r);x<=bx+r;x++)if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(x-bx,y-by)<=r)shine[y*w+x]=1;}}}); // a catchlight in an eye, the shine on a nose
+      const dg=blur(dm,w,h,Math.max(1,Math.round(2*sc)));
+      // shaded by the photo inside each shape, so a shine on the nose or in an eye stays lighter instead of a flat stamp
+      // drawn like a pencil would: a firm outline round each shape, a softer fill, and the shine left as paper
+      const db=blur(dm,w,h,Math.max(1,Math.round(3*sc))),sh=blur(shine,w,h,Math.max(1,Math.round(1.5*sc)));
+      for(let i=0;i<n;i++)shine[i]*=smooth(.45,.7,db[i]); // only a shine held inside the dark shape, not the fur at its edge
+      sh.set(blur(shine,w,h,Math.max(1,Math.round(1.5*sc))));
+      for(let i=0;i<n;i++){const ring=Math.max(0,1-Math.abs(2*db[i]-1)*1.6),fill=smooth(.15,.5,dg[i])*(.5+.45*smooth(lo+.06,lo-.14,pd[i]));
+        L.acc[i]=Math.max(L.acc[i]*.25,Math.max(ring*.95,fill)*(.8+.2*grain(i)))*(1-smooth(.2,.5,sh[i]));}}}
+  // the highlights step 10 lifts: the brightest spots inside the face, surrounded by shading
+  // (catchlights, the bridge of the nose, the lower lip), not the bare paper around the figure
+  // found as spots in the photo that are clearly brighter than what is around them
+  L.hi=new Float32Array(n);const pg=blur(S.gray,w,h,Math.max(1,Math.round(.8*sc))),around=blur(S.gray,w,h,Math.round(5*sc));
+  for(let i=0;i<n;i++){const x=i%w,y=(i/w)|0,face=1-smooth(.55,.9,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));
+    L.hi[i]=smooth(.05,.12,pg[i]-around[i])*smooth(.45,.65,pg[i])*face;}
+  // lifted with a kneaded eraser: soft-edged, and a lone speck is too small to lift at all
+  {const hb=blur(L.hi,w,h,Math.max(1,Math.round(1.5*sc)));for(let i=0;i<n;i++)L.hi[i]=smooth(.15,.6,hb[i]);}
+  if(shine){const sh=blur(shine,w,h,Math.max(1,Math.round(3*sc)));for(let i=0;i<n;i++)L.hi[i]=Math.max(L.hi[i],.8*smooth(.05,.6,sh[i]));}
+  L.sc=sc;
+  return S.cache.plan=L;
+}
+/* how much graphite is on the paper after step k (0 = paper, 1 = darkest), as tone (1 = paper) */
+function stepTone(k){
+  const L=planLayers();
+  if(!L.tones)L.tones=[];
+  if(L.tones[k])return L.tones[k];
+  const n=S.w*S.h,out=new Float32Array(n),sk=L.sk;
+  for(let i=0;i<n;i++){
+    let lit=1;
+    // block-in lines are lightly erased once the real contours are in, and gone before shading;
+    // the shadow outlines sink into the tone as it builds
+    if(k>=1&&k<5)lit*=1-L.block[i]*(k>=3?.4:1);
+    if(k>=2)lit*=1-L.feat[i];
+    if(k>=3)lit*=1-L.line[i];
+    if(k>=4)lit*=1-L.shadow[i]*(k>=6?.3:k>=5?.6:1);
+    if(k>=5)lit*=k>=6?L.t7[i]:1-L.tone1[i];
+    if(k>=5&&lit<.55)lit=.55-(.55-lit)*.6; // the layers stay mostly mid-grey (compressed, not clipped): the true darks wait for the accents and the blending
+    if(k>=5&&k<8)lit=lit*(1-.65*L.line[i])-.3*L.line[i]*(1-lit); // the contours are gone over again, after the squeeze, so dark tone does not swallow them
+    // the darkest accents are taken straight from the finished drawing
+    const accT=1-(1-Math.min(sk[i],.05+.15*sk[i]))*L.acc[i];
+    if(k>=7)lit=Math.min(lit,accT);
+    // blending turns the hatched values into the finished smooth shading, but drags a grey film into the lights
+    // next to the shading; the last step lifts it again with the eraser, along with the highlights
+    if(k>=8)lit=k>=9?sk[i]:sk[i]-.16*smooth(.72,.95,sk[i])*L.film[i]*(.4+.6*L.hatch[i])*(L.sub?smooth(.3,.6,L.sub[i]):1)-.2*L.hi[i];
+    if(k>=8)lit*=1-(k>=9?.1:.16)*L.hst[i]; // the hatching still shows faintly through the blended tone
+    if(k>=8)lit=Math.min(lit,accT); // the accents stay through blending
+    if(k>=9)lit+=(1-lit)*smooth(.25,.6,L.hi[i]); // the eraser lifts the catchlights and shine back to paper
+    out[i]=lit;
+  }
+  return L.tones[k]=out;
+}
+/* the glow shows what step k adds, built from that step's own layer:
+   line steps light the new pencil strokes themselves (with a thin halo);
+   shading steps outline the area being shaded and lightly mark the hatch strokes inside it, instead of flooding it;
+   blending outlines where the texture gets smoothed; the last step rings each highlight that is lifted */
+function stepGlow(k){
+  const L=planLayers();if(!L.glows)L.glows=[];if(L.glows[k])return L.glows[k];
+  const {w,h}=S,n=w*h,sc=L.sc,F=S.focus,a=new Float32Array(n);
+  const edgeOf=m=>{const b=blur(m,w,h,Math.max(1,Math.round(1.5*sc))),e=new Float32Array(n);
+    for(let i=0;i<n;i++)e[i]=smooth(.05,.25,Math.abs(m[i]-b[i]));return blur(e,w,h,1);};
+  // the hair: large, dense dark masses (small dark marks like pupils don't count), grown by r
+  const hairNear=r=>{const d=new Float32Array(n);for(let i=0;i<n;i++)d[i]=L.sk[i]<.35?1:0;
+    const dense=blur(d,w,h,Math.round(8*sc));for(let i=0;i<n;i++)d[i]=smooth(.55,.7,dense[i]);return blur(d,w,h,Math.round(r*sc));};
+  const faceOnly=i=>{const x=i%w,y=(i/w)|0;return 1-smooth(.5,.85,Math.hypot((x-F.x)/F.r,(y-F.y)/F.r*.85));};
+  if(k>=1&&k<=4){
+    const lay=[null,L.block,L.feat,L.line,L.shadow][k],core=new Float32Array(n);
+    for(let i=0;i<n;i++)core[i]=(k===2?smooth(.015,.08,lay[i]):smooth(.03,.12,lay[i]))*(k===3?1-smooth(.05,.2,L.feat[i]):1);
+    const halo=blur(core,w,h,Math.max(1,Math.round(1.5*sc)));
+    for(let i=0;i<n;i++)a[i]=Math.max(core[i]*.5,halo[i]*.55);
+  }else if(k===5||k===6||k===7){
+    // the area this step shades: the light layer (6), the shadow shapes (7), the darkest accents (8)
+    let reg,tone;
+    if(k===7){const cur=stepTone(k),prev=stepTone(k-1);reg=new Float32Array(n);
+      for(let i=0;i<n;i++)reg[i]=prev[i]-cur[i]>.15?1:0;
+      // smoothed so the outline isn't beaded, specks dropped, then grown a little so the outline sits on lighter paper
+      reg=blur(reg,w,h,Math.max(1,Math.round(2*sc)));for(let i=0;i<n;i++)reg[i]=reg[i]>.5?1:0;
+      const big=blur(reg,w,h,Math.round(3*sc));for(let i=0;i<n;i++)reg[i]*=big[i]>.22?1:0;
+      reg=blur(reg,w,h,Math.max(1,Math.round(2*sc)));for(let i=0;i<n;i++)reg[i]=reg[i]>.06?1:0;}
+    else{reg=k===5?L.m1:L.m2;tone=k===5?L.tone1:L.tone2;}
+    const e=edgeOf(reg);
+    // in step 6 the figure's own silhouette is softer, so the strokes and the lights left white carry the step
+    let paper=null;if(k===5){paper=new Float32Array(n);for(let i=0;i<n;i++)paper[i]=L.sk[i]>.95?1:0;paper=blur(paper,w,h,Math.round(3*sc));}
+    for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.85*(paper?1-.5*smooth(.3,.6,paper[i]):1),tone?smooth(.3,.6,tone[i])*.3:0);
+  }else if(k===8){
+    // blending: the shaded skin of the face is smoothed with the stump; the hair keeps its strokes
+    // one clean area from the lit side into the shadow (the shading grown over the lights), without the hair
+    const hair=hairNear(3),grown=blur(L.m1,w,h,Math.round(8*sc)),reg=new Float32Array(n);
+    for(let i=0;i<n;i++)reg[i]=faceOnly(i)*smooth(.05,.2,grown[i])*(1-smooth(.15,.4,hair[i]));
+    const r2=blur(reg,w,h,Math.round(10*sc));for(let i=0;i<n;i++)r2[i]=smooth(.4,.6,r2[i]); // closed: no loops round the eyes
+    {const fill=blur(r2,w,h,Math.round(12*sc));for(let i=0;i<n;i++)r2[i]=Math.max(r2[i],smooth(.6,.75,fill[i]));} // small holes (a dark pupil) filled
+    // a crisp rim just inside the area's edge, all the way round, over a light wash
+    const inner=blur(r2,w,h,Math.max(1,Math.round(2*sc)));
+    for(let i=0;i<n;i++)a[i]=Math.max(.75*r2[i]*(1-smooth(.8,.97,inner[i])),r2[i]*.1);
+  }else if(k===9){
+    // lifted highlights: only spots with shading all round them (not the pale edge of the figure), each ringed
+    const sh=new Float32Array(n);for(let i=0;i<n;i++)sh[i]=L.sk[i]<.9?1:0;
+    const inside=blur(sh,w,h,Math.round(12*sc)),hn=hairNear(3),spot=new Float32Array(n);
+    const cand=new Float32Array(n);
+    for(let i=0;i<n;i++){cand[i]=L.hi[i]*smooth(.92,.99,inside[i])*(1-smooth(.1,.3,hn[i]))*(faceOnly(i)>.5?1:0);spot[i]=cand[i]>.15?1:0;}
+    // the few strongest highlights in the face (the catchlights, the nose) always get a ring, even when faint
+    const sup=Math.round(14*sc),dot=Math.max(1,Math.round(2*sc));
+    for(let t=0;t<4;t++){let best=-1,bv=.03;for(let i=0;i<n;i++)if(cand[i]>bv){bv=cand[i];best=i;}
+      if(best<0)break;const bx=best%w,by=(best/w)|0;
+      for(let y=Math.max(0,by-sup);y<Math.min(h,by+sup);y++)for(let x=Math.max(0,bx-sup);x<Math.min(w,bx+sup);x++){
+        const dd=Math.hypot(x-bx,y-by),i=y*w+x;if(dd<=sup)cand[i]=0;if(dd<=dot)spot[i]=1;}}
+    const grow=blur(spot,w,h,Math.round(8*sc));for(let i=0;i<n;i++)grow[i]=smooth(.002,.006,grow[i]);
+    const e=edgeOf(grow);for(let i=0;i<n;i++)a[i]=Math.max(e[i]*.95,spot[i]*.5);
+  }
+  const img=new ImageData(w,h),d=img.data;
+  const [gr,gg,gb]=glowRGB();
+  for(let i=0,j=0;i<n;i++,j+=4){d[j]=gr;d[j+1]=gg;d[j+2]=gb;d[j+3]=clamp(a[i])*255;}
+  return L.glows[k]=img;
+}
+/* the glow colour is the --glow token, so the CSS legend dot and the picture always match */
+function glowRGB(){const v=getComputedStyle(document.documentElement).getPropertyValue("--glow").split(",").map(Number);return v.length===3&&v.every(x=>x>=0&&x<=255)?v:[40,130,255];}
+function renderGlow(k){
+  const c=$("glowcanvas");c.width=S.w;c.height=S.h;const x=c.getContext("2d");
+  if(k===0){if(S.grid.on){x.save();const G=S.grid;S.grid={...G,color:0,op:1,type:0};drawGrid(x,false);S.grid=G;x.restore();}return;} // step 1 adds the grid itself
+  x.putImageData(stepGlow(k),0,0);
 }
 /* grid overlay: cells of the chosen width:height, "cols" cells across; rows run from the top and the last row may be partial */
 const RATIOS=[[1,1,"1:1 squares"],[3,4,"3:4"],[4,3,"4:3"],[2,3,"2:3"],[3,2,"3:2"]];
 function gridDims(){const [rw,rh]=RATIOS[S.grid.ratio],cw=S.w/S.grid.cols,ch=cw*rh/rw;return{cw,ch,cols:S.grid.cols,rows:Math.ceil(S.h/ch-1e-6)};}
+const GCOLORS=[["Blue","47,109,181"],["Red","196,56,48"],["Green","34,135,86"],["Graphite","38,41,47"]];
+const GTYPES=["Solid","Dashed","Dotted"];
 function drawGrid(ctx,strong){
-  const {cw,ch,cols,rows}=gridDims(),lw=Math.max(1,Math.round(S.w/640));
-  // every step keeps the grid as faint reference blue; step 1 shows it strongly
-  ctx.strokeStyle=strong?"rgba(47,109,181,.85)":"rgba(47,109,181,.32)";ctx.lineWidth=strong?1.5*lw:lw;ctx.beginPath();
-  for(let k=1;k<cols;k++){const x=Math.round(k*cw)+.5;ctx.moveTo(x,0);ctx.lineTo(x,S.h);}
-  for(let k=1;k<rows;k++){const y=Math.round(k*ch)+.5;ctx.moveTo(0,y);ctx.lineTo(S.w,y);}
-  ctx.stroke();ctx.strokeRect(.5,.5,S.w-1,S.h-1);
+  const {cw,ch,cols,rows}=gridDims(),G=S.grid,lw=G.thick*Math.max(1,S.w/640)*(strong?1.5:1);
+  // step 1 is about drawing the grid, so it shows the grid more strongly than the later steps
+  ctx.strokeStyle=`rgba(${GCOLORS[G.color][1]},${strong?Math.min(1,G.op*2.4):G.op})`;ctx.lineWidth=lw;
+  ctx.lineCap=G.type===2?"round":"butt";ctx.setLineDash(G.type===1?[6*lw,4*lw]:G.type===2?[.01,3*lw]:[]);
+  const a=lw%2?.5:0;ctx.beginPath();
+  for(let k=1;k<cols;k++){const x=Math.round(k*cw)+a;ctx.moveTo(x,0);ctx.lineTo(x,S.h);}
+  for(let k=1;k<rows;k++){const y=Math.round(k*ch)+a;ctx.moveTo(0,y);ctx.lineTo(S.w,y);}
+  ctx.stroke();ctx.strokeRect(lw/2,lw/2,S.w-lw,S.h-lw);ctx.setLineDash([]);
 }
 function gridLabel(){const {cols,rows}=gridDims();$("gdens-o").textContent=`${cols} × ${rows} cells`;}
 function renderStep(){
   if(!S.gray)return;
-  const st=STEPS[S.step],c=$("stepcanvas");
-  const ctx=paint(c,stepTone(st.layer),$("ghost").checked);
-  if(S.grid.on)drawGrid(ctx,st.layer==="grid");
-  $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;
+  const st=STEPS[S.step],k=S.step,c=$("stepcanvas"),tone=stepTone(k);
+  const ctx=paint(c,tone,$("ghost").checked);
+  if(S.grid.on&&k<STEPS.length-1)drawGrid(ctx,k===0); // the grid is erased in the last step
+  renderGlow(k);
+  $("s-title").textContent=st.title;$("s-pencil").textContent=st.pencil();$("s-body").textContent=st.body;$("s-look").textContent=st.look;
   $("s-checks").replaceChildren(...st.checks.map(t=>{const li=document.createElement("li");li.textContent=t;return li;}));
   $("stepcount").textContent=`Step ${S.step+1} of ${STEPS.length}`;
+  $("sb-n").textContent=`Step ${S.step+1} of ${STEPS.length}`;$("sb-title").textContent=st.title;
+  $("sb-prev").disabled=S.step===0;$("sb-next").textContent=S.step===STEPS.length-1?"Start over":"Next";
+  c.setAttribute("aria-label",`Step ${S.step+1} of ${STEPS.length}: ${st.title}. What your drawing should look like after this step.`);
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
   $("prev").disabled=S.step===0;$("next").textContent=S.step===STEPS.length-1?"Start over":"Next step";
+  document.querySelectorAll(".dot").forEach((d,i)=>{d.classList.toggle("done",!!S.done[i]);d.classList.toggle("past",i<S.step);});
+  const d=!!S.done[S.step];if(d)$("donebtn").innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 8.4l3 3 6.6-7.2"/></svg>Completed';else $("donebtn").textContent="Mark as complete";
+  $("donebtn").title=d?"Mark as not complete":"";
+  $("donebtn").setAttribute("aria-pressed",d);
 }
-STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>{S.step=i;renderStep();};$("dots").appendChild(d);});
-$("prev").onclick=()=>{S.step=Math.max(0,S.step-1);renderStep();};
-$("next").onclick=()=>{S.step=S.step===STEPS.length-1?0:S.step+1;renderStep();};
+/* moving between steps: the old picture fades off the new one so the step's marks appear on the paper,
+   the step text slides in from the side you are heading, and going forward the new marks glow briefly.
+   Everything is cancelled and restarted on the next click, and skipped with reduced motion. */
+const RM=()=>!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+let FADE=null;
+function goStep(i){
+  const from=S.step,rm=RM(),anim=i!==from&&!$("view-plan").hidden&&!!Element.prototype.animate,c=$("stepcanvas");
+  if(anim&&c.width){
+    if(!FADE){FADE=document.createElement("canvas");FADE.className="stepfade";FADE.setAttribute("aria-hidden","true");$("canvaswrap").insertBefore(FADE,$("glowcanvas"));}
+    FADE.getAnimations().forEach(a=>a.cancel());WIPE++;FADE.style.webkitMaskImage=FADE.style.maskImage="";FADE.style.opacity=1;FADE.width=c.width;FADE.height=c.height;FADE.getContext("2d").drawImage(c,0,0);
+  }
+  S.step=i;renderStep();saveSoon();
+  if(!anim)return;
+  const fwd=i>from;
+  if(FADE)wipe(fwd&&!rm);
+  [...document.querySelector(".stepcard").children].forEach((el,k)=>{el.getAnimations().forEach(a=>a.cancel());
+    el.animate(rm?[{opacity:0},{opacity:1}]:[{opacity:0,transform:`translateX(${fwd?16:-16}px)`},{opacity:1,transform:"none"}],{duration:rm?200:320,delay:rm?0:k*30,easing:"cubic-bezier(.2,.75,.25,1)",fill:"backwards"});});
+}
+/* forward: the old picture is rubbed away along a soft 45° edge from the top left, so the new marks
+   appear the way a hand works across the page. Back: a quick fade. */
+let WIPE=0;
+function wipe(fwd){
+  const id=++WIPE,F=FADE,mask=v=>{F.style.webkitMaskImage=F.style.maskImage=v;};
+  if(!fwd){mask("");F.style.opacity="";F.animate([{opacity:1},{opacity:0}],{duration:280,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});return;}
+  F.style.opacity=1;const t0=performance.now(),D=650;
+  const tick=now=>{if(id!==WIPE)return;const u=Math.min(1,(now-t0)/D),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,a=-10+e*150;
+    mask(`linear-gradient(135deg,transparent ${a-40}%,rgba(0,0,0,.35) ${a-22}%,rgba(0,0,0,.8) ${a-8}%,#000 ${a}%)`);
+    if(u<1)requestAnimationFrame(tick);else{F.style.opacity=0;mask("");}};
+  requestAnimationFrame(tick);
+}
+STEPS.forEach((s,i)=>{const d=document.createElement("button");d.className="dot";d.textContent=i+1;d.setAttribute("aria-label",`Step ${i+1}: ${s.title}`);d.onclick=()=>goStep(i);$("dots").appendChild(d);});
+$("prev").onclick=()=>goStep(Math.max(0,S.step-1));
+// the phone bar: same moves, and the picture is brought back into view if the page was scrolled down to read
+const barGo=d=>{$(d).click();const c=$("canvaswrap").getBoundingClientRect();if(c.top<0||c.top>innerHeight*.5)$("canvaswrap").scrollIntoView({block:"start",behavior:RM()?"auto":"smooth"});};
+$("sb-prev").onclick=()=>barGo("prev");$("sb-next").onclick=()=>barGo("next");
+$("next").onclick=()=>goStep(S.step===STEPS.length-1?0:S.step+1);
 $("ghost").onchange=renderStep;
-S.grid={on:true,ratio:0,cols:4};
+// phones have no hover: touching and holding the picture shows the glow until the finger lifts
+{const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
+  w.addEventListener("pointerdown",on);["pointerup","pointercancel","pointerleave"].forEach(t=>w.addEventListener(t,off));
+  w.addEventListener("contextmenu",e=>e.preventDefault());}
+S.grid={on:true,ratio:0,cols:4,color:0,op:.35,thick:1,type:0};
+function pickers(id,items,key,cls,make){items.forEach((it,i)=>{const b=document.createElement("button");b.className=cls;make(b,it);b.setAttribute("aria-pressed",i===S.grid[key]);
+  b.onclick=()=>{S.grid[key]=i;document.querySelectorAll("#"+id+" button").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));renderStep();};$(id).appendChild(b);});}
+pickers("gcolors",GCOLORS,"color","swatch",(b,c)=>{b.style.background=`rgb(${c[1]})`;b.title=b.ariaLabel=c[0];});
+pickers("gtypes",GTYPES,"type","grade",(b,t)=>{b.textContent=t;});
+function gridStyleLabels(){$("gop-o").textContent=Math.round(S.grid.op*100)+"%";$("gthick-o").textContent=S.grid.thick+" px";}
+gridStyleLabels();
+$("gop").addEventListener("input",e=>{S.grid.op=e.target.value/100;gridStyleLabels();renderStep();});
+$("gthick").addEventListener("input",e=>{S.grid.thick=+e.target.value;gridStyleLabels();renderStep();});
 RATIOS.forEach((r,i)=>{const b=document.createElement("button");b.className="grade ratio";b.textContent=r[2];b.setAttribute("aria-pressed",i===S.grid.ratio);
   b.onclick=()=>{S.grid.ratio=i;document.querySelectorAll(".ratio").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));gridLabel();renderStep();};$("ratios").appendChild(b);});
 $("grid-on").onchange=e=>{S.grid.on=e.target.checked;renderStep();};
 $("gdens").addEventListener("input",e=>{S.grid.cols=+e.target.value;gridLabel();renderStep();});
 
-function show(tab){const plan=tab==="plan";$("view-sketch").hidden=plan;$("view-plan").hidden=!plan;$("tab-sketch").setAttribute("aria-selected",!plan);$("tab-plan").setAttribute("aria-selected",plan);if(plan){S.cache.sketch=sketchTone(params());S.cache.bands=null;renderStep();}}
-$("tab-sketch").onclick=()=>show("sketch");$("tab-plan").onclick=()=>show("plan");
+const TABS=["book","photo","sketch","plan"];
+// how far the current sketch has got: 0 nothing open, 1 choosing the photo, 2 sketch generated, 3 drawing planned
+S.stage=0;
+function setStage(n){S.stage=n;$("tab-photo").disabled=n<1;$("tab-sketch").disabled=n<2;$("tab-plan").disabled=n<3;}
+/* sliders show how far along they are (the track fills up to the thumb) */
+function fillRange(el){const mn=+el.min||0,mx=+el.max||100;el.style.setProperty("--p",(100*(el.value-mn)/(mx-mn||1))+"%");}
+const fillAll=()=>document.querySelectorAll("input[type=range]").forEach(fillRange);
+document.addEventListener("input",e=>{if(e.target.type==="range")fillRange(e.target);});
+function show(tab){
+  TABS.forEach(t=>{$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab);$("tab-"+t).tabIndex=t===tab?0:-1;});
+  fillAll();
+  window.scrollTo({top:0});
+  if(tab==="book")drawBook();
+  if(tab==="photo")drawPhoto();
+  if(tab==="plan"){const p=params(),k=JSON.stringify(p); // unchanged settings: the finished sketch is reused
+    if(!S.cache.sketch||S.cache.sketchKey!==k||S.cache.sketchAI!==S.cache.ailines){S.cache.sketch=sketchTone(p);S.cache.sketchKey=k;S.cache.bands=null;}
+    S.cache.sketchAI=S.cache.ailines;renderStep();}
+}
+TABS.forEach(t=>{$("tab-"+t).onclick=()=>show(t);});
+// arrow keys move between the steps that are open, as tabs do; Tab itself jumps into the step's content
+document.querySelector(".tabs").addEventListener("keydown",e=>{
+  const open=TABS.filter(t=>!$("tab-"+t).disabled),at=open.indexOf(e.target.id.slice(4));if(at<0)return;
+  const to={ArrowRight:at+1,ArrowLeft:at-1,Home:0,End:open.length-1}[e.key];if(to===undefined)return;
+  e.preventDefault();const t=open[(to+open.length)%open.length];show(t);$("tab-"+t).focus();});
 
-loadSource(sample());
+const CUTMODEL="models/cutout.onnx";
+/* ---------- photo editing: straighten, crop, remove the background ----------
+   P.img is the photo as uploaded and is never changed. Everything else is a
+   setting applied on top of it, so "Undo my changes" is just a reset. */
+const P={img:null,name:"",quarter:0,tilt:0,crop:null,bg:false,mask:null,aspect:0,rot:null};
+const ASPECTS=[["Free",0],["1:1",1],["3:4",3/4],["4:3",4/3],["2:3",2/3],["3:2",3/2]];
+const FULLCROP=()=>({x:0,y:0,w:1,h:1});
+
+/* the photo with the background taken out: the subject stays, the rest becomes paper */
+function maskedSource(){
+  const im=P.img;if(!P.bg||!P.mask)return im;
+  const c=document.createElement("canvas");c.width=im.width;c.height=im.height;
+  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
+  const d=x.getImageData(0,0,c.width,c.height),q=d.data,m=P.mask;
+  // feather the mask edge so hair and shoulders don't get a cut-out look
+  for(let i=0,j=0;i<m.length;i++,j+=4){const a=m[i];q[j]=q[j]*a+250*(1-a);q[j+1]=q[j+1]*a+249*(1-a);q[j+2]=q[j+2]*a+245*(1-a);}
+  x.putImageData(d,0,0);return c;
+}
+/* the photo turned by whole quarter-turns plus a small straightening angle */
+function rotated(){
+  if(P.rot)return P.rot;
+  const src=maskedSource(),q=((P.quarter%4)+4)%4,a=q*Math.PI/2+P.tilt*Math.PI/180;
+  const w=src.width,h=src.height,co=Math.abs(Math.cos(a)),si=Math.abs(Math.sin(a));
+  const W=Math.round(w*co+h*si),H=Math.round(w*si+h*co);
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  x.fillStyle="#faf9f5";x.fillRect(0,0,W,H);x.imageSmoothingQuality="high";
+  x.translate(W/2,H/2);x.rotate(a);x.drawImage(src,-w/2,-h/2);
+  return P.rot=c;
+}
+function cropRect(){const r=rotated(),c=P.crop||FULLCROP();
+  return{x:Math.round(c.x*r.width),y:Math.round(c.y*r.height),w:Math.max(8,Math.round(c.w*r.width)),h:Math.max(8,Math.round(c.h*r.height))};}
+/* what the drawing is actually made from: rotated, then cropped */
+function buildPhoto(){
+  const r=rotated(),b=cropRect(),c=document.createElement("canvas");
+  c.width=b.w;c.height=b.h;c.getContext("2d").drawImage(r,b.x,b.y,b.w,b.h,0,0,b.w,b.h);
+  return c;
+}
+function photoDirty(){P.rot=null;drawPhoto();}
+function drawPhoto(){
+  if(!P.img)return;
+  const r=rotated(),c=$("photocanvas"),s=Math.min(1,900/Math.max(r.width,r.height));
+  c.width=Math.round(r.width*s);c.height=Math.round(r.height*s);
+  const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(r,0,0,c.width,c.height);
+  placeCrop();
+}
+function placeCrop(){
+  const c=P.crop||FULLCROP(),e=$("croprect");
+  e.style.left=c.x*100+"%";e.style.top=c.y*100+"%";e.style.width=c.w*100+"%";e.style.height=c.h*100+"%";
+}
+function setAspect(i){
+  P.aspect=i;document.querySelectorAll("#aspects button").forEach((b,k)=>b.setAttribute("aria-pressed",k===i));
+  const ar=ASPECTS[i][1];if(!ar){placeCrop();return;}
+  const r=rotated(),c=P.crop||FULLCROP();
+  // keep the box centred on what it already covers, as large as the chosen shape allows
+  const cx=c.x+c.w/2,cy=c.y+c.h/2;let w=c.w,h=w*r.width/(ar*r.height);
+  if(h>1){h=1;w=h*ar*r.height/r.width;}
+  P.crop={w,h,x:Math.min(1-w,Math.max(0,cx-w/2)),y:Math.min(1-h,Math.max(0,cy-h/2))};
+  placeCrop();
+}
+/* dragging the crop box: inside it moves, a corner resizes */
+{
+  let drag=null;
+  const wrap=()=>$("cropwrap").getBoundingClientRect();
+  $("cropwrap").addEventListener("pointerdown",e=>{
+    if(!P.img)return;
+    const b=wrap(),h=e.target.dataset?e.target.dataset.h:null,c=P.crop||(P.crop=FULLCROP());
+    drag={h,px:(e.clientX-b.left)/b.width,py:(e.clientY-b.top)/b.height,c:{...c}};
+    $("cropwrap").setPointerCapture(e.pointerId);e.preventDefault();
+  });
+  $("cropwrap").addEventListener("pointermove",e=>{
+    if(!drag)return;
+    const b=wrap(),dx=(e.clientX-b.left)/b.width-drag.px,dy=(e.clientY-b.top)/b.height-drag.py,o=drag.c;
+    const r=rotated(),ar=ASPECTS[P.aspect][1],MIN=.08;
+    if(!drag.h){ // move
+      P.crop={...o,x:Math.min(1-o.w,Math.max(0,o.x+dx)),y:Math.min(1-o.h,Math.max(0,o.y+dy))};
+    }else{
+      const west=drag.h[1]==="w",north=drag.h[0]==="n";
+      let x0=west?o.x+dx:o.x,x1=west?o.x+o.w:o.x+o.w+dx;
+      let y0=north?o.y+dy:o.y,y1=north?o.y+o.h:o.y+o.h+dy;
+      x0=Math.max(0,Math.min(x0,x1-MIN));x1=Math.min(1,Math.max(x1,x0+MIN));
+      y0=Math.max(0,Math.min(y0,y1-MIN));y1=Math.min(1,Math.max(y1,y0+MIN));
+      let w=x1-x0,h=y1-y0;
+      if(ar){ // keep the chosen shape: the side that moved least gives way
+        const hh=w*r.width/(ar*r.height);
+        if(hh<=1-(north?0:y0)&&hh+(north?y1-hh:y0)<=1){h=hh;if(north)y0=y1-h;else y1=y0+h;}
+        else{h=Math.min(h,1);w=h*ar*r.height/r.width;if(west)x0=x1-w;else x1=x0+w;}
+      }
+      P.crop={x:Math.max(0,x0),y:Math.max(0,y0),w:Math.min(1,w),h:Math.min(1,h)};
+    }
+    placeCrop();
+  });
+  ["pointerup","pointercancel","lostpointercapture"].forEach(t=>$("cropwrap").addEventListener(t,()=>{drag=null;}));
+  window.addEventListener("blur",()=>{drag=null;});
+  // the keyboard way: arrows move the box, Shift+arrows resize it from its bottom-right corner (keeping a chosen shape)
+  $("croprect").addEventListener("keydown",e=>{
+    const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!k||!P.img)return;
+    e.preventDefault();const c=P.crop||(P.crop=FULLCROP()),st=e.altKey?.002:.02,MIN=.08;
+    if(!e.shiftKey)P.crop={...c,x:Math.min(1-c.w,Math.max(0,c.x+k[0]*st)),y:Math.min(1-c.h,Math.max(0,c.y+k[1]*st))};
+    else{let w=Math.min(1-c.x,Math.max(MIN,c.w+k[0]*st)),h=Math.min(1-c.y,Math.max(MIN,c.h+k[1]*st));
+      const ar=ASPECTS[P.aspect][1];
+      if(ar){const r=rotated();if(k[0])h=w*r.width/(ar*r.height);else w=h*ar*r.height/r.width;
+        if(c.x+w>1||c.y+h>1||w<MIN||h<MIN)return;}
+      P.crop={...c,w,h};}
+    placeCrop();});
+}
+ASPECTS.forEach((a,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=a[0];
+  b.setAttribute("aria-pressed",i===0);b.onclick=()=>setAspect(i);$("aspects").appendChild(b);});
+$("rot-l").onclick=()=>{P.quarter--;P.crop=FULLCROP();photoDirty();};
+$("rot-r").onclick=()=>{P.quarter++;P.crop=FULLCROP();photoDirty();};
+$("tilt").addEventListener("input",e=>{P.tilt=+e.target.value;$("tilt-o").textContent=P.tilt+"°";photoDirty();});
+$("resetphoto").onclick=()=>{P.quarter=0;P.tilt=0;P.crop=FULLCROP();P.bg=false;
+  $("tilt").value=0;$("tilt-o").textContent="0°";$("bgrm").checked=false;setAspect(0);photoDirty();fillAll();};
+$("bgrm").onchange=async e=>{
+  P.bg=e.target.checked;
+  if(P.bg&&!P.mask){const ok=await cutOut();if(!ok){P.bg=false;e.target.checked=false;}}
+  photoDirty();
+};
+
+/* ---------- background removal (runs on this device) ----------
+   Model: U^2-Net (small), Qin et al. 2020, Apache-2.0; ONNX build from the rembg project (MIT).
+   It reads a 320 x 320 image and returns a map of how much each pixel belongs to the subject. */
+let CUTSESSION=null;
+async function cutOut(){
+  const im=P.img;
+  if(!window.ort){note("photostat","Background removal can\u2019t run in this browser. You can carry on with the background left in.",1);return false;}
+  try{
+    note("photostat","Finding the person…");
+    await new Promise(r=>setTimeout(r,30));
+    const m=await subjectMap(im);
+    P.mask=m.map(v=>clamp((v-.3)/.4));note("photostat","Background removed");return true;
+  }catch(err){console.warn(err);note("photostat","The background could not be removed. Try again, or carry on without it.",1);return false;}
+}
+/* how much each pixel of an image belongs to the subject (0 to 1), at the image's own size */
+async function subjectMap(im){
+    if(!CUTSESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true;ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
+      CUTSESSION=ort.InferenceSession.create(CUTMODEL,{executionProviders:["wasm"]});}
+    const sess=await CUTSESSION,N=320;
+    const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
+    qx.drawImage(im,0,0,N,N);
+    const px=qx.getImageData(0,0,N,N).data,inp=new Float32Array(3*N*N),M=[.485,.456,.406],SD=[.229,.224,.225];
+    for(let i=0;i<N*N;i++)for(let ch=0;ch<3;ch++)inp[ch*N*N+i]=(px[i*4+ch]/255-M[ch])/SD[ch];
+    const res=await sess.run({[sess.inputNames[0]]:new ort.Tensor("float32",inp,[1,3,N,N])});
+    const y=res[sess.outputNames[0]].data;let mn=1e9,mx=-1e9;
+    for(const v of y){if(v<mn)mn=v;if(v>mx)mx=v;}
+    // paint the map back at the photo's own size, with a soft edge
+    const s=document.createElement("canvas");s.width=s.height=N;const sx=s.getContext("2d",{willReadFrequently:true});
+    const img=sx.createImageData(N,N);for(let i=0;i<N*N;i++){const v=Math.round(255*(y[i]-mn)/(mx-mn+1e-6));
+      img.data[i*4]=img.data[i*4+1]=img.data[i*4+2]=v;img.data[i*4+3]=255;}
+    sx.putImageData(img,0,0);
+    const o=document.createElement("canvas");o.width=im.width;o.height=im.height;
+    const ox=o.getContext("2d",{willReadFrequently:true});ox.imageSmoothingQuality="high";ox.drawImage(s,0,0,im.width,im.height);
+    const d=ox.getImageData(0,0,im.width,im.height).data,m=new Float32Array(im.width*im.height);
+    for(let i=0;i<m.length;i++)m[i]=d[i*4]/255;
+    return m;
+}
+
+/* ---------- the sketchbook: projects saved on this device ---------- */
+const DBNAME="graphite-coach",STORE="projects";
+let DBOK=true;
+function db(){return new Promise((res,rej)=>{const r=indexedDB.open(DBNAME,1);
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:"id"});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function store(mode,fn){return db().then(d=>new Promise((res,rej)=>{
+  const t=d.transaction(STORE,mode),q=fn(t.objectStore(STORE));
+  t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>rej(t.error);})).catch(e=>{DBOK=false;console.warn(e);throw e;});}
+const allProjects=()=>store("readonly",s=>s.getAll());
+const putProject=p=>store("readwrite",s=>s.put(p));
+const delProject=id=>store("readwrite",s=>s.delete(id));
+const getProject=id=>store("readonly",s=>s.get(id));
+
+function snapshot(){return{params:params(),grade:S.grade,grid:{...S.grid},step:S.step,done:[...S.done],planned:S.stage>=3};}
+function applySnapshot(p){
+  if(p.grade!=null)S.grade=p.grade;
+  if(p.grid)S.grid={...S.grid,...p.grid};
+  if(p.params){const v=p.params;
+    $("shade").value=v.shade*100;$("soft").value=v.soft;$("press").value=v.press*100;$("detail").value=v.detail*100;
+    $("contrast").value=v.contrast*100;$("grain").value=v.grain*100;$("strokes").value=v.strokes*100;
+    $("fade").value=v.fade*100;$("bright").value=v.bright*50;}
+  $("grid-on").checked=S.grid.on;$("gdens").value=S.grid.cols;$("gop").value=Math.round(S.grid.op*100);$("gthick").value=S.grid.thick;
+  document.querySelectorAll("#grades button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grade));
+  document.querySelectorAll(".ratio").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.ratio));
+  document.querySelectorAll("#gcolors button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.color));
+  document.querySelectorAll("#gtypes button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.type));
+  S.step=Math.min(STEPS.length-1,Math.max(0,p.step|0));S.done=(p.done||[]).slice(0,STEPS.length);
+  gridStyleLabels();gridLabel();
+}
+let saveT=0;
+function saveSoon(){
+  if(!S.project||!DBOK)return;clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    try{const p={...S.project,...snapshot(),updated:Date.now()};if($("out").width>1&&S.cache.sketch){p.thumb=thumbOf($("out"));p.sketch=await blobOf($("out"));}S.project=p;await putProject(p);
+      note("savestat","Saved to your sketchbook");}catch(e){note("savestat","This browser wouldn\u2019t save the sketch (private browsing can block it). You can keep working, but it won\u2019t be in your sketchbook next time.",1);}
+  },700);
+}
+function thumbOf(c){const t=document.createElement("canvas"),s=Math.min(1,240/Math.max(c.width,c.height));
+  t.width=Math.round(c.width*s);t.height=Math.round(c.height*s);
+  t.getContext("2d").drawImage(c,0,0,t.width,t.height);return t.toDataURL("image/jpeg",.78);}
+const blobOf=(c,type="image/jpeg")=>new Promise(r=>c.toBlob(r,type,.92));
+/* hand the viewer a file: inside claude.ai through its downloads capability, otherwise an ordinary browser download */
+async function saveFile(blob,filename){
+  const dl=window.claude&&window.claude.use?await window.claude.use("downloads").catch(()=>null):null;
+  if(dl){try{await dl.save({filename,data:blob});}catch(e){}return;}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const safeName=t=>(t||"sketch").replace(/[\\/:*?"<>|]+/g," ").replace(/\s+/g," ").trim().slice(0,80)||"sketch";
+
+function newId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now());}
+function setPhoto(im,name){
+  Object.assign(P,{img:im,name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
+  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;note("photostat","");fillAll();
+  $("photoname").textContent=name;$("srcname").textContent=name;
+  $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
+  setAspect(0);drawPhoto();
+}
+/* Start new sketch: an empty photo screen; nothing is saved until the sketch is generated */
+function startNew(){
+  S.project=null;P.img=null;P.mask=null;P.rot=null;
+  $("dropzone").hidden=false;$("cropwrap").hidden=true;$("changephoto").hidden=true;$("gensketch").disabled=true;
+  $("photoname").textContent="";note("photostat","");
+  setStage(1);show("photo");
+}
+/* Generate sketch: the edited photo becomes the pencil sketch, and the sketch is saved to the sketchbook */
+async function generateSketch(){
+  const c=buildPhoto();
+  loadSource(c);
+  S.step=0;S.done=[];setStage(2);show("sketch");
+  try{
+    const now=Date.now(),photo=await blobOf(c),thumb=thumbOf(c);
+    // going back to the photo and generating again updates the same sketch rather than adding another
+    S.project=S.project?{...S.project,photo,thumb,updated:now,planned:false,...snapshot()}
+      :{id:newId(),name:P.name||"Untitled sketch",created:now,updated:now,photo,thumb,planned:false,...snapshot()};
+    await putProject(S.project);
+  }catch(e){console.warn(e);}
+  $("projname").value=S.project?S.project.name:P.name;
+  saveSoon(); // swaps the card's thumbnail for the pencil sketch once it is painted
+}
+/* a sketch's name can be changed from its sketchbook card or from the Sketch screen */
+async function renameProject(p,name){
+  name=name.trim()||p.name;p.name=name;
+  if(S.project&&S.project.id===p.id){S.project.name=name;showName(name);}
+  try{const cur=await getProject(p.id);if(cur){cur.name=name;await putProject(cur);}}catch(e){}
+  return name;
+}
+function showName(n){$("projname").value=n;$("srcname").textContent=n;$("photoname").textContent=n;}
+$("projname").addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();});
+$("projname").addEventListener("change",e=>{if(S.project)renameProject(S.project,e.target.value);});
+/* Plan my drawing: the ten steps, built from the sketch as it is now */
+function planDrawing(){
+  if(S.project&&!S.project.planned){S.project.planned=true;S.step=0;S.done=[];}
+  setStage(3);show("plan");saveSoon();
+}
+function openProject(p){
+  const im=new Image();
+  im.onload=()=>{
+    // the saved photo is already cropped and cleaned up, so it comes back with no edits on top
+    Object.assign(P,{img:im,name:p.name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
+    $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
+    $("photoname").textContent=p.name;$("srcname").textContent=p.name;setAspect(0);
+    S.project=p;applySnapshot(p);loadSource(im);$("projname").value=p.name;
+    if(p.planned){setStage(3);show("plan");}else{setStage(2);show("sketch");}
+    note("savestat","Opened from your sketchbook");
+    URL.revokeObjectURL(im.src);};
+  im.src=URL.createObjectURL(p.photo);
+}
+async function drawBook(){
+  let list=[];
+  try{list=await allProjects();}catch(e){}
+  list.sort((a,b)=>b.updated-a.updated);
+  $("bookempty").hidden=list.length>0;
+  $("books").replaceChildren(...list.map((p,idx)=>{
+    const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";el.style.setProperty("--i",Math.min(idx,12));
+    const img=document.createElement("img");img.src=p.thumb;img.alt="";
+    const b=document.createElement("input");b.className="namefield";b.type="text";b.maxLength=80;b.value=p.name;
+    b.setAttribute("aria-label","Sketch name");b.title="Rename this sketch";
+    b.onkeydown=e=>{if(e.key==="Enter")b.blur();if(e.key==="Escape"){b.value=p.name;b.blur();}};
+    b.onchange=()=>renameProject(p,b.value).then(n=>{b.value=n;});
+    const when=document.createElement("span");
+    when.textContent="Started "+new Date(p.created||p.updated).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+    const st=document.createElement("span");st.textContent=p.planned?`${done} of ${STEPS.length} steps done · on step ${(p.step|0)+1}`:"Sketch ready, drawing not planned yet";
+    const bar=document.createElement("div");bar.className="bar";const fill=document.createElement("i");
+    fill.style.width=Math.round(100*done/STEPS.length)+"%";bar.appendChild(fill);
+    const row=document.createElement("div");row.className="rowbtns";
+    const open=document.createElement("button");open.className="btn primary";open.textContent="Open";open.onclick=()=>openProject(p);
+    const del=document.createElement("button");del.className="btn";del.textContent="Delete";
+    del.onclick=async()=>{if(!confirm(`Delete "${p.name}" and its progress? This can\u2019t be undone.`))return;
+      try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
+    const ren=document.createElement("button");ren.className="btn";ren.textContent="Rename";ren.onclick=()=>{b.focus();b.select();};
+    const dlb=document.createElement("button");dlb.className="btn dl";dlb.textContent="Download";
+    dlb.onclick=()=>{const blob=p.sketch||p.photo;if(blob)saveFile(blob,safeName(p.name)+(p.sketch?" - pencil sketch":"")+".jpg");};
+    const brk=document.createElement("i");brk.className="brk";row.append(open,dlb,brk,ren,del);el.append(img,b,when,st,bar,row);return el;
+  }));
+}
+$("newsketch").onclick=startNew;
+$("trysample").onclick=()=>{const pk=$("samplepick");pk.hidden=!pk.hidden;$("trysample").setAttribute("aria-expanded",String(!pk.hidden));};
+document.querySelectorAll(".sampletile").forEach(t=>t.onclick=()=>{if(t.getAttribute("aria-busy")==="true")return;
+  const im=new Image();t.setAttribute("aria-busy","true");
+  im.onload=()=>{t.removeAttribute("aria-busy");$("samplepick").hidden=true;$("trysample").setAttribute("aria-expanded","false");startNew();setPhoto(im,t.dataset.name);};
+  im.onerror=()=>{t.removeAttribute("aria-busy");$("samplemsg").textContent=`The ${t.dataset.name.replace("Sample: ","")} sample didn't load. Check your connection and tap it again.`;};
+  $("samplemsg").textContent="";im.src=t.dataset.src;});
+$("gensketch").onclick=generateSketch;
+$("planbtn").onclick=planDrawing;
+$("backphoto").onclick=()=>show("photo");
+$("stepdl").onclick=async()=>{const blob=await blobOf($("stepcanvas"),"image/png");
+  saveFile(blob,`${safeName(S.project?S.project.name:"sketch")} - step ${S.step+1} - ${safeName(STEPS[S.step].title)}.png`);};
+$("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();
+  const dot=document.querySelectorAll(".dot")[S.step];if(S.done[S.step]&&dot){dot.classList.remove("justdone");void dot.offsetWidth;dot.classList.add("justdone");}};
+
+// clicking the logo replays the full intro (it normally plays in full only on the first visit)
+$("brand").style.cursor="pointer";
+$("brand").onclick=()=>{try{localStorage.removeItem("gc-splash-seen");}catch(e){}location.reload();};
+// the app opens on the sketchbook
+setStage(0);show("book");
 })();
 </script>
 </body>
