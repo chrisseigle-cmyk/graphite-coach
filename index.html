@@ -18,7 +18,7 @@
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
   --paper:#f2eee5; --sheet:#fcfaf5; --sheet-2:#f7f3ea; --graphite:#26282c; --ink-2:#3d4046; --muted:#6a655c;
-  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c; --field:#968a73; --glow:40,130,255;
+  --rule:#e1d9ca; --rule-2:#d2c8b5; --blue:#2f63a8; --blue-soft:#e3eaf4; --ochre:#c8902c; --chalk:#75777c; --field:#968a73; --alert:#a8432c; --glow:40,130,255;
   --shadow:41,33,20; --track:color-mix(in srgb,#e1d9ca 70%,transparent); --tab-on:#fcfaf5; --on-blue:#fff;
   --lift:0 1px 0 rgba(var(--shadow),.04),0 1px 2px rgba(var(--shadow),.06),0 12px 28px -14px rgba(var(--shadow),.28);
   --lift-hi:0 1px 0 rgba(var(--shadow),.04),0 2px 4px rgba(var(--shadow),.07),0 22px 40px -18px rgba(var(--shadow),.36);
@@ -33,7 +33,7 @@ html{scrollbar-color:var(--rule-2) var(--paper)}
 input,textarea{caret-color:var(--blue)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d; --alert:#eb9a82;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -41,7 +41,7 @@ input,textarea{caret-color:var(--blue)}
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#1b1a18; --sheet:#24231f; --sheet-2:#2a2925; --graphite:#ebe6dc; --ink-2:#d4cfc4; --muted:#a59f93;
-  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d;
+  --rule:#37352f; --rule-2:#47443d; --blue:#8fb5ec; --blue-soft:#24324a; --ochre:#d9a548; --chalk:#a3a6ab; --field:#7e786d; --alert:#eb9a82;
   --shadow:0,0,0; --track:#141311; --tab-on:#36342f; --on-blue:#141820;
   --lift:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.3),0 14px 30px -14px rgba(0,0,0,.6);
   --lift-hi:0 1px 0 rgba(255,255,255,.04) inset,0 2px 4px rgba(0,0,0,.35),0 24px 44px -18px rgba(0,0,0,.7);
@@ -202,6 +202,9 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
   .gridopts summary,.about summary{min-height:44px;align-items:center}
 }
 #donebtn[aria-pressed="true"]{background:var(--blue-soft);border-color:transparent;color:var(--blue)}
+#donebtn svg{width:15px;height:15px;vertical-align:-2px;margin-right:6px}
+.dot.justdone{animation:doneRing .5s cubic-bezier(.16,1,.3,1)}
+@keyframes doneRing{from{box-shadow:0 0 0 0 var(--blue)}to{box-shadow:0 0 0 9px transparent}}
 .toggle{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
 .toggles{display:flex;flex-direction:column;gap:4px}
 /* hover (or touch and hold) the step picture: a soft glowing outline around what this step adds */
@@ -244,7 +247,9 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .sampletile{display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--rule-2);border-radius:10px;background:var(--paper);color:var(--graphite);font:600 13px var(--body);cursor:pointer;transition:border-color .2s,transform .2s}
 .sampletile:hover,.sampletile:focus-visible{border-color:var(--graphite);transform:translateY(-2px)}
 .sampletile[aria-busy="true"]{opacity:.55;cursor:progress}
-.samplepick .samplemsg{margin:10px 0 0;color:var(--graphite)}.samplepick .samplemsg:empty{display:none}
+.samplepick .samplemsg{margin:10px 0 0;color:var(--alert)}
+/* something didn't work: the message takes the alert colour (red chalk), and its wording says what to do next */
+.alert{color:var(--alert)!important}.samplepick .samplemsg:empty{display:none}
 .sampletile img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px;display:block}
 .books{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px}
 @media (max-width:520px){.books{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
@@ -299,6 +304,7 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 
 /* ---------- motion: screens rise in, cards settle, steps slide ---------- */
 @keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes fadeIn{from{opacity:0}}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.985)}}
 /* a screen replays its entrance each time it is unhidden (display:none restarts CSS animations) */
 #view-book{animation:viewIn .38s var(--ease) both}
@@ -308,7 +314,8 @@ html.revealing .wrap>*{animation:viewIn .6s var(--ease) both}
 html.revealing .wrap>:nth-child(2){animation-delay:80ms}
 html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 @media (prefers-reduced-motion:reduce){
-  #view-book,section.grid>*,.book,html.revealing .wrap>*,.gridopts[open]>.ctrl{animation:none!important}
+  #view-book,section.grid>*,.book,html.revealing .wrap>*,.gridopts[open]>.ctrl,.samplepick{animation-name:fadeIn!important;animation-delay:0s!important}
+  .dot.justdone{animation:none!important}
   .book:hover{transform:none}
   /* keep colour and fade changes (they show what changed); drop anything that moves or resizes */
   *{transition-property:opacity,color,background-color,border-color,box-shadow,outline-color,fill,stroke!important}
@@ -559,7 +566,7 @@ html.revealing .wrap>header{animation:none!important}
     <p class="sub">Turn a portrait photo into a pencil study, then draw it yourself with a fixed ten&#8209;step plan.</p>
   </header>
 
-  <div class="tabs" role="tablist" aria-label="Sketch steps">
+  <div class="tabs" role="tablist" aria-label="App sections">
     <button class="tab" role="tab" id="tab-book" aria-controls="view-book" aria-selected="true"><svg class="ti" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2v11H6a2 2 0 0 1-2-2z"/><path d="M4 14.5a2 2 0 0 1 2-2h9.5M7.5 6.5h5"/></svg><span class="lbl">Sketchbook</span></button>
     <button class="tab" role="tab" id="tab-photo" aria-controls="view-photo" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">1</span><span><span class="sr">1 · </span>Photo</span></button>
     <button class="tab" role="tab" id="tab-sketch" aria-controls="view-sketch" aria-selected="false" tabindex="-1" disabled><span class="num" aria-hidden="true">2</span><span><span class="sr">2 · </span>Sketch</span></button>
@@ -589,12 +596,12 @@ html.revealing .wrap>header{animation:none!important}
         <g transform="translate(124 98) rotate(36)" stroke-width="1.6"><path d="M0 0-2-6H2Z" fill="currentColor"/><path d="M-2-6-5.5-17H5.5L2-6M-5.5-17V-66H5.5V-17M-1.8-17V-66"/></g>
       </svg>
       <h3>A blank sketchbook</h3>
-      <p>Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing. Every sketch is saved here so you can stop and pick it up later.</p>
+      <p>Start a new sketch: choose a photo, tidy it up, generate the pencil sketch, then plan your drawing.</p>
     </div>
     <div class="books" id="books"></div>
     <details class="about">
       <summary>About and privacy <span>Your photo never leaves your device</span></summary>
-      <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Your photo never leaves your device. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), the subject is found by U²-Net (Qin et al., 2020) and facial features by Google's MediaPipe Face Landmarker (Apache-2.0), all running on your device. Sketches you start are saved in this browser on this device only.</p>
+      <p class="note">The coaching is a fixed library of steps written ahead of time. Your photo only changes the overlay images and which pencil each step names, so the same photo always gives the same plan. Lines are drawn by the Informative Drawings model (Chan, Durand &amp; Isola, 2022), the subject is found by U²-Net (Qin et al., 2020) and facial features by Google's MediaPipe Face Landmarker (Apache-2.0), all running on your device. Sketches you start are saved in this browser on this device only.</p>
     </details>
   </section>
 
@@ -690,7 +697,7 @@ html.revealing .wrap>header{animation:none!important}
         <button class="btn" id="donebtn">Mark as complete</button>
       </div>
       <p id="savestat" role="status"></p>
-      <nav class="stepbar" aria-label="Step navigation (phone)">
+      <nav class="stepbar" aria-label="Step controls">
         <button class="btn" type="button" id="sb-prev" aria-label="Previous step"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 4.5 7 10l5.5 5.5"/></svg></button>
         <span class="sb-t" aria-hidden="true"><span id="sb-n"></span><span id="sb-title"></span></span>
         <button class="btn primary" type="button" id="sb-next">Next</button>
@@ -908,7 +915,8 @@ function loadSource(src){
    Model: "Informative Drawings" (Chan, Durand & Isola, CVPR 2022), trained on artists' line drawings. MIT licence.
    It reads a 512 x 512 image and returns a line drawing; we pad the photo to a square, run it, and crop back. */
 let AISESSION=null,AIJOB=0;
-function aiStatus(t){$("aistat").textContent=t;}
+function aiStatus(t,bad){note("aistat",t,bad);}
+function note(id,t,bad){const e=$(id);e.textContent=t;e.classList.toggle("alert",!!bad);}
 /* a download that reports how far along it is (the first sketch fetches about 9 MB of AI model) */
 async function fetchBytes(url,onPct){const r=await fetch(url);if(!r.ok)throw new Error(url+" "+r.status);
   const total=+r.headers.get("content-length")||0;if(!r.body||!total)return new Uint8Array(await r.arrayBuffer());
@@ -918,13 +926,13 @@ async function fetchBytes(url,onPct){const r=await fetch(url);if(!r.ok)throw new
   return got===total?out:out.subarray(0,got);}
 async function aiLines(c){
   const job=++AIJOB,{w,h}=S;
-  if(!window.ort){aiStatus("Basic lines (AI drawing unavailable)");return;}
+  if(!window.ort){aiStatus("Basic lines: AI drawing can\u2019t run in this browser",1);return;}
   try{
-    aiStatus("Drawing lines with AI…");
+    aiStatus("Drawing lines with AI (up to a minute)…");
     if(!AISESSION){ort.env.wasm.numThreads=1;ort.env.wasm.proxy=true; // run in a background worker so the page stays responsive
       ort.env.wasm.wasmPaths=new URL("vendor/",location.href).href;
       AISESSION=fetchBytes("models/lines.onnx",pc=>{if(job===AIJOB)aiStatus(`Downloading the AI line model (one time only)… ${pc}%`);})
-        .then(buf=>{aiStatus("Drawing lines with AI…");return ort.InferenceSession.create(buf,{executionProviders:["wasm"]});});}
+        .then(buf=>{aiStatus("Drawing lines with AI (up to a minute)…");return ort.InferenceSession.create(buf,{executionProviders:["wasm"]});});}
     const sess=await AISESSION;
     const N=512,side=Math.max(w,h),ox=(side-w)/2,oy=(side-h)/2,k=N/side;
     const q=document.createElement("canvas");q.width=q.height=N;const qx=q.getContext("2d",{willReadFrequently:true});
@@ -943,7 +951,7 @@ async function aiLines(c){
     S.cache.ailines=ink;S.cache.bands=null;aiStatus("Lines drawn by AI");
     render();renderStep();saveSoon(); // refresh the sketchbook thumbnail with the finished lines
   }catch(err){console.warn(err);AISESSION=null; // so the next sketch tries the download again
-    if(job===AIJOB)aiStatus(navigator.onLine===false?"Basic lines (you\u2019re offline, so the AI lines couldn\u2019t download)":"Basic lines (AI drawing unavailable)");}
+    if(job===AIJOB)aiStatus(navigator.onLine===false?"Basic lines: you\u2019re offline. Generate again when connected for AI lines":"Basic lines: AI drawing didn\u2019t start. Generating again may fix it",1);}
   // the subject's silhouette, so the block-in step outlines the head and shoulders rather than light and dark patches
   try{const m=await subjectMap(c);if(job===AIJOB){S.cache.subject=m;renderStep();}}catch(err){console.warn(err);}
   // and the face's landmarks, so the darkest accents land on the pupils, nostrils and lip line
@@ -983,7 +991,7 @@ GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="gra
 
 function usePhoto(f){if(!f)return;const im=new Image();
   im.onload=()=>{setPhoto(im,f.name.replace(/\.[^.]+$/,""));URL.revokeObjectURL(im.src);};
-  im.onerror=()=>{$("photostat").textContent="That file could not be read as an image. Try a JPEG or PNG.";};
+  im.onerror=()=>{note("photostat","That file could not be read as an image. Try a JPEG or PNG.",1);};
   im.src=URL.createObjectURL(f);}
 ["file","file2"].forEach(id=>$(id).addEventListener("change",e=>{usePhoto(e.target.files[0]);e.target.value="";}));
 {const z=$("dropzone");z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over");});
@@ -1386,7 +1394,8 @@ function renderStep(){
   document.querySelectorAll(".dot").forEach((d,i)=>{if(i===S.step)d.setAttribute("aria-current","step");else d.removeAttribute("aria-current");});
   $("prev").disabled=S.step===0;$("next").textContent=S.step===STEPS.length-1?"Start over":"Next step";
   document.querySelectorAll(".dot").forEach((d,i)=>{d.classList.toggle("done",!!S.done[i]);d.classList.toggle("past",i<S.step);});
-  const d=!!S.done[S.step];$("donebtn").textContent=d?"Completed \u2713 (undo)":"Mark as complete";
+  const d=!!S.done[S.step];if(d)$("donebtn").innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 8.4l3 3 6.6-7.2"/></svg>Completed';else $("donebtn").textContent="Mark as complete";
+  $("donebtn").title=d?"Mark as not complete":"";
   $("donebtn").setAttribute("aria-pressed",d);
 }
 /* moving between steps: the old picture fades off the new one so the step's marks appear on the paper,
@@ -1395,7 +1404,7 @@ function renderStep(){
 const RM=()=>!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
 let FADE=null;
 function goStep(i){
-  const from=S.step,anim=i!==from&&!RM()&&!$("view-plan").hidden&&!!Element.prototype.animate,c=$("stepcanvas");
+  const from=S.step,rm=RM(),anim=i!==from&&!$("view-plan").hidden&&!!Element.prototype.animate,c=$("stepcanvas");
   if(anim&&c.width){
     if(!FADE){FADE=document.createElement("canvas");FADE.className="stepfade";FADE.setAttribute("aria-hidden","true");$("canvaswrap").insertBefore(FADE,$("glowcanvas"));}
     FADE.getAnimations().forEach(a=>a.cancel());WIPE++;FADE.style.webkitMaskImage=FADE.style.maskImage="";FADE.style.opacity=1;FADE.width=c.width;FADE.height=c.height;FADE.getContext("2d").drawImage(c,0,0);
@@ -1403,9 +1412,9 @@ function goStep(i){
   S.step=i;renderStep();saveSoon();
   if(!anim)return;
   const fwd=i>from;
-  if(FADE)wipe(fwd);
+  if(FADE)wipe(fwd&&!rm);
   [...document.querySelector(".stepcard").children].forEach((el,k)=>{el.getAnimations().forEach(a=>a.cancel());
-    el.animate([{opacity:0,transform:`translateX(${fwd?16:-16}px)`},{opacity:1,transform:"none"}],{duration:320,delay:k*30,easing:"cubic-bezier(.2,.75,.25,1)",fill:"backwards"});});
+    el.animate(rm?[{opacity:0},{opacity:1}]:[{opacity:0,transform:`translateX(${fwd?16:-16}px)`},{opacity:1,transform:"none"}],{duration:rm?200:320,delay:rm?0:k*30,easing:"cubic-bezier(.2,.75,.25,1)",fill:"backwards"});});
 }
 /* forward: the old picture is rubbed away along a soft 45° edge from the top left, so the new marks
    appear the way a hand works across the page. Back: a quick fade. */
@@ -1593,13 +1602,13 @@ $("bgrm").onchange=async e=>{
 let CUTSESSION=null;
 async function cutOut(){
   const im=P.img;
-  if(!window.ort){$("photostat").textContent="Background removal is unavailable here.";return false;}
+  if(!window.ort){note("photostat","Background removal can\u2019t run in this browser. You can carry on with the background left in.",1);return false;}
   try{
-    $("photostat").textContent="Finding the person…";
+    note("photostat","Finding the person…");
     await new Promise(r=>setTimeout(r,30));
     const m=await subjectMap(im);
-    P.mask=m.map(v=>clamp((v-.3)/.4));$("photostat").textContent="Background removed";return true;
-  }catch(err){console.warn(err);$("photostat").textContent="The background could not be removed. Try again, or carry on without it.";return false;}
+    P.mask=m.map(v=>clamp((v-.3)/.4));note("photostat","Background removed");return true;
+  }catch(err){console.warn(err);note("photostat","The background could not be removed. Try again, or carry on without it.",1);return false;}
 }
 /* how much each pixel of an image belongs to the subject (0 to 1), at the image's own size */
 async function subjectMap(im){
@@ -1660,7 +1669,7 @@ function saveSoon(){
   if(!S.project||!DBOK)return;clearTimeout(saveT);
   saveT=setTimeout(async()=>{
     try{const p={...S.project,...snapshot(),updated:Date.now()};if($("out").width>1&&S.cache.sketch){p.thumb=thumbOf($("out"));p.sketch=await blobOf($("out"));}S.project=p;await putProject(p);
-      $("savestat").textContent="Saved to your sketchbook";}catch(e){$("savestat").textContent="This browser would not save the sketch.";}
+      note("savestat","Saved to your sketchbook");}catch(e){note("savestat","This browser wouldn\u2019t save the sketch (private browsing can block it). You can keep working, but it won\u2019t be in your sketchbook next time.",1);}
   },700);
 }
 function thumbOf(c){const t=document.createElement("canvas"),s=Math.min(1,240/Math.max(c.width,c.height));
@@ -1679,7 +1688,7 @@ const safeName=t=>(t||"sketch").replace(/[\\/:*?"<>|]+/g," ").replace(/\s+/g," "
 function newId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now());}
 function setPhoto(im,name){
   Object.assign(P,{img:im,name,quarter:0,tilt:0,crop:FULLCROP(),bg:false,mask:null,rot:null});
-  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;$("photostat").textContent="";fillAll();
+  $("tilt").value=0;$("tilt-o").textContent="0\u00b0";$("bgrm").checked=false;note("photostat","");fillAll();
   $("photoname").textContent=name;$("srcname").textContent=name;
   $("dropzone").hidden=true;$("cropwrap").hidden=false;$("changephoto").hidden=false;$("gensketch").disabled=false;
   setAspect(0);drawPhoto();
@@ -1688,7 +1697,7 @@ function setPhoto(im,name){
 function startNew(){
   S.project=null;P.img=null;P.mask=null;P.rot=null;
   $("dropzone").hidden=false;$("cropwrap").hidden=true;$("changephoto").hidden=true;$("gensketch").disabled=true;
-  $("photoname").textContent="";$("photostat").textContent="";
+  $("photoname").textContent="";note("photostat","");
   setStage(1);show("photo");
 }
 /* Generate sketch: the edited photo becomes the pencil sketch, and the sketch is saved to the sketchbook */
@@ -1730,7 +1739,7 @@ function openProject(p){
     $("photoname").textContent=p.name;$("srcname").textContent=p.name;setAspect(0);
     S.project=p;applySnapshot(p);loadSource(im);$("projname").value=p.name;
     if(p.planned){setStage(3);show("plan");}else{setStage(2);show("sketch");}
-    $("savestat").textContent="Opened from your sketchbook";
+    note("savestat","Opened from your sketchbook");
     URL.revokeObjectURL(im.src);};
   im.src=URL.createObjectURL(p.photo);
 }
@@ -1743,7 +1752,7 @@ async function drawBook(){
     const done=(p.done||[]).filter(Boolean).length,el=document.createElement("div");el.className="book";el.style.setProperty("--i",Math.min(idx,12));
     const img=document.createElement("img");img.src=p.thumb;img.alt="";
     const b=document.createElement("input");b.className="namefield";b.type="text";b.maxLength=80;b.value=p.name;
-    b.setAttribute("aria-label","Sketch name");b.title="Click to rename";
+    b.setAttribute("aria-label","Sketch name");b.title="Rename this sketch";
     b.onkeydown=e=>{if(e.key==="Enter")b.blur();if(e.key==="Escape"){b.value=p.name;b.blur();}};
     b.onchange=()=>renameProject(p,b.value).then(n=>{b.value=n;});
     const when=document.createElement("span");
@@ -1754,7 +1763,7 @@ async function drawBook(){
     const row=document.createElement("div");row.className="rowbtns";
     const open=document.createElement("button");open.className="btn primary";open.textContent="Open";open.onclick=()=>openProject(p);
     const del=document.createElement("button");del.className="btn";del.textContent="Delete";
-    del.onclick=async()=>{if(!confirm(`Delete "${p.name}"? This cannot be undone.`))return;
+    del.onclick=async()=>{if(!confirm(`Delete "${p.name}" and its progress? This can\u2019t be undone.`))return;
       try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
     const ren=document.createElement("button");ren.className="btn";ren.textContent="Rename";ren.onclick=()=>{b.focus();b.select();};
     const dlb=document.createElement("button");dlb.className="btn dl";dlb.textContent="Download";
@@ -1774,7 +1783,8 @@ $("planbtn").onclick=planDrawing;
 $("backphoto").onclick=()=>show("photo");
 $("stepdl").onclick=async()=>{const blob=await blobOf($("stepcanvas"),"image/png");
   saveFile(blob,`${safeName(S.project?S.project.name:"sketch")} - step ${S.step+1} - ${safeName(STEPS[S.step].title)}.png`);};
-$("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();};
+$("donebtn").onclick=()=>{S.done[S.step]=!S.done[S.step];renderStep();saveSoon();
+  const dot=document.querySelectorAll(".dot")[S.step];if(S.done[S.step]&&dot){dot.classList.remove("justdone");void dot.offsetWidth;dot.classList.add("justdone");}};
 
 // clicking the logo replays the full intro (it normally plays in full only on the first visit)
 $("brand").style.cursor="pointer";
