@@ -273,6 +273,12 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .book .btn{padding:6px 13px;font-size:13px}
 .book .btn:not(.primary):not(.dl){border-color:transparent;background:transparent;color:var(--muted);padding-inline:4px;font-size:12.5px}
 .book .btn:not(.primary):hover{color:var(--graphite);background:var(--sheet-2);box-shadow:none}
+.book .delask{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.book .delask p{flex-basis:100%;margin:0 0 2px;font-size:13px;color:var(--graphite)}
+.book .delask .btn{flex:1 1 0;white-space:nowrap}
+.book .delask .btn.danger{background:var(--alert);border-color:var(--alert);color:var(--sheet)}
+.book .delask .btn.danger:hover{filter:brightness(1.08)}
+.book .delask .btn:not(.danger){border-color:var(--rule-2);color:var(--graphite);background:var(--sheet)}
 .bar{height:4px;border-radius:2px;background:var(--rule);overflow:hidden;margin-top:2px}
 .bar i{display:block;height:100%;background:var(--blue);border-radius:2px}
 .empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;color:var(--muted);padding:36px 22px 40px;border:1.5px dashed var(--rule-2);border-radius:16px;background:color-mix(in srgb,var(--sheet) 55%,transparent)}
@@ -1779,8 +1785,17 @@ async function drawBook(){
     const row=document.createElement("div");row.className="rowbtns";
     const open=document.createElement("button");open.className="btn primary";open.textContent="Open";open.onclick=()=>openProject(p);
     const del=document.createElement("button");del.className="btn";del.textContent="Delete";
-    del.onclick=async()=>{if(!confirm(`Delete "${p.name}" and its progress? This can\u2019t be undone.`))return;
-      try{await delProject(p.id);}catch(e){}if(S.project&&S.project.id===p.id)S.project=null;drawBook();};
+    /* the confirmation sits in the card itself: browser confirm() dialogs are blocked inside embedded previews,
+       which made Delete silently do nothing */
+    del.onclick=()=>{const ask=document.createElement("div");ask.className="delask";ask.setAttribute("role","group");
+      const q=document.createElement("p");q.textContent="Delete this sketch and its progress? This can\u2019t be undone.";
+      const yes=document.createElement("button");yes.className="btn danger";yes.textContent="Delete sketch";
+      const no=document.createElement("button");no.className="btn";no.textContent="Keep it";
+      ask.setAttribute("aria-label",q.textContent);ask.append(q,yes,no);row.replaceWith(ask);no.focus();
+      const back=()=>{ask.replaceWith(row);del.focus();};no.onclick=back;ask.onkeydown=e=>{if(e.key==="Escape")back();};
+      yes.onclick=async()=>{yes.disabled=no.disabled=true;
+        try{await delProject(p.id);}catch(e){q.textContent="This sketch couldn\u2019t be deleted. Try again.";q.classList.add("alert");yes.disabled=no.disabled=false;return;}
+        if(S.project&&S.project.id===p.id)S.project=null;drawBook();};};
     const ren=document.createElement("button");ren.className="btn";ren.textContent="Rename";ren.onclick=()=>{b.focus();b.select();};
     const dlb=document.createElement("button");dlb.className="btn dl";dlb.textContent="Download";
     dlb.onclick=()=>{const blob=p.sketch||p.photo;if(blob)saveFile(blob,safeName(p.name)+(p.sketch?" - pencil sketch":"")+".jpg");};
