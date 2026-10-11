@@ -1116,14 +1116,30 @@ function hatchInk(dark,ang,gap,seed,sc){
 function faceAccents(P,w,h){
   const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});
   const d=(a,b)=>Math.hypot(P[a][0]-P[b][0],P[a][1]-P[b][1]),iris=(d(469,471)+d(474,476))/4; // iris radius
+  /* the landmarks are a fitted face, not the photo: a hand or an ice cream over the mouth, or a tilted head, can drag
+     them off the real features. So each accent is moved onto the dark spot it stands for in the photo, searching
+     a small window round the landmark (mostly upwards, where the fit tends to err), and left out if the photo has none there */
+  const g=blur(S.gray,w,h,Math.max(1,Math.round(iris*.3))),at=(px,py)=>g[Math.min(h-1,Math.max(0,Math.round(py)))*w+Math.min(w-1,Math.max(0,Math.round(px)))];
+  const ring=(px,py,r)=>{let t=0;for(let k=0;k<16;k++)t+=at(px+r*Math.cos(k*Math.PI/8),py+r*Math.sin(k*Math.PI/8));return t/16;};
+  const snap=(px,py,rx,up,down,min)=>{let bx=px,by=py,bv=1e9;
+    for(let dy=-up;dy<=down;dy++)for(let dx=-rx;dx<=rx;dx++){const v=at(px+dx,py+dy);if(v<bv){bv=v;bx=px+dx;by=py+dy;}}
+    return ring(bx,by,iris*1.6)-bv>=min?[bx,by]:null;};
   x.fillStyle=x.strokeStyle="#000";x.lineCap=x.lineJoin="round";
+  // the pupils stay on the iris landmarks: the eyes are rarely covered, and the lid's shadow would pull a search upwards
   for(const k of[468,473]){x.beginPath();x.arc(P[k][0],P[k][1],iris*.62,0,7);x.fill();}
-  // nostrils: small dark ellipses tucked under the nose, either side of its centre line
-  for(const k of[60,290]){const nx=(P[k][0]*2+P[2][0])/3,ny=(P[k][1]*2+P[2][1])/3;x.beginPath();x.ellipse(nx,ny,iris*.5,iris*.3,Math.atan2(P[290][1]-P[60][1],P[290][0]-P[60][0]),0,7);x.fill();}
-  // the lip line, thickest in the middle and fading towards the corners
+  // nostrils: small dark ellipses tucked under the nose, either side of its centre line, wherever the photo shows them
+  const ang=Math.atan2(P[290][1]-P[60][1],P[290][0]-P[60][0]);
+  for(const k of[60,290]){const nx=(P[k][0]*2+P[2][0])/3,ny=(P[k][1]*2+P[2][1])/3,
+      q=snap(nx,ny,Math.round(iris*.7),Math.round(iris*1.6),Math.round(iris*.5),.06);
+    if(!q)continue;x.beginPath();x.ellipse(q[0],q[1],iris*.5,iris*.3,ang,0,7);x.fill();}
+  // the lip line, thickest in the middle and fading towards the corners, slid up or down onto the darkest line of the mouth
   const up=[78,191,80,81,82,13,312,311,310,415,308],lo=[78,95,88,178,87,14,317,402,318,324,308];
-  for(let j=0;j<up.length-1;j++){const t=Math.sin(Math.PI*(j+.5)/(up.length-1));x.lineWidth=iris*(.1+.28*t);x.globalAlpha=.6+.4*t;x.beginPath();
-    x.moveTo((P[up[j]][0]+P[lo[j]][0])/2,(P[up[j]][1]+P[lo[j]][1])/2);x.lineTo((P[up[j+1]][0]+P[lo[j+1]][0])/2,(P[up[j+1]][1]+P[lo[j+1]][1])/2);x.stroke();}
+  const mid=up.map((a,j)=>[(P[a][0]+P[lo[j]][0])/2,(P[a][1]+P[lo[j]][1])/2]);
+  const along=dy=>{let t=0,n=0;for(let j=0;j<mid.length-1;j++)for(let u=0;u<1;u+=.25){t+=at(mid[j][0]+(mid[j+1][0]-mid[j][0])*u,mid[j][1]+(mid[j+1][1]-mid[j][1])*u+dy);n++;}return t/n;};
+  let bdy=0,bv=1e9;for(let dy=-Math.round(iris*1.8);dy<=Math.round(iris*.8);dy++){const v=along(dy);if(v<bv){bv=v;bdy=dy;}}
+  const lipOk=(along(bdy-iris*1.4)+along(bdy+iris*1.4))/2-bv>=.05;
+  if(lipOk)for(let j=0;j<mid.length-1;j++){const t=Math.sin(Math.PI*(j+.5)/(mid.length-1));x.lineWidth=iris*(.1+.28*t);x.globalAlpha=.6+.4*t;x.beginPath();
+    x.moveTo(mid[j][0],mid[j][1]+bdy);x.lineTo(mid[j+1][0],mid[j+1][1]+bdy);x.stroke();}
   x.globalAlpha=1;
   const dd=x.getImageData(0,0,w,h).data,m=new Float32Array(w*h);for(let i=0;i<m.length;i++)m[i]=dd[i*4+3]/255;
   const t=strokes().tooth;for(let i=0;i<m.length;i++)m[i]*=.7+.3*t[i];
