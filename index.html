@@ -191,6 +191,28 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
   .stepnav #donebtn{margin-left:0;flex:1 1 100%}
 }
 
+
+/* zoom on the plan picture: free zoom and drag, or zoom to grid cells */
+.zoomport{position:relative;overflow:hidden;border-radius:4px;box-shadow:0 0 0 1px rgba(var(--shadow),.06)}
+.zoomport .canvaswrap{transform-origin:0 0;box-shadow:none;will-change:auto}
+.zoomport.glide .canvaswrap{transition:transform .38s cubic-bezier(.16,1,.3,1),filter .25s var(--ease)}
+.zoomport.zfree,.zoomport.zcells{touch-action:none}
+.zoomport.zfree{cursor:grab}.zoomport.zfree.dragging{cursor:grabbing}
+.zoomport.zcells{cursor:cell}
+.cellsel{position:absolute;pointer-events:none;border:2px solid var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-radius:2px;z-index:3}
+.zoombar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.zseg{display:flex;flex-wrap:wrap;gap:6px}
+.zseg .grade{font-family:var(--body);font-weight:600}
+.zctl{display:flex;align-items:center;gap:6px;margin-left:auto}
+.zctl[hidden]{display:none}
+.zb{padding:6px 10px;font-size:13px;display:inline-grid;place-items:center}
+.zb svg{width:16px;height:16px}
+#zin,#zout{width:38px;padding:0;height:38px}
+#zlvl{font:500 12.5px var(--mono);color:var(--muted);min-width:4.2ch;text-align:center;font-variant-numeric:tabular-nums}
+.zhint{font-size:12.5px;color:var(--muted);margin:-2px 0 0;padding-inline:2px}
+@media (max-width:560px){#zin,#zout{width:44px;height:44px}.zctl{margin-left:0}}
+#view-plan.drawing .zoombar{width:100%;max-width:960px;justify-content:center}
+#view-plan.drawing .zhint{display:none}
 /* Sketch screen: three sliders up front, the rest under Fine-tune */
 .finetune{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--rule);padding-top:14px}
 .finetune[open]{gap:14px}
@@ -202,12 +224,11 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 .drawbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
 .drawbtn svg{width:17px;height:17px}
 .drawbar,.drawnav{display:none}
-.canvaswrap.flip{transform:scaleX(-1)}
 .canvaswrap.squint{filter:blur(var(--sq,5px))}
 .canvaswrap{transition:filter .25s var(--ease)}
 #view-plan.drawing>.stage{position:fixed;inset:0;z-index:50;border-radius:0;border:0;margin:0;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
   background:var(--paper);display:flex;flex-direction:column;gap:10px;align-items:center;animation:fadeIn .2s ease both}
-#view-plan.drawing>.stage>:not(.drawbar):not(.canvaswrap):not(.drawnav){display:none}
+#view-plan.drawing>.stage>:not(.drawbar):not(.zoomport):not(.zoombar):not(.drawnav){display:none}
 #view-plan.drawing .drawbar,#view-plan.drawing .drawnav{display:flex;align-items:center;gap:8px;width:100%;max-width:960px}
 #view-plan.drawing .drawbar .btn,#view-plan.drawing .drawnav .btn{min-height:48px}
 #view-plan.drawing .drawnav .btn{flex:1}
@@ -215,7 +236,7 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 #dm-n{font:500 11.5px var(--mono);color:var(--muted);letter-spacing:.03em}
 #dm-title{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .drawbar .btn[aria-pressed="true"]{background:var(--graphite);color:var(--sheet);border-color:var(--graphite)}
-#view-plan.drawing .canvaswrap{flex:none;margin-block:auto;width:min(100%,calc((100svh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--ar,.8)));align-self:center}
+#view-plan.drawing .zoomport{flex:none;margin-block:auto;width:min(100%,calc((100svh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--ar,.8)));align-self:center}
 #view-plan.drawing .canvaswrap>canvas{height:auto}
 html.drawing-open{overflow:hidden}
 @media (max-width:520px){.drawbar #dm-n{display:none}#view-plan.drawing .drawbar .btn{padding-inline:12px}}
@@ -727,7 +748,12 @@ html.revealing .wrap>header{animation:none!important}
         <button class="btn" type="button" id="dm-flip" aria-pressed="false">Flip</button>
         <button class="btn" type="button" id="dm-squint" aria-pressed="false">Squint</button>
       </div>
-      <div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas" role="img" aria-label="Drawing plan step"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas></div>
+      <div class="zoomport" id="zoomport"><div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas" role="img" aria-label="Drawing plan step"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas><div class="cellsel" id="cellsel" hidden></div></div></div>
+      <div class="zoombar" id="zoombar" role="group" aria-label="Zoom">
+        <span class="zseg" role="group" aria-label="Zoom mode"><button class="grade" type="button" data-zm="off" aria-pressed="true">No zoom</button><button class="grade" type="button" data-zm="free" aria-pressed="false">Zoom &amp; drag</button><button class="grade" type="button" data-zm="cells" aria-pressed="false">Grid cells</button></span>
+        <span class="zctl" id="zctl" hidden><button class="btn zb" type="button" id="zout" aria-label="Zoom out"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h10"/></svg></button><output id="zlvl" aria-live="polite">100%</output><button class="btn zb" type="button" id="zin" aria-label="Zoom in"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h10M10 5v10"/></svg></button><button class="btn zb" type="button" id="zfit">Whole picture</button></span>
+      </div>
+      <p class="zhint" id="zhint" hidden></p>
       <button class="btn primary drawbtn" type="button" id="drawbtn"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4M17 7V3h-4M3 13v4h4M17 13v4h-4"/></svg>Draw full screen</button>
       <p class="peekhint" id="peekhint">Hover over the picture (or touch and hold it) to see what this step adds.</p>
       <div class="drawnav" id="drawnav">
@@ -1478,6 +1504,7 @@ function renderStep(){
   document.querySelectorAll(".dot").forEach((d,i)=>{d.classList.toggle("done",!!S.done[i]);d.classList.toggle("past",i<S.step);});
   const d=!!S.done[S.step];if(d)$("donebtn").innerHTML='<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 8.4l3 3 6.6-7.2"/></svg>Completed';else $("donebtn").textContent="Mark as complete";
   $("donebtn").title=d?"Mark as not complete":"";
+  try{$("cellsel").hidden=true;zHint();}catch(e){}
   $("donebtn").setAttribute("aria-pressed",d);
 }
 /* moving between steps: the old picture fades off the new one so the step's marks appear on the paper,
@@ -1519,16 +1546,17 @@ $("next").onclick=()=>goStep(S.step===STEPS.length-1?0:S.step+1);
 $("ghost").onchange=renderStep;
 /* the artist's checks: flip the picture to catch proportion mistakes, squint (blur) to see only light and dark */
 function setView(k,on){$(k).checked=on;$("dm-"+k).setAttribute("aria-pressed",on);$("canvaswrap").classList.toggle(k,on);
-  if(k==="squint")$("canvaswrap").style.setProperty("--sq",Math.max(3,Math.round($("canvaswrap").getBoundingClientRect().width/90))+"px");}
+  if(k==="squint")$("canvaswrap").style.setProperty("--sq",Math.max(3,Math.round($("zoomport").clientWidth/90))+"px");if(k==="flip")applyZ();}
 for(const k of["flip","squint"]){$(k).onchange=()=>setView(k,$(k).checked);$("dm-"+k).onclick=()=>setView(k,!$(k).checked);}
 /* drawing mode: the step picture fills the screen, with big Back and Next, and the screen is kept awake */
 let WAKE=null;
 const wake=async()=>{try{if(navigator.wakeLock&&document.visibilityState==="visible")WAKE=await navigator.wakeLock.request("screen");}catch(e){WAKE=null;}};
 function drawMode(on){const v=$("view-plan");v.classList.toggle("drawing",on);document.documentElement.classList.toggle("drawing-open",on);
   document.querySelectorAll(".wrap>*:not(#view-plan),#view-plan>.panel").forEach(e=>{e.inert=on;});
-  if(on){$("canvaswrap").style.setProperty("--ar",S.w/S.h);syncDraw();wake();$("dm-next").focus();}
+  if(on){$("zoomport").style.setProperty("--ar",S.w/S.h);syncDraw();wake();$("dm-next").focus();}
   else{try{WAKE&&WAKE.release();}catch(e){}WAKE=null;$("drawbtn").focus();}
-  if(document.querySelector("#canvaswrap.squint"))setView("squint",true);}
+  if(document.querySelector("#canvaswrap.squint"))setView("squint",true);
+  requestAnimationFrame(applyZ);}
 function syncDraw(){$("dm-n").textContent=`Step ${S.step+1} of ${STEPS.length}`;$("dm-title").textContent=STEPS[S.step].title;
   $("dm-prev").disabled=S.step===0;$("dm-next").textContent=S.step===STEPS.length-1?"Finish":"Next step";}
 $("drawbtn").onclick=()=>drawMode(true);$("dm-exit").onclick=()=>drawMode(false);
@@ -1537,6 +1565,59 @@ $("dm-next").onclick=()=>{if(S.step===STEPS.length-1){drawMode(false);return;}$(
 document.addEventListener("keydown",e=>{if(!$("view-plan").classList.contains("drawing"))return;
   if(e.key==="Escape")drawMode(false);else if(e.key==="ArrowRight")$("dm-next").click();else if(e.key==="ArrowLeft"&&S.step>0)$("dm-prev").click();});
 document.addEventListener("visibilitychange",()=>{if($("view-plan").classList.contains("drawing")&&document.visibilityState==="visible")wake();});
+
+/* zoom on the plan picture.
+   "Zoom & drag": pinch or scroll to zoom, drag to move around, double-click/tap to zoom in or out.
+   "Grid cells": tap a cell, or drag across several, and the view zooms to fit them.
+   Position is kept as a fraction of the picture, so it survives drawing mode and resizing; it also stays put between steps. */
+const Z={mode:"off",z:1,x:0,y:0}; // z: scale; x,y: offset of the picture's top left, as fractions of the view
+const ZMAX=6;
+function zClamp(){Z.z=Math.min(ZMAX,Math.max(1,Z.z));Z.x=Math.min(0,Math.max(1-Z.z,Z.x));Z.y=Math.min(0,Math.max(1-Z.z,Z.y));}
+function applyZ(glide){const port=$("zoomport"),w=$("canvaswrap"),W=port.clientWidth,H=port.clientHeight;zClamp();
+  port.classList.toggle("glide",!!glide);
+  const flip=$("flip").checked?` translateX(${W}px) scaleX(-1)`:"";
+  w.style.transform=`translate(${Z.x*W}px,${Z.y*H}px) scale(${Z.z})${flip}`;
+  $("zlvl").textContent=Math.round(Z.z*100)+"%";$("zout").disabled=Z.z<=1.001;$("zin").disabled=Z.z>=ZMAX-.001;$("zfit").disabled=Z.z<=1.001;}
+// zoom by f around a point given as a fraction of the view (fx,fy)
+function zoomAt(f,fx,fy,glide){const z0=Z.z;Z.z=Math.min(ZMAX,Math.max(1,z0*f));const k=Z.z/z0;Z.x=fx-(fx-Z.x)*k;Z.y=fy-(fy-Z.y)*k;applyZ(glide);}
+function zFit(glide){Z.z=1;Z.x=Z.y=0;$("cellsel").hidden=true;applyZ(glide);}
+// a pointer's spot on the picture, as fractions of the picture (flip taken into account)
+function picAt(e){const r=$("canvaswrap").getBoundingClientRect();let px=(e.clientX-r.left)/r.width;const py=(e.clientY-r.top)/r.height;if($("flip").checked)px=1-px;return[px,py];}
+function viewAt(e){const r=$("zoomport").getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height];}
+const cellsOn=()=>S.grid.on&&S.step<STEPS.length-1;
+function cellOf([px,py]){const {cw,ch,cols,rows}=gridDims();return[Math.min(cols-1,Math.max(0,Math.floor(px*S.w/cw))),Math.min(rows-1,Math.max(0,Math.floor(py*S.h/ch)))];}
+function cellBox(a,b){const {cw,ch}=gridDims(),c0=Math.min(a[0],b[0]),c1=Math.max(a[0],b[0]),r0=Math.min(a[1],b[1]),r1=Math.max(a[1],b[1]);
+  return{x:c0*cw/S.w,y:r0*ch/S.h,w:Math.min(1,(c1+1)*cw/S.w)-c0*cw/S.w,h:Math.min(1,(r1+1)*ch/S.h)-r0*ch/S.h};}
+function showSel(b){const e=$("cellsel");e.hidden=false;const fx=$("flip").checked;
+  Object.assign(e.style,{left:((fx?1-b.x-b.w:b.x)*100)+"%",top:(b.y*100)+"%",width:(b.w*100)+"%",height:(b.h*100)+"%"});}
+function zoomToBox(b){const pad=.04;Z.z=Math.min(ZMAX,1/Math.max(b.w+pad*b.w*2,b.h+pad*b.h*2));
+  const bx=$("flip").checked?1-b.x-b.w:b.x;Z.x=.5-(bx+b.w/2)*Z.z;Z.y=.5-(b.y+b.h/2)*Z.z;applyZ(!RM());}
+function zHint(){const h=$("zhint");h.hidden=Z.mode==="off";$("zctl").hidden=Z.mode==="off";
+  h.textContent=Z.mode==="free"?"Pinch or scroll to zoom, drag to move around. Double-tap to zoom in or out."
+    :cellsOn()?"Tap a grid cell to zoom in on it, or drag across several cells. Tap another cell to move on."
+    :"Grid-cell zoom needs the grid: turn on Show grid (the last step has no grid).";}
+function setZMode(m){Z.mode=m;const port=$("zoomport");port.classList.toggle("zfree",m==="free");port.classList.toggle("zcells",m==="cells");
+  document.querySelectorAll("[data-zm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.zm===m));
+  if(m==="off")zFit(!RM());if(m!=="cells")$("cellsel").hidden=true;zHint();}
+document.querySelectorAll("[data-zm]").forEach(b=>b.onclick=()=>setZMode(b.dataset.zm));
+$("zin").onclick=()=>zoomAt(1.5,.5,.5,!RM());$("zout").onclick=()=>zoomAt(1/1.5,.5,.5,!RM());$("zfit").onclick=()=>zFit(!RM());
+{const port=$("zoomport"),P=new Map();let pinch=null,drag=null,sel=null,selT=0;
+  port.addEventListener("wheel",e=>{if(Z.mode!=="free")return;e.preventDefault();const[fx,fy]=viewAt(e);zoomAt(Math.exp(-e.deltaY*.0018),fx,fy,false);},{passive:false});
+  port.addEventListener("dblclick",e=>{if(Z.mode!=="free")return;const[fx,fy]=viewAt(e);if(Z.z>1.05)zFit(!RM());else zoomAt(2.5,fx,fy,!RM());});
+  port.addEventListener("pointerdown",e=>{if(Z.mode==="off")return;try{port.setPointerCapture(e.pointerId);}catch(_){}P.set(e.pointerId,viewAt(e));
+    if(Z.mode==="cells"){if(!cellsOn())return;const c=cellOf(picAt(e));sel={a:c,b:c};showSel(cellBox(c,c));return;}
+    if(P.size===2){const[a,b]=[...P.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:Z.z};drag=null;}
+    else drag={p:viewAt(e),x:Z.x,y:Z.y,moved:false};});
+  port.addEventListener("pointermove",e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,viewAt(e));
+    if(sel){const c=cellOf(picAt(e));if(c[0]!==sel.b[0]||c[1]!==sel.b[1]){sel.b=c;showSel(cellBox(sel.a,sel.b));}return;}
+    if(pinch&&P.size>=2){const[a,b]=[...P.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);zoomAt(pinch.z*d/pinch.d/Z.z,(a[0]+b[0])/2,(a[1]+b[1])/2,false);$("canvaswrap").classList.remove("peek");return;}
+    if(drag){const q=viewAt(e);if(Math.hypot(q[0]-drag.p[0],q[1]-drag.p[1])>.01){drag.moved=true;port.classList.add("dragging");$("canvaswrap").classList.remove("peek");}
+      Z.x=drag.x+q[0]-drag.p[0];Z.y=drag.y+q[1]-drag.p[1];applyZ(false);}});
+  const end=e=>{P.delete(e.pointerId);port.classList.remove("dragging");
+    if(sel){const b=cellBox(sel.a,sel.b);sel=null;showSel(b);zoomToBox(b);clearTimeout(selT);selT=setTimeout(()=>{$("cellsel").hidden=true;},650);return;} // the outline shows what was picked, then gets out of the way
+    if(P.size<2)pinch=null;if(P.size===0)drag=null;else if(P.size===1){const p=[...P.values()][0];drag={p,x:Z.x,y:Z.y};}};
+  port.addEventListener("pointerup",end);port.addEventListener("pointercancel",end);
+  addEventListener("resize",()=>applyZ(false));}
 // phones have no hover: touching and holding the picture shows the glow until the finger lifts
 {const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
   w.addEventListener("pointerdown",on);["pointerup","pointercancel","pointerleave"].forEach(t=>w.addEventListener(t,off));
