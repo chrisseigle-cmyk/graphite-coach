@@ -190,6 +190,48 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
   #stepcount{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} /* the bar shows it; still announced */
   .stepnav #donebtn{margin-left:0;flex:1 1 100%}
 }
+
+/* Sketch screen: three sliders up front, the rest under Fine-tune */
+.finetune{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--rule);padding-top:14px}
+.finetune[open]{gap:14px}
+.finetune summary span{font-weight:400;color:var(--muted);font-size:13px}
+.finetune[open] summary span{display:none}
+.finetune>.ctrl{margin-top:12px}
+.resetsk{align-self:flex-start;margin-top:-6px}
+/* plan picture: drawing mode and the artist's checks */
+.drawbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px}
+.drawbtn svg{width:17px;height:17px}
+.drawbar,.drawnav{display:none}
+.canvaswrap.flip{transform:scaleX(-1)}
+.canvaswrap.squint{filter:blur(var(--sq,5px))}
+.canvaswrap{transition:filter .25s var(--ease)}
+#view-plan.drawing>.stage{position:fixed;inset:0;z-index:50;border-radius:0;border:0;margin:0;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  background:var(--paper);display:flex;flex-direction:column;gap:10px;align-items:center;animation:fadeIn .2s ease both}
+#view-plan.drawing>.stage>:not(.drawbar):not(.canvaswrap):not(.drawnav){display:none}
+#view-plan.drawing .drawbar,#view-plan.drawing .drawnav{display:flex;align-items:center;gap:8px;width:100%;max-width:960px}
+#view-plan.drawing .drawbar .btn,#view-plan.drawing .drawnav .btn{min-height:48px}
+#view-plan.drawing .drawnav .btn{flex:1}
+.dm-t{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+#dm-n{font:500 11.5px var(--mono);color:var(--muted);letter-spacing:.03em}
+#dm-title{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drawbar .btn[aria-pressed="true"]{background:var(--graphite);color:var(--sheet);border-color:var(--graphite)}
+#view-plan.drawing .canvaswrap{flex:none;margin-block:auto;width:min(100%,calc((100svh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--ar,.8)));align-self:center}
+#view-plan.drawing .canvaswrap>canvas{height:auto}
+html.drawing-open{overflow:hidden}
+@media (max-width:520px){.drawbar #dm-n{display:none}#view-plan.drawing .drawbar .btn{padding-inline:12px}}
+/* phones: the sketch stays in view while the sliders scroll, and the next step is always at the bottom */
+@media (max-width:760px){
+  #view-sketch>.stage{position:sticky;top:0;z-index:6;padding:8px;box-shadow:0 10px 22px -16px rgba(var(--shadow),.5)}
+  #view-sketch>.stage>canvas{max-height:34svh;width:auto;max-width:100%;align-self:center}
+  #view-sketch .cap{font-size:11.5px}
+  #view-sketch:not([hidden]){padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  #view-sketch .panel>.nav{position:fixed;z-index:20;left:0;right:0;bottom:0;margin:0;flex-wrap:nowrap;
+    padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+    background:color-mix(in srgb,var(--sheet) 94%,transparent);border-top:1px solid var(--rule);box-shadow:0 -6px 18px -10px rgba(var(--shadow),.3);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #view-sketch .panel>.nav .btn{min-height:48px;flex:1}
+  #view-sketch .panel>.nav .primary{flex:1.4}
+}
 /* phones: everything tappable is at least a fingertip (44px) */
 @media (max-width:560px){
   .tab{min-height:44px}
@@ -313,10 +355,10 @@ input[type=checkbox]{accent-color:var(--graphite);width:16px;height:16px;margin:
 @keyframes fadeIn{from{opacity:0}}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.985)}}
 /* a screen replays its entrance each time it is unhidden (display:none restarts CSS animations) */
-#view-book{animation:viewIn .38s var(--ease) both}
-section.grid>*{animation:viewIn .42s var(--ease) both}
+#view-book{animation:viewIn .38s var(--ease) backwards}
+section.grid>*{animation:viewIn .42s var(--ease) backwards}
 section.grid>*+*{animation-delay:70ms}
-html.revealing .wrap>*{animation:viewIn .6s var(--ease) both}
+html.revealing .wrap>*{animation:viewIn .6s var(--ease) backwards}
 html.revealing .wrap>:nth-child(2){animation-delay:80ms}
 html.revealing .wrap>:nth-child(n+3){animation-delay:150ms}
 @media (prefers-reduced-motion:reduce){
@@ -655,21 +697,21 @@ html.revealing .wrap>header{animation:none!important}
         <div class="grades" id="grades"></div>
         <p class="hint">Harder leads cap how dark the drawing can go. Softer leads reach deeper blacks with more grain.</p>
       </div>
-      <div class="group"><h3>Tone</h3>
+      <div class="group">
       <div class="ctrl"><label for="shade">Shading <output id="shade-o"></output></label><input id="shade" type="range" min="0" max="100" value="55"></div>
-      <div class="ctrl"><label for="bright">Brightness <output id="bright-o"></output></label><input id="bright" type="range" min="-50" max="50" value="0"></div>
       <div class="ctrl"><label for="contrast">Contrast <output id="contrast-o"></output></label><input id="contrast" type="range" min="50" max="200" value="110"></div>
-      </div>
-      <div class="group"><h3>Lines</h3>
-      <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
-      <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
       <div class="ctrl"><label for="detail">Line detail <output id="detail-o"></output></label><input id="detail" type="range" min="0" max="100" value="45"></div>
-      <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
       </div>
-      <div class="group"><h3>Paper</h3>
-      <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
-      <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
-      </div>
+      <details class="gridopts finetune" id="finetune">
+        <summary>Fine-tune <span>6 more settings</span></summary>
+        <div class="ctrl"><label for="bright">Brightness <output id="bright-o"></output></label><input id="bright" type="range" min="-50" max="50" value="0"></div>
+        <div class="ctrl"><label for="strokes">Pencil strokes <output id="strokes-o"></output></label><input id="strokes" type="range" min="0" max="100" value="70"></div>
+        <div class="ctrl"><label for="press">Line pressure <output id="press-o"></output></label><input id="press" type="range" min="0" max="100" value="50"></div>
+        <div class="ctrl"><label for="soft">Blending softness <output id="soft-o"></output></label><input id="soft" type="range" min="2" max="30" value="10"></div>
+        <div class="ctrl"><label for="grain">Paper grain <output id="grain-o"></output></label><input id="grain" type="range" min="0" max="100" value="30"></div>
+        <div class="ctrl"><label for="fade">Fade edges <output id="fade-o"></output></label><input id="fade" type="range" min="0" max="100" value="0"></div>
+      </details>
+      <button class="btn small resetsk" type="button" id="resetsk">Reset to default</button>
       <div class="nav">
         <button class="btn" id="backphoto">Back to photo</button>
         <button class="btn primary" id="planbtn">Plan my drawing</button>
@@ -679,10 +721,23 @@ html.revealing .wrap>header{animation:none!important}
 
   <section id="view-plan" role="tabpanel" aria-labelledby="tab-plan" class="grid" hidden>
     <div class="stage">
+      <div class="drawbar" id="drawbar" aria-label="Drawing mode">
+        <button class="btn" type="button" id="dm-exit">Done</button>
+        <span class="dm-t"><span id="dm-n"></span><span id="dm-title"></span></span>
+        <button class="btn" type="button" id="dm-flip" aria-pressed="false">Flip</button>
+        <button class="btn" type="button" id="dm-squint" aria-pressed="false">Squint</button>
+      </div>
       <div class="canvaswrap" id="canvaswrap"><canvas id="stepcanvas" role="img" aria-label="Drawing plan step"></canvas><canvas id="glowcanvas" aria-hidden="true"></canvas></div>
+      <button class="btn primary drawbtn" type="button" id="drawbtn"><svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4M17 7V3h-4M3 13v4h4M17 13v4h-4"/></svg>Draw full screen</button>
       <p class="peekhint" id="peekhint">Hover over the picture (or touch and hold it) to see what this step adds.</p>
+      <div class="drawnav" id="drawnav">
+        <button class="btn" type="button" id="dm-prev">Back</button>
+        <button class="btn primary" type="button" id="dm-next">Next step</button>
+      </div>
       <div class="cap">
         <span class="toggles"><label class="toggle"><input id="ghost" type="checkbox"> Show photo underneath</label>
+          <label class="toggle"><input id="flip" type="checkbox"> Flip (mirror the picture)</label>
+          <label class="toggle"><input id="squint" type="checkbox"> Squint (blur to see light and dark)</label>
 </span>
         <button class="btn small" id="stepdl" type="button">Download this step</button>
         <span id="stepcount" role="status"></span>
@@ -993,6 +1048,11 @@ function render(quick){labels();cancelAnimationFrame(raf);clearTimeout(fullT);ra
   S.cache.sketch=sketchTone(p);S.cache.sketchKey=JSON.stringify(p);paint($("out"),S.cache.sketch);S.cache.bands=null;
   $("out").setAttribute("aria-label",`Pencil sketch of ${$("srcname").textContent||"your photo"}, ${GRADES[S.grade].id} pencil`);});}
 sliders.forEach(id=>$(id).addEventListener("input",()=>{render(true);S.cache.planDirty=true;saveSoon();}));
+// back to the starting point: every slider to its default and the 4B pencil
+$("resetsk").onclick=()=>{sliders.forEach(id=>{$(id).value=$(id).defaultValue;});S.grade=3;
+  document.querySelectorAll("#grades .grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===S.grade));
+  fillAll();render();S.cache.planDirty=true;saveSoon();};
+const FINE=["bright","strokes","press","soft","grain","fade"];
 GRADES.forEach((g,i)=>{const b=document.createElement("button");b.className="grade";b.textContent=g.id;b.setAttribute("aria-pressed",i===S.grade);b.onclick=()=>{S.grade=i;document.querySelectorAll("#grades .grade").forEach((e,k)=>e.setAttribute("aria-pressed",k===i));render();};$("grades").appendChild(b);});
 
 function usePhoto(f){if(!f)return;const im=new Image();
@@ -1457,6 +1517,26 @@ const barGo=d=>{$(d).click();const c=$("canvaswrap").getBoundingClientRect();if(
 $("sb-prev").onclick=()=>barGo("prev");$("sb-next").onclick=()=>barGo("next");
 $("next").onclick=()=>goStep(S.step===STEPS.length-1?0:S.step+1);
 $("ghost").onchange=renderStep;
+/* the artist's checks: flip the picture to catch proportion mistakes, squint (blur) to see only light and dark */
+function setView(k,on){$(k).checked=on;$("dm-"+k).setAttribute("aria-pressed",on);$("canvaswrap").classList.toggle(k,on);
+  if(k==="squint")$("canvaswrap").style.setProperty("--sq",Math.max(3,Math.round($("canvaswrap").getBoundingClientRect().width/90))+"px");}
+for(const k of["flip","squint"]){$(k).onchange=()=>setView(k,$(k).checked);$("dm-"+k).onclick=()=>setView(k,!$(k).checked);}
+/* drawing mode: the step picture fills the screen, with big Back and Next, and the screen is kept awake */
+let WAKE=null;
+const wake=async()=>{try{if(navigator.wakeLock&&document.visibilityState==="visible")WAKE=await navigator.wakeLock.request("screen");}catch(e){WAKE=null;}};
+function drawMode(on){const v=$("view-plan");v.classList.toggle("drawing",on);document.documentElement.classList.toggle("drawing-open",on);
+  document.querySelectorAll(".wrap>*:not(#view-plan),#view-plan>.panel").forEach(e=>{e.inert=on;});
+  if(on){$("canvaswrap").style.setProperty("--ar",S.w/S.h);syncDraw();wake();$("dm-next").focus();}
+  else{try{WAKE&&WAKE.release();}catch(e){}WAKE=null;$("drawbtn").focus();}
+  if(document.querySelector("#canvaswrap.squint"))setView("squint",true);}
+function syncDraw(){$("dm-n").textContent=`Step ${S.step+1} of ${STEPS.length}`;$("dm-title").textContent=STEPS[S.step].title;
+  $("dm-prev").disabled=S.step===0;$("dm-next").textContent=S.step===STEPS.length-1?"Finish":"Next step";}
+$("drawbtn").onclick=()=>drawMode(true);$("dm-exit").onclick=()=>drawMode(false);
+$("dm-prev").onclick=()=>{$("prev").click();syncDraw();};
+$("dm-next").onclick=()=>{if(S.step===STEPS.length-1){drawMode(false);return;}$("next").click();syncDraw();};
+document.addEventListener("keydown",e=>{if(!$("view-plan").classList.contains("drawing"))return;
+  if(e.key==="Escape")drawMode(false);else if(e.key==="ArrowRight")$("dm-next").click();else if(e.key==="ArrowLeft"&&S.step>0)$("dm-prev").click();});
+document.addEventListener("visibilitychange",()=>{if($("view-plan").classList.contains("drawing")&&document.visibilityState==="visible")wake();});
 // phones have no hover: touching and holding the picture shows the glow until the finger lifts
 {const w=$("canvaswrap"),on=e=>{if(e.pointerType!=="mouse")w.classList.add("peek");},off=()=>w.classList.remove("peek");
   w.addEventListener("pointerdown",on);["pointerup","pointercancel","pointerleave"].forEach(t=>w.addEventListener(t,off));
@@ -1684,6 +1764,7 @@ function applySnapshot(p){
   document.querySelectorAll("#gcolors button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.color));
   document.querySelectorAll("#gtypes button").forEach((b,k)=>b.setAttribute("aria-pressed",k===S.grid.type));
   S.step=Math.min(STEPS.length-1,Math.max(0,p.step|0));S.done=(p.done||[]).slice(0,STEPS.length);
+  $("finetune").open=FINE.some(id=>$(id).value!==$(id).defaultValue); // show the fine-tune settings when this sketch uses them
   gridStyleLabels();gridLabel();
 }
 let saveT=0;
